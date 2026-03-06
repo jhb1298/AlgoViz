@@ -51,8 +51,7 @@ C F
 E F`;
 
         function parseGraph(text) {
-            const lines = text.trim().split('
-');
+            const lines = text.trim().split('\n');
             const edges = [];
             const nodeIds = new Set();
             lines.forEach(line => {
@@ -83,10 +82,14 @@ E F`;
             const source = graph.nodes[0]?.id;
             if (!source) return [];
 
+            const currentStack = [];
+
             function dfs(u, p = null) {
                 visited.add(u);
+                currentStack.push(u);
                 history.push({ 
                     stepId: history.length, activeNode: u, visited: new Set(visited), 
+                    stack: [...currentStack],
                     status: 'VISITING', desc: `Visiting ${u}`, 
                     speech: SEARCH_SCRIPT.DFS.VISITING(u) 
                 });
@@ -96,24 +99,33 @@ E F`;
                         history.push({ 
                             stepId: history.length, activeNode: u, targetNode: v,
                             activeEdge: {from: u, to: v}, visited: new Set(visited), 
+                            stack: [...currentStack],
                             status: 'EXPLORING', desc: `Checking ${v}`, 
                             speech: SEARCH_SCRIPT.DFS.EXPLORING_EDGE(u, v) 
                         });
                         dfs(v, u);
                         history.push({ 
                             stepId: history.length, activeNode: u, 
-                            visited: new Set(visited), status: 'BACK', 
+                            visited: new Set(visited), 
+                            stack: [...currentStack],
+                            status: 'BACK', 
                             desc: `Back to ${u}`, speech: `Backtracking to ${u}` 
                         });
-                    } else if (v !== p) {
-                        // Already visited
                     }
                 }
+                currentStack.pop();
+                history.push({ 
+                    stepId: history.length, activeNode: u, 
+                    visited: new Set(visited), 
+                    stack: [...currentStack],
+                    status: 'POP', 
+                    desc: `Popping ${u} from stack`, speech: `Popping ${u} from stack` 
+                });
             }
 
-            history.push({ stepId: 0, activeNode: source, visited: new Set(), status: 'START', desc: `Starting DFS at ${source}`, speech: SEARCH_SCRIPT.DFS.START(source) });
+            history.push({ stepId: 0, activeNode: source, visited: new Set(), stack: [], status: 'START', desc: `Starting DFS at ${source}`, speech: SEARCH_SCRIPT.DFS.START(source) });
             dfs(source);
-            history.push({ stepId: history.length, status: 'SUCCESS', visited: new Set(visited), desc: "DFS Complete", speech: SEARCH_SCRIPT.DFS.SUCCESS() });
+            history.push({ stepId: history.length, status: 'SUCCESS', visited: new Set(visited), stack: [], desc: "DFS Complete", speech: SEARCH_SCRIPT.DFS.SUCCESS() });
             return history;
         }
 
@@ -131,6 +143,17 @@ E F`;
                 <line x1={u.x} y1={u.y} x2={v.x} y2={v.y} stroke={isVisited ? "#10b981" : (isActive ? "#6366f1" : "#1e293b")} strokeWidth={isVisited ? 4 : (isActive ? 4 : 2)} className={isActive ? 'edge-active' : (isVisited ? 'edge-visited' : '')} />
             );
         };
+
+        const StackComponent = ({ stack }) => (
+            <div className="absolute right-6 top-24 w-28 flex flex-col-reverse gap-2 z-40 bg-slate-900/80 backdrop-blur-md p-4 rounded-2xl border border-slate-700 shadow-xl max-h-[60vh] overflow-y-auto">
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 text-center w-full">Stack</div>
+                {stack.map((id, i) => (
+                    <div key={i} className="flex items-center justify-center w-full h-10 bg-slate-800 border-2 border-blue-500/50 rounded-lg font-bold text-blue-400 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                        {id}
+                    </div>
+                ))}
+            </div>
+        );
 
         const App = () => {
             const [inputText, setInputText] = useState(DEFAULT_EDGES);
@@ -221,6 +244,8 @@ E F`;
                             {graph.nodes.map(node => <NodeComponent key={node.id} node={node} isActive={state.activeNode === node.id} isVisited={state.visited.has(node.id)} />)}
                         </div>
                     </div>
+
+                    <StackComponent stack={state.stack || []} />
 
                     <div className="absolute bottom-6 left-1/2 w-full max-w-4xl px-4 z-50 control-panel-wrapper" style={{ transform: `translate(calc(-50% + ${panelOffset.x}px), ${panelOffset.y}px)` }}>
                         <div className={`bg-slate-900/40 hover:bg-slate-900/85 backdrop-blur-md border border-slate-600/30 rounded-2xl shadow-2xl flex flex-col relative box-border transition-all duration-300 ${isMinimized ? 'w-fit min-w-[180px] mx-auto px-4 pb-3 pt-1' : 'px-5 pb-4 pt-2'}`}>

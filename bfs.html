@@ -52,8 +52,7 @@ C F
 E F`;
 
         function parseGraph(text) {
-            const lines = text.trim().split('
-');
+            const lines = text.trim().split('\n');
             const edges = [];
             const nodeIds = new Set();
             lines.forEach(line => {
@@ -88,14 +87,14 @@ E F`;
             const queue = [source];
             queued.add(source);
             
-            history.push({ stepId: 0, activeNode: source, visited: new Set(), queued: new Set(queued), status: 'START', desc: `Starting BFS at ${source}`, speech: SEARCH_SCRIPT.BFS.START(source) });
+            history.push({ stepId: 0, activeNode: source, visited: new Set(), queued: new Set(queued), queue: [...queue], status: 'START', desc: `Starting BFS at ${source}`, speech: SEARCH_SCRIPT.BFS.START(source) });
 
             while (queue.length > 0) {
                 const u = queue.shift();
                 visited.add(u);
                 history.push({ 
                     stepId: history.length, activeNode: u, visited: new Set(visited), 
-                    queued: new Set(queued), status: 'VISITING', desc: `Visiting ${u}`, 
+                    queued: new Set(queued), queue: [...queue], status: 'VISITING', desc: `Visiting ${u}`, 
                     speech: SEARCH_SCRIPT.BFS.VISITING(u) 
                 });
 
@@ -106,14 +105,14 @@ E F`;
                         history.push({ 
                             stepId: history.length, activeNode: u, targetNode: v,
                             activeEdge: {from: u, to: v}, visited: new Set(visited), 
-                            queued: new Set(queued), status: 'ENQUEUE', desc: `Enqueuing ${v}`, 
+                            queued: new Set(queued), queue: [...queue], status: 'ENQUEUE', desc: `Enqueuing ${v}`, 
                             speech: SEARCH_SCRIPT.BFS.ENQUEUE(v) 
                         });
                     }
                 }
             }
 
-            history.push({ stepId: history.length, status: 'SUCCESS', visited: new Set(visited), queued: new Set(queued), desc: "BFS Complete", speech: SEARCH_SCRIPT.BFS.SUCCESS() });
+            history.push({ stepId: history.length, status: 'SUCCESS', visited: new Set(visited), queued: new Set(queued), queue: [], desc: "BFS Complete", speech: SEARCH_SCRIPT.BFS.SUCCESS() });
             return history;
         }
 
@@ -131,6 +130,18 @@ E F`;
                 <line x1={u.x} y1={u.y} x2={v.x} y2={v.y} stroke={isVisited ? "#10b981" : (isActive ? "#6366f1" : "#1e293b")} strokeWidth={isVisited ? 4 : (isActive ? 4 : 2)} className={isActive ? 'edge-active' : (isVisited ? 'edge-visited' : '')} />
             );
         };
+
+        const QueueComponent = ({ queue }) => (
+            <div className="absolute right-6 top-24 w-28 flex flex-col gap-2 z-40 bg-slate-900/80 backdrop-blur-md p-4 rounded-2xl border border-slate-700 shadow-xl max-h-[60vh] overflow-y-auto">
+                <div className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-1 text-center w-full">Queue</div>
+                {queue.map((id, i) => (
+                    <div key={i} className={`flex items-center justify-center w-full h-10 bg-slate-800 border-2 rounded-lg font-bold animate-in fade-in slide-in-from-right-2 duration-300 ${i === 0 ? 'border-emerald-500 text-emerald-400' : 'border-blue-500/50 text-blue-400'}`}>
+                        {id}
+                    </div>
+                ))}
+                {queue.length === 0 && <div className="text-[10px] text-slate-600 text-center py-2 italic">Empty</div>}
+            </div>
+        );
 
         const App = () => {
             const [inputText, setInputText] = useState(DEFAULT_EDGES);
@@ -221,6 +232,8 @@ E F`;
                             {graph.nodes.map(node => <NodeComponent key={node.id} node={node} isActive={state.activeNode === node.id} isVisited={state.visited.has(node.id)} isQueued={state.queued.has(node.id)} />)}
                         </div>
                     </div>
+
+                    <QueueComponent queue={state.queue || []} />
 
                     <div className="absolute bottom-6 left-1/2 w-full max-w-4xl px-4 z-50 control-panel-wrapper" style={{ transform: `translate(calc(-50% + ${panelOffset.x}px), ${panelOffset.y}px)` }}>
                         <div className={`bg-slate-900/40 hover:bg-slate-900/85 backdrop-blur-md border border-slate-600/30 rounded-2xl shadow-2xl flex flex-col relative box-border transition-all duration-300 ${isMinimized ? 'w-fit min-w-[180px] mx-auto px-4 pb-3 pt-1' : 'px-5 pb-4 pt-2'}`}>
