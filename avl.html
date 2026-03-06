@@ -218,6 +218,9 @@
                 <div className={`absolute -top-8 px-1.5 py-0.5 rounded text-[9px] font-bold ${Math.abs(node.balance) > 1 ? 'bg-rose-500 text-white' : 'bg-slate-700 text-slate-300'}`}>
                     BF: {node.balance}
                 </div>
+                <div className="absolute -bottom-8 px-1.5 py-0.5 rounded text-[9px] font-bold bg-slate-700 text-slate-300">
+                    H: {node.height}
+                </div>
             </div>
         );
 
@@ -300,16 +303,27 @@
 
             const state = history[currentStep] || { tree: null };
 
-            const renderTree = (node, x, y, level) => {
+            const renderLines = (node, x, y, level) => {
+                if (!node) return null;
+                const spread = 700 / Math.pow(2, level);
+                return (
+                    <React.Fragment key={`line-${node.id}`}>
+                        {node.left && <line x1={x} y1={y} x2={x - spread} y2={y + 100} stroke="#1e293b" strokeWidth="2" />}
+                        {node.right && <line x1={x} y1={y} x2={x + spread} y2={y + 100} stroke="#1e293b" strokeWidth="2" />}
+                        {renderLines(node.left, x - spread, y + 100, level + 1)}
+                        {renderLines(node.right, x + spread, y + 100, level + 1)}
+                    </React.Fragment>
+                );
+            };
+
+            const renderNodes = (node, x, y, level) => {
                 if (!node) return null;
                 const spread = 700 / Math.pow(2, level);
                 return (
                     <React.Fragment key={node.id}>
-                        {node.left && <line x1={x} y1={y} x2={x - spread} y2={y + 100} stroke="#1e293b" strokeWidth="2" />}
-                        {node.right && <line x1={x} y1={y} x2={x + spread} y2={y + 100} stroke="#1e293b" strokeWidth="2" />}
                         <NodeComponent node={node} x={x} y={y} isActive={state.activeId === node.id} isImbalanced={state.status === 'IMBALANCE' && state.activeId === node.id} isFound={state.status === 'FOUND' && state.activeId === node.id} />
-                        {renderTree(node.left, x - spread, y + 100, level + 1)}
-                        {renderTree(node.right, x + spread, y + 100, level + 1)}
+                        {renderNodes(node.left, x - spread, y + 100, level + 1)}
+                        {renderNodes(node.right, x + spread, y + 100, level + 1)}
                     </React.Fragment>
                 );
             };
@@ -347,8 +361,9 @@
                         <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.2, z-e.deltaY*0.001), 1.5))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper') && !e.target.closest('.top-nav-area')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
                             <div className={`absolute left-0 top-0 w-full h-full ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${manualOffset.x + 0}px, ${manualOffset.y + 0}px) scale(${zoom})` }}>
                                 <svg className="absolute top-0 left-0 w-full h-full overflow-visible">
-                                    {state.tree && renderTree(state.tree, 500, 100, 1)}
+                                    {state.tree && renderLines(state.tree, 500, 100, 1)}
                                 </svg>
+                                {state.tree && renderNodes(state.tree, 500, 100, 1)}
                             </div>
                         </div>
 

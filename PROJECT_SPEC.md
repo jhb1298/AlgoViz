@@ -53,7 +53,7 @@ Algorithms are not executed in real-time during visualization. Instead, they fol
 ### 5.1. Core Application Files
 | File | Algorithm Category | Description |
 | :--- | :--- | :--- |
-| `home.html` | Landing Page | Portal to all simulations. |
+| `index.html` | Landing Page | Portal to all simulations. |
 | `hanoi.html` | Recursion | Classic 3-peg disk puzzle. |
 | `factorial.html` | Recursion | Basic linear recursion accumulation. |
 | `fibonacci.html` | Recursion | Binary tree recursion with overlapping subproblems. |
