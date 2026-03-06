@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Algorithm Dashboard | Cinematic Visualizations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root { --accent: #6366f1; --bg: #030712; --card-bg: #0f172a; }
+        body { background-color: var(--bg); color: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; }
+        .sidebar { background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(12px); border-right: 1px solid rgba(255, 255, 255, 0.05); }
+        .card { background: #0f172a; border: 1px solid rgba(255, 255, 255, 0.05); transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .card:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 20px 40px -20px rgba(99, 102, 241, 0.3); }
+        .nav-link { transition: all 0.2s; color: #94a3b8; }
+        .nav-link:hover, .nav-link.active { color: #f8fafc; background: rgba(99, 102, 241, 0.1); border-left: 3px solid var(--accent); }
+        .tag { font-family: 'JetBrains Mono', monospace; font-size: 10px; text-transform: uppercase; padding: 2px 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.05); color: #94a3b8; }
+        .hero-gradient { background: radial-gradient(circle at top right, rgba(99, 102, 241, 0.15), transparent 40%), radial-gradient(circle at bottom left, rgba(168, 85, 247, 0.1), transparent 40%); }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .search-ring:focus-within { ring: 2px solid var(--accent); }
+    </style>
+</head>
+<body class="flex min-h-screen">
+    <!-- SIDEBAR -->
+    <aside class="sidebar w-72 h-screen sticky top-0 flex flex-col p-6 z-50">
+        <div class="flex items-center gap-3 mb-10 px-2">
+            <div class="w-10 h-10 bg-indigo-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="16 18 22 12 16 6"></polyline><polyline points="8 6 2 12 8 18"></polyline></svg>
+            </div>
+            <div>
+                <h1 class="font-extrabold text-lg leading-tight">MasterSuite</h1>
+                <p class="text-[10px] text-slate-500 font-mono tracking-widest uppercase">Visual Labs v3.9</p>
+            </div>
+        </div>
+
+        <nav class="flex-1 space-y-1 overflow-y-auto pr-2 custom-scrollbar">
+            <p class="text-[10px] font-bold text-slate-600 uppercase tracking-widest px-3 mb-2">Categories</p>
+            <a href="#search" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                Search Algorithms
+            </a>
+            <a href="#recursion" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></svg>
+                Recursion & Logic
+            </a>
+            <a href="#data-structures" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v3"></path><path d="M21 16v3a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-3"></path><path d="M4 12h16"></path><rect width="20" height="8" x="2" y="8" rx="2"></rect></svg>
+                Data Structures
+            </a>
+            <a href="#sorting" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="6" x2="15" y2="6"></line><line x1="3" y1="12" x2="12" y2="12"></line><line x1="3" y1="18" x2="18" y2="18"></line></svg>
+                Sorting Suite
+            </a>
+            <a href="#graph" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"></circle><circle cx="6" cy="12" r="3"></circle><circle cx="18" cy="19" r="3"></circle><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line></svg>
+                Graph Theory
+            </a>
+            <a href="#optimization" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"></path><path d="m17 5-5-3-5 3"></path><path d="m17 19-5 3-5-3"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                Optimization
+            </a>
+            <a href="#dp" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2"></rect><path d="M3 9h18"></path><path d="M3 15h18"></path><path d="M9 3v18"></path><path d="M15 3v18"></path></svg>
+                Dynamic Programming
+            </a>
+            <a href="#math" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="7" y1="12" x2="17" y2="12"></line><line x1="7" y1="12" x2="17" y2="12"></line><rect width="18" height="18" x="3" y="3" rx="2"></rect></svg>
+                Math & Expressions
+            </a>
+            <a href="#compression" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"></path><path d="M2 12h20"></path></svg>
+                Compression
+            </a>
+            <a href="#ml" class="nav-link flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10"></path></svg>
+                Machine Learning
+            </a>
+        </nav>
+
+        <div class="mt-auto pt-6 border-t border-slate-800 px-2">
+            <div class="bg-indigo-600/10 border border-indigo-500/20 rounded-xl p-4">
+                <p class="text-xs text-indigo-300 font-bold mb-1">37 Algorithms</p>
+                <div class="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
+                    <div class="bg-indigo-500 h-full w-[92%]"></div>
+                </div>
+                <p class="text-[9px] text-slate-500 mt-2 font-medium">Interactive Labs Complete</p>
+            </div>
+        </div>
+    </aside>
+
+    <!-- MAIN CONTENT -->
+    <main class="flex-1 hero-gradient overflow-y-auto">
+        <header class="p-8 pb-0 max-w-6xl mx-auto flex justify-between items-center">
+            <div class="relative w-96 search-ring rounded-xl bg-slate-900 overflow-hidden border border-slate-800">
+                <div class="absolute inset-y-0 left-3 flex items-center pointer-events-none text-slate-500">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                </div>
+                <input type="text" id="algorithm-search" placeholder="Search for an algorithm..." class="bg-transparent border-none text-sm w-full pl-10 pr-4 py-3 focus:outline-none text-slate-300">
+            </div>
+            <div class="flex gap-4">
+                <button class="bg-slate-900 border border-slate-800 p-2.5 rounded-xl hover:bg-slate-800 transition-colors">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21a9 9 0 1 0 0-18 9 9 0 0 0 0 18z"></path><path d="M12 8v4l3 3"></path></svg>
+                </button>
+                <button class="bg-indigo-600 hover:bg-indigo-500 px-5 py-2.5 rounded-xl text-sm font-bold shadow-lg shadow-indigo-500/20 transition-all">Quick Start</button>
+            </div>
+        </header>
+
+        <section class="p-8 max-w-6xl mx-auto">
+            <div class="mb-12">
+                <h2 class="text-4xl font-extrabold mb-3 tracking-tight">Welcome back, Architect.</h2>
+                <p class="text-slate-400 text-lg">Pick a module to explore its mathematical beauty.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20" id="algorithm-grid">
+                
+                <!-- Category: Search -->
+                <div class="lg:col-span-3 mt-10 mb-4" id="search">
+                    <h3 class="text-xl font-bold flex items-center gap-2">
+                        <span class="w-2 h-6 bg-emerald-500 rounded-full"></span>
+                        Search Algorithms
+                    </h3>
+                </div>
+                <a href="binarysearch.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4">
+                        <div class="text-emerald-400 font-bold font-mono">01</div>
+                        <span class="tag">Logarithmic</span>
+                    </div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Binary Search</h4>
+                    <p class="text-slate-500 text-xs leading-relaxed mb-6">Logarithmic divide & conquer search.</p>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider">Launch Simulation <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></div>
+                </a>
+
+                <!-- Category: Recursion -->
+                <div class="lg:col-span-3 mt-10 mb-4" id="recursion">
+                    <h3 class="text-xl font-bold flex items-center gap-2">
+                        <span class="w-2 h-6 bg-blue-500 rounded-full"></span>
+                        Recursion & Backtracking
+                    </h3>
+                </div>
+                <a href="hanoi.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-blue-400 font-bold font-mono">02</div><span class="tag">Recursive</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Tower of Hanoi</h4>
+                    <p class="text-slate-500 text-xs leading-relaxed mb-6">The classic 3-peg recursive puzzle.</p>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider">Launch Simulation →</div>
+                </a>
+                <a href="factorial.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-blue-400 font-bold font-mono">03</div><span class="tag">Linear</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Factorial</h4>
+                    <p class="text-slate-500 text-xs leading-relaxed mb-6">Visualizing linear call stacks.</p>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider">Launch Simulation →</div>
+                </a>
+                <a href="fibonacci.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-blue-400 font-bold font-mono">04</div><span class="tag">Binary Tree</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Fibonacci (Recursion)</h4>
+                    <p class="text-slate-500 text-xs leading-relaxed mb-6">Binary tree of recursive calls.</p>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider">Launch Simulation →</div>
+                </a>
+                <a href="nqueens.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-blue-400 font-bold font-mono">05</div><span class="tag">Backtracking</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">N-Queens</h4>
+                    <p class="text-slate-500 text-xs leading-relaxed mb-6">Chessboard queen placement constraints.</p>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider">Launch Simulation →</div>
+                </a>
+                <a href="permutations.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-blue-400 font-bold font-mono">06</div><span class="tag">Combinatorics</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Permutations</h4>
+                    <p class="text-slate-500 text-xs leading-relaxed mb-6">Generating all arrangements of a string.</p>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider">Launch Simulation →</div>
+                </a>
+                <a href="sudoku.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-blue-400 font-bold font-mono">07</div><span class="tag">Constraint</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Sudoku Solver</h4>
+                    <p class="text-slate-500 text-xs leading-relaxed mb-6">Grid-based logical backtracking.</p>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider">Launch Simulation →</div>
+                </a>
+
+                <!-- Category: Data Structures -->
+                <div class="lg:col-span-3 mt-10 mb-4" id="data-structures">
+                    <h3 class="text-xl font-bold flex items-center gap-2">
+                        <span class="w-2 h-6 bg-emerald-500 rounded-full"></span>
+                        Data Structures
+                    </h3>
+                </div>
+                <a href="heapify.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-emerald-400 font-bold font-mono">08</div><span class="tag">Heap</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Max-Heapify</h4>
+                    <p class="text-slate-500 text-xs leading-relaxed mb-6">Building a Max-Heap structure.</p>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider">Launch Simulation →</div>
+                </a>
+                <a href="bst.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-emerald-400 font-bold font-mono">09</div><span class="tag">Binary Tree</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">BST Operations</h4>
+                    <p class="text-slate-500 text-xs leading-relaxed mb-6">Insert, Search, Delete in Binary Trees.</p>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider">Launch Simulation →</div>
+                </a>
+                <a href="avl.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-emerald-400 font-bold font-mono">10</div><span class="tag">Balanced</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">AVL Tree</h4>
+                    <p class="text-slate-500 text-xs leading-relaxed mb-6">Self-balancing via rotations.</p>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider">Launch Simulation →</div>
+                </a>
+                <a href="hashing.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-emerald-400 font-bold font-mono">11</div><span class="tag">Hash Map</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Hashing (Chaining)</h4>
+                    <p class="text-slate-500 text-xs leading-relaxed mb-6">Collision handling with linked lists.</p>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider">Launch Simulation →</div>
+                </a>
+
+                <!-- Category: Sorting -->
+                <div class="lg:col-span-3 mt-10 mb-4" id="sorting">
+                    <h3 class="text-xl font-bold flex items-center gap-2">
+                        <span class="w-2 h-6 bg-sky-500 rounded-full"></span>
+                        Sorting Suite
+                    </h3>
+                </div>
+                <a href="bubble.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-sky-400 font-bold font-mono">12</div><span class="tag">Comparison</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Bubble Sort</h4>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider mt-10">Launch Simulation →</div>
+                </a>
+                <a href="insertion.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-sky-400 font-bold font-mono">13</div><span class="tag">Comparison</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Insertion Sort</h4>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider mt-10">Launch Simulation →</div>
+                </a>
+                <a href="selection.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-sky-400 font-bold font-mono">14</div><span class="tag">Comparison</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Selection Sort</h4>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider mt-10">Launch Simulation →</div>
+                </a>
+                <a href="quick.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-sky-400 font-bold font-mono">15</div><span class="tag">Partition</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Quick Sort</h4>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider mt-10">Launch Simulation →</div>
+                </a>
+                <a href="mergesort.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-sky-400 font-bold font-mono">16</div><span class="tag">Divide & Conquer</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Merge Sort</h4>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider mt-10">Launch Simulation →</div>
+                </a>
+                <a href="heap.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-sky-400 font-bold font-mono">17</div><span class="tag">Heap-based</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Heap Sort</h4>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider mt-10">Launch Simulation →</div>
+                </a>
+                <a href="radix.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-sky-400 font-bold font-mono">18</div><span class="tag">Non-Comparison</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Radix Sort</h4>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider mt-10">Launch Simulation →</div>
+                </a>
+
+                <!-- Category: Graph Theory -->
+                <div class="lg:col-span-3 mt-10 mb-4" id="graph">
+                    <h3 class="text-xl font-bold flex items-center gap-2">
+                        <span class="w-2 h-6 bg-indigo-500 rounded-full"></span>
+                        Graph Theory
+                    </h3>
+                </div>
+                <a href="dijkstra.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-indigo-400 font-bold font-mono">19</div><span class="tag">Shortest Path</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Dijkstra's</h4>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider mt-10">Launch Simulation →</div>
+                </a>
+                <a href="bellmanford.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-indigo-400 font-bold font-mono">20</div><span class="tag">Dynamic</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Bellman-Ford</h4>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider mt-10">Launch Simulation →</div>
+                </a>
+                <a href="prims.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-indigo-400 font-bold font-mono">21</div><span class="tag">MST</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Prim's MST</h4>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider mt-10">Launch Simulation →</div>
+                </a>
+                <a href="kruskals.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-indigo-400 font-bold font-mono">22</div><span class="tag">Greedy</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Kruskal's MST</h4>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider mt-10">Launch Simulation →</div>
+                </a>
+                <a href="topological.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-indigo-400 font-bold font-mono">23</div><span class="tag">DAG</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Topological Sort</h4>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider mt-10">Launch Simulation →</div>
+                </a>
+                <a href="dfs.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-indigo-400 font-bold font-mono">24</div><span class="tag">Traversal</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">DFS (Depth First)</h4>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider mt-10">Launch Simulation →</div>
+                </a>
+                <a href="bfs.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-indigo-400 font-bold font-mono">25</div><span class="tag">Traversal</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">BFS (Breadth First)</h4>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider mt-10">Launch Simulation →</div>
+                </a>
+                <a href="astar.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-indigo-400 font-bold font-mono">26</div><span class="tag">Heuristic</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">A* Search</h4>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider mt-10">Launch Simulation →</div>
+                </a>
+                <a href="pagerank.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-indigo-400 font-bold font-mono">27</div><span class="tag">Ranking</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">PageRank</h4>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider mt-10">Launch Simulation →</div>
+                </a>
+
+                <!-- Category: Optimization -->
+                <div class="lg:col-span-3 mt-10 mb-4" id="optimization">
+                    <h3 class="text-xl font-bold flex items-center gap-2">
+                        <span class="w-2 h-6 bg-orange-500 rounded-full"></span>
+                        Optimization & Heuristics
+                    </h3>
+                </div>
+                <a href="genetic.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-orange-400 font-bold font-mono">28</div><span class="tag">Evolutionary</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Genetic Algorithm</h4>
+                    <p class="text-slate-500 text-xs mb-6">Evolutionary string optimization.</p>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider">Launch Simulation →</div>
+                </a>
+                <a href="simulated_annealing.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-orange-400 font-bold font-mono">29</div><span class="tag">Metaheuristic</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Simulated Annealing</h4>
+                    <p class="text-slate-500 text-xs mb-6">Solving TSP via thermal cooling.</p>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider">Launch Simulation →</div>
+                </a>
+
+                <!-- Category: DP -->
+                <div class="lg:col-span-3 mt-10 mb-4" id="dp">
+                    <h3 class="text-xl font-bold flex items-center gap-2">
+                        <span class="w-2 h-6 bg-rose-500 rounded-full"></span>
+                        Dynamic Programming
+                    </h3>
+                </div>
+                <a href="knapsack.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-rose-400 font-bold font-mono">30</div><span class="tag">Optimization</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">0/1 Knapsack</h4>
+                    <p class="text-slate-500 text-xs mb-6">Optimal item selection strategy.</p>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider">Launch Simulation →</div>
+                </a>
+                <a href="fibonacci_dp.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-rose-400 font-bold font-mono">31</div><span class="tag">Memoization</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Fibonacci (DP)</h4>
+                    <p class="text-slate-500 text-xs mb-6">Efficient iterative calculation.</p>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider">Launch Simulation →</div>
+                </a>
+
+                <!-- Category: Math -->
+                <div class="lg:col-span-3 mt-10 mb-4" id="math">
+                    <h3 class="text-xl font-bold flex items-center gap-2">
+                        <span class="w-2 h-6 bg-yellow-500 rounded-full"></span>
+                        Math & Expressions
+                    </h3>
+                </div>
+                <a href="infix.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-yellow-400 font-bold font-mono">32</div><span class="tag">Parsing</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Infix Evaluation</h4>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider mt-10">Launch Simulation →</div>
+                </a>
+                <a href="postfix.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-yellow-400 font-bold font-mono">33</div><span class="tag">Stack-based</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Postfix Evaluation</h4>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider mt-10">Launch Simulation →</div>
+                </a>
+                <a href="prefix.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-yellow-400 font-bold font-mono">34</div><span class="tag">Expression</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Prefix Evaluation</h4>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider mt-10">Launch Simulation →</div>
+                </a>
+                <a href="minimax.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-yellow-400 font-bold font-mono">35</div><span class="tag">Game Theory</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Minimax Search</h4>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider mt-10">Launch Simulation →</div>
+                </a>
+
+                <!-- Category: Compression -->
+                <div class="lg:col-span-3 mt-10 mb-4" id="compression">
+                    <h3 class="text-xl font-bold flex items-center gap-2">
+                        <span class="w-2 h-6 bg-sky-500 rounded-full"></span>
+                        Data Compression
+                    </h3>
+                </div>
+                <a href="huffman.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-sky-400 font-bold font-mono">36</div><span class="tag">Greedy</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Huffman Coding</h4>
+                    <p class="text-slate-500 text-xs mb-6">Greedy tree-based compression.</p>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider">Launch Simulation →</div>
+                </a>
+
+                <!-- Category: ML -->
+                <div class="lg:col-span-3 mt-10 mb-4" id="ml">
+                    <h3 class="text-xl font-bold flex items-center gap-2">
+                        <span class="w-2 h-6 bg-indigo-500 rounded-full"></span>
+                        Machine Learning
+                    </h3>
+                </div>
+                <a href="kmeans.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-indigo-400 font-bold font-mono">37</div><span class="tag">Unsupervised</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">K-Means Clustering</h4>
+                    <p class="text-slate-500 text-xs mb-6">Unsupervised pattern discovery.</p>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider">Launch Simulation →</div>
+                </a>
+                <a href="neural_network.html" class="card p-6 rounded-2xl group">
+                    <div class="flex justify-between items-start mb-4"><div class="text-indigo-400 font-bold font-mono">38</div><span class="tag">Deep Learning</span></div>
+                    <h4 class="text-lg font-bold mb-1 group-hover:text-indigo-400 transition-colors">Neural Network</h4>
+                    <p class="text-slate-500 text-xs mb-6">Multilayer Perceptron (XOR).</p>
+                    <div class="flex items-center text-xs font-bold text-indigo-400 gap-1 uppercase tracking-wider">Launch Simulation →</div>
+                </a>
+
+            </div>
+
+            <footer class="mt-20 border-t border-slate-800 pt-10 text-center text-slate-600 font-mono text-[10px] tracking-[0.2em] uppercase pb-20">
+                Algorithm Visualizer Suite • Experimental Core • 2026
+            </footer>
+        </section>
+    </main>
+
+    <script>
+        // Simple search functionality
+        const searchInput = document.getElementById('algorithm-search');
+        const cards = document.querySelectorAll('.card');
+        const sections = document.querySelectorAll('.lg\\:col-span-3');
+
+        searchInput.addEventListener('input', (e) => {
+            const term = e.target.value.toLowerCase();
+            
+            cards.forEach(card => {
+                const title = card.querySelector('h4').textContent.toLowerCase();
+                const desc = card.querySelector('p').textContent.toLowerCase();
+                if (title.includes(term) || desc.includes(term)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+
+            // Hide section headers if no visible cards in that section
+            sections.forEach(section => {
+                let current = section.nextElementSibling;
+                let hasVisible = false;
+                while (current && !current.classList.contains('lg:col-span-3')) {
+                    if (current.style.display !== 'none') {
+                        hasVisible = true;
+                        break;
+                    }
+                    current = current.nextElementSibling;
+                }
+                section.style.display = hasVisible ? 'block' : 'none';
+            });
+        });
+
+        // Smooth scroll for nav links
+        document.querySelectorAll('.nav-link').forEach(link => {
+            link.addEventListener('click', (e) => {
+                e.preventDefault();
+                const targetId = link.getAttribute('href').slice(1);
+                const target = document.getElementById(targetId);
+                target.scrollIntoView({ behavior: 'smooth' });
+                
+                // Update active state
+                document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
