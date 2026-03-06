@@ -46,14 +46,15 @@ const SEARCH_SCRIPT = {
         "DAMPING": () => `Applying the Damping Factor. This represents a "random surfer" who might jump to any page at random, keeping the math stable.`,
         "CONVERGED": () => `The scores have stabilized! We've found the true hierarchy of importance in our graph.`,
         "SUCCESS": () => `PageRank complete! The nodes with the most links from other important nodes have risen to the top.`
-    },
-    "BIPARTITE": {
-        "START": () => `Let's check if this graph is Bipartite! We'll try to color every node using only two colors, ensuring no two neighbors share the same one.`,
-        "COLORING": (node, color) => `Coloring node ${node} with ${color === 0 ? 'Blue' : 'Pink'}. Let's see if its neighbors can take the opposite color!`,
-        "ENQUEUE": (node) => `Adding node ${node} to the queue to check its neighbors very soon.`,
-        "CHECKING": (u, v) => `Checking the link between ${u} and ${v}. They must have different colors!`,
-        "IMBALANCE": (u, v) => `Wait! Both ${u} and ${v} have the same color. That's a conflict! This graph is NOT Bipartite.`,
-        "BIPARTITE_FORM": () => `Success! Every node is perfectly colored. Now, let's rearrange the graph into its two independent sets!`,
-        "SUCCESS": () => `The graph is officially Bipartite! We've split it into two distinct groups where links only exist between groups, never within them.`
     }
+};
+
+const BIPARTITE_SCRIPT = {
+    "START": () => `Let's check if this graph is Bipartite! We'll try to color every node using only two colors, ensuring no two neighbors share the same one.`,
+    "COLORING": (node, color) => `Coloring node ${node} with ${color === 0 ? 'Blue' : 'Pink'}. Let's see if its neighbors can take the opposite color!`,
+    "ENQUEUE": (node) => `Adding node ${node} to the queue to check its neighbors very soon.`,
+    "CHECKING": (u, v) => `Checking the link between ${u} and ${v}. They must have different colors!`,
+    "IMBALANCE": (u, v) => `Wait! Both ${u} and ${v} have the same color. That's a conflict! This graph is NOT Bipartite.`,
+    "BIPARTITE_FORM": () => `Success! Every node is perfectly colored. Now, let's rearrange the graph into its two independent sets!`,
+    "SUCCESS": () => `The graph is officially Bipartite! We've split it into two distinct groups where links only exist between groups, never within them.`
 };
