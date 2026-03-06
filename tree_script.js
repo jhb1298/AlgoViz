@@ -16,6 +16,11 @@ const TREE_SCRIPT = {
     },
     "AVL": {
         "START": () => `This is an AVL Tree! It's a BST that balances itself automatically using rotations. It never gets too lopsided.`,
+        "INSERT": (val) => `Inserting ${val}. Let's find its place and ensure the tree remains perfectly balanced.`,
+        "SEARCH": (val, node) => `Searching for ${val}. Current node: ${node}. AVL trees make searching super fast!`,
+        "FOUND": (val) => `Found ${val}! The tree structure kept our search path short and efficient.`,
+        "NOT_FOUND": (val) => `${val} is not in the tree. We checked the entire path in O(log n) time.`,
+        "DELETE": (val) => `Removing ${val}. After removal, we might need to re-balance the tree from the bottom up.`,
         "IMBALANCE": (node) => `Node ${node} is out of balance! The height difference is too big.`,
         "ROTATE_LEFT": (node) => `Performing a Left Rotation on ${node} to restore balance. Swing it round!`,
         "ROTATE_RIGHT": (node) => `Performing a Right Rotation on ${node}. Pivot and shift!`,

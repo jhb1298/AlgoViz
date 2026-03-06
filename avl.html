@@ -17,6 +17,7 @@
         .infinite-bg { background-image: radial-gradient(#334155 1px, transparent 1px); background-size: 30px 30px; }
         .node-active { border-color: #6366f1 !important; box-shadow: 0 0 20px rgba(99, 102, 241, 0.5); transform: scale(1.1); }
         .node-imbalance { border-color: #f43f5e !important; box-shadow: 0 0 25px rgba(244, 63, 94, 0.6); animation: shake 0.5s infinite; }
+        .node-found { border-color: #10b981 !important; box-shadow: 0 0 25px rgba(16, 185, 129, 0.6); }
         @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-2px); } 75% { transform: translateX(2px); } }
     </style>
 </head>
@@ -43,7 +44,8 @@
         class Node {
             constructor(val) {
                 this.val = val; this.left = null; this.right = null; this.height = 1;
-                this.id = Math.random().toString(36).substr(2, 9);
+                // Use stable ID based on value for React transitions
+                this.id = `node-${val}`;
             }
         }
 
@@ -54,7 +56,7 @@
             'RL': 'Right-Left (Double Rotation)'
         };
 
-        function generateSimulation(initialArr, opVal) {
+        function generateSimulation(initialArr, opType, opVal) {
             const history = [];
             let root = null;
 
@@ -74,22 +76,64 @@
             function getHeight(node) { return node ? node.height : 0; }
             function getBalance(node) { return node ? getHeight(node.left) - getHeight(node.right) : 0; }
 
-            function rightRotate(y, isDouble = false) {
-                if (!isDouble) record('ROTATE', `Right rotation on ${y.val}`, TREE_SCRIPT.AVL.ROTATE_RIGHT(y.val), y.id, 'LL');
+            function rightRotate(y, silent = false) {
                 let x = y.left; let T2 = x.right;
                 x.right = y; y.left = T2;
                 y.height = Math.max(getHeight(y.left), getHeight(y.right)) + 1;
                 x.height = Math.max(getHeight(x.left), getHeight(x.right)) + 1;
+                
+                // Update closure root if needed
+                if (y === root) root = x;
+
+                if (!silent) record('ROTATE', `Right rotation on ${y.val}`, TREE_SCRIPT.AVL.ROTATE_RIGHT(y.val), y.id, 'LL');
                 return x;
             }
 
-            function leftRotate(x, isDouble = false) {
-                if (!isDouble) record('ROTATE', `Left rotation on ${x.val}`, TREE_SCRIPT.AVL.ROTATE_LEFT(x.val), x.id, 'RR');
+            function leftRotate(x, silent = false) {
                 let y = x.right; let T2 = y.left;
                 y.left = x; x.right = T2;
                 x.height = Math.max(getHeight(x.left), getHeight(x.right)) + 1;
                 y.height = Math.max(getHeight(y.left), getHeight(y.right)) + 1;
+                
+                // Update closure root if needed
+                if (x === root) root = y;
+
+                if (!silent) record('ROTATE', `Left rotation on ${x.val}`, TREE_SCRIPT.AVL.ROTATE_LEFT(x.val), x.id, 'RR');
                 return y;
+            }
+
+            function rebalance(node, silent = false) {
+                if (!node) return null;
+                node.height = 1 + Math.max(getHeight(node.left), getHeight(node.right));
+                let balance = getBalance(node);
+
+                if (!silent && Math.abs(balance) > 1) {
+                    record('IMBALANCE', `Imbalance at ${node.val} (Factor: ${balance})`, TREE_SCRIPT.AVL.IMBALANCE(node.val), node.id);
+                }
+
+                // LL Case
+                if (balance > 1 && getBalance(node.left) >= 0) {
+                    return rightRotate(node, silent);
+                }
+                // LR Case
+                if (balance > 1 && getBalance(node.left) < 0) {
+                    if (!silent) record('ROTATE', `Double Rotation: Left-Right Part 1`, `Rotating left child ${node.left.val} left.`, node.left.id, 'LR');
+                    node.left = leftRotate(node.left, silent);
+                    if (!silent) record('ROTATE', `Double Rotation: Left-Right Part 2`, `Now rotating ${node.val} right.`, node.id, 'LR');
+                    return rightRotate(node, silent);
+                }
+                // RR Case
+                if (balance < -1 && getBalance(node.right) <= 0) {
+                    return leftRotate(node, silent);
+                }
+                // RL Case
+                if (balance < -1 && getBalance(node.right) > 0) {
+                    if (!silent) record('ROTATE', `Double Rotation: Right-Left Part 1`, `Rotating right child ${node.right.val} right.`, node.right.id, 'RL');
+                    node.right = rightRotate(node.right, silent);
+                    if (!silent) record('ROTATE', `Double Rotation: Right-Left Part 2`, `Now rotating ${node.val} left.`, node.id, 'RL');
+                    return leftRotate(node, silent);
+                }
+                return node;
             }
 
             function insert(node, val, silent = false) {
@@ -100,30 +144,40 @@
                 else if (val > node.val) node.right = insert(node.right, val, silent);
                 else return node;
 
-                node.height = 1 + Math.max(getHeight(node.left), getHeight(node.right));
-                let balance = getBalance(node);
+                return rebalance(node, silent);
+            }
 
-                if (!silent && Math.abs(balance) > 1) {
-                    record('IMBALANCE', `Imbalance at ${node.val} (Factor: ${balance})`, TREE_SCRIPT.AVL.IMBALANCE(node.val), node.id);
-                }
+            function search(node, val) {
+                if (!node) { record('NOT_FOUND', `${val} not found`, TREE_SCRIPT.AVL.NOT_FOUND(val)); return null; }
+                record('COMPARING', `Comparing ${val} with ${node.val}`, TREE_SCRIPT.AVL.SEARCH(val, node.val), node.id);
+                if (val === node.val) { record('FOUND', `Found ${val}!`, TREE_SCRIPT.AVL.FOUND(val), node.id); return node; }
+                if (val < node.val) return search(node.left, val);
+                return search(node.right, val);
+            }
 
-                // LL
-                if (balance > 1 && val < node.left.val) return rightRotate(node);
-                // RR
-                if (balance < -1 && val > node.right.val) return leftRotate(node);
-                // LR
-                if (balance > 1 && val > node.left.val) {
-                    record('ROTATE', `Left-Right rotation start at ${node.val}`, "Performing Left-Right double rotation.", node.id, 'LR');
-                    node.left = leftRotate(node.left, true);
-                    return rightRotate(node, true);
-                }
-                // RL
-                if (balance < -1 && val < node.right.val) {
-                    record('ROTATE', `Right-Left rotation start at ${node.val}`, "Performing Right-Left double rotation.", node.id, 'RL');
-                    node.right = rightRotate(node.right, true);
-                    return leftRotate(node, true);
-                }
+            function findMin(node) {
+                while (node.left) node = node.left;
                 return node;
+            }
+
+            function remove(node, val, silent = false) {
+                if (!node) return null;
+                if (!silent) record('COMPARING', `Comparing ${val} with ${node.val}`, TREE_SCRIPT.BST.COMPARING(val, node.val), node.id);
+                
+                if (val < node.val) node.left = remove(node.left, val, silent);
+                else if (val > node.val) node.right = remove(node.right, val, silent);
+                else {
+                    if (!silent) record('DELETE', `Deleting node ${val}`, TREE_SCRIPT.AVL.DELETE(val), node.id);
+                    if (!node.left) return node.right;
+                    if (!node.right) return node.left;
+                    
+                    let temp = findMin(node.right);
+                    node.val = temp.val;
+                    // Stable ID update: if we swap values, we should swap IDs too or use stable ones
+                    node.id = `node-${temp.val}`; 
+                    node.right = remove(node.right, temp.val, silent);
+                }
+                return rebalance(node, silent);
             }
 
             function serializeTree(node) {
@@ -139,17 +193,27 @@
                 };
             }
 
+            // Initialization
             initialArr.forEach(v => { root = insert(root, v, true); });
             history.length = 0;
             record('START', "Initial Tree Ready", TREE_SCRIPT.AVL.START());
-            root = insert(root, opVal);
-            record('SUCCESS', "Tree Balanced!", TREE_SCRIPT.AVL.BALANCED());
+
+            if (opType === 'INSERT') {
+                record('COMPARING', `Inserting ${opVal}`, TREE_SCRIPT.AVL.INSERT(opVal));
+                root = insert(root, opVal);
+                record('SUCCESS', "Tree Balanced!", TREE_SCRIPT.AVL.BALANCED());
+            } else if (opType === 'SEARCH') {
+                search(root, opVal);
+            } else if (opType === 'DELETE') {
+                root = remove(root, opVal);
+                record('SUCCESS', "Tree Re-balanced!", TREE_SCRIPT.AVL.BALANCED());
+            }
 
             return history;
         }
 
-        const NodeComponent = ({ node, x, y, isActive, isImbalanced }) => (
-            <div className={`absolute w-14 h-14 rounded-full bg-slate-800 border-4 flex flex-col items-center justify-center font-black text-lg transition-all duration-500 z-20 ${isActive ? 'node-active' : (isImbalanced ? 'node-imbalance' : 'border-slate-700')}`} style={{ left: x - 28, top: y - 28 }}>
+        const NodeComponent = ({ node, x, y, isActive, isImbalanced, isFound }) => (
+            <div className={`absolute w-14 h-14 rounded-full bg-slate-800 border-4 flex flex-col items-center justify-center font-black text-lg transition-all duration-500 z-20 ${isActive ? 'node-active' : (isFound ? 'node-found' : (isImbalanced ? 'node-imbalance' : 'border-slate-700'))}`} style={{ left: x - 28, top: y - 28 }}>
                 {node.val}
                 <div className={`absolute -top-8 px-1.5 py-0.5 rounded text-[9px] font-bold ${Math.abs(node.balance) > 1 ? 'bg-rose-500 text-white' : 'bg-slate-700 text-slate-300'}`}>
                     BF: {node.balance}
@@ -196,6 +260,7 @@
 
         const App = () => {
             const [treeData, setTreeData] = useState([30, 20, 10, 40, 50]);
+            const [opType, setOpType] = useState('INSERT');
             const [opVal, setOpVal] = useState(25);
             const [currentStep, setCurrentStep] = useState(0);
             const [isPlaying, setIsPlaying] = useState(false);
@@ -214,7 +279,7 @@
             const isPlayingRef = useRef(false);
             isPlayingRef.current = isPlaying;
 
-            const history = useMemo(() => generateSimulation(treeData, opVal), [treeData, opVal]);
+            const history = useMemo(() => generateSimulation(treeData, opType, opVal), [treeData, opType, opVal]);
 
             const nextStep = () => { setCurrentStep(prev => (prev < history.length - 1 ? prev + 1 : (setIsPlaying(false), prev))); };
             const prevStep = () => { setCurrentStep(prev => Math.max(0, prev - 1)); setIsPlaying(false); };
@@ -237,16 +302,26 @@
 
             const renderTree = (node, x, y, level) => {
                 if (!node) return null;
-                const spread = 600 / Math.pow(2, level);
+                const spread = 700 / Math.pow(2, level);
                 return (
                     <React.Fragment key={node.id}>
                         {node.left && <line x1={x} y1={y} x2={x - spread} y2={y + 100} stroke="#1e293b" strokeWidth="2" />}
                         {node.right && <line x1={x} y1={y} x2={x + spread} y2={y + 100} stroke="#1e293b" strokeWidth="2" />}
-                        <NodeComponent node={node} x={x} y={y} isActive={state.activeId === node.id} isImbalanced={state.status === 'IMBALANCE' && state.activeId === node.id} />
+                        <NodeComponent node={node} x={x} y={y} isActive={state.activeId === node.id} isImbalanced={state.status === 'IMBALANCE' && state.activeId === node.id} isFound={state.status === 'FOUND' && state.activeId === node.id} />
                         {renderTree(node.left, x - spread, y + 100, level + 1)}
                         {renderTree(node.right, x + spread, y + 100, level + 1)}
                     </React.Fragment>
                 );
+            };
+
+            const commitOperation = () => {
+                if (opType === 'INSERT') {
+                    if (!treeData.includes(opVal)) setTreeData([...treeData, opVal]);
+                } else if (opType === 'DELETE') {
+                    setTreeData(treeData.filter(v => v !== opVal));
+                }
+                setCurrentStep(0);
+                setIsPlaying(true);
             };
 
             return (
@@ -254,19 +329,23 @@
                     <div className="absolute top-0 left-0 right-0 z-[60] top-nav-area">
                         <div className="absolute top-0 left-0 w-full h-4 z-[70] peer"></div>
                         <div className="relative h-16 bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50 flex items-center justify-between px-6 shadow-2xl transition-transform duration-300 -translate-y-full peer-hover:translate-y-0 hover:translate-y-0 z-[60]">
-                            <div className="flex items-center gap-4"><a href="home.html" className="bg-slate-800 p-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-400 hover:text-white"><Home size={20} /></a><div><h1 className="font-bold text-lg leading-none tracking-tight">AVL Tree Visualizer</h1><span className="text-xs text-slate-400 font-mono">Self-Balancing with Rotations</span></div></div>
+                            <div className="flex items-center gap-4"><a href="index.html" className="bg-slate-800 p-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-400 hover:text-white"><Home size={20} /></a><div><h1 className="font-bold text-lg leading-none tracking-tight">AVL Tree Visualizer</h1><span className="text-xs text-slate-400 font-mono">Self-Balancing with Rotations</span></div></div>
                             <div className="flex items-center gap-3">
-                                <button onClick={() => setShowSidebar(!showSidebar)} className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition-all ${showSidebar ? 'bg-slate-700 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}>{showSidebar ? "Hide Stats" : "Show Stats"}</button>
-                                <span className="text-xs font-bold text-slate-500 uppercase tracking-widest ml-4">Insert:</span>
+                                <div className="flex bg-slate-800 p-1 rounded-lg border border-slate-700">
+                                    <button onClick={() => setOpType('INSERT')} className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${opType === 'INSERT' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}>Insert</button>
+                                    <button onClick={() => setOpType('SEARCH')} className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${opType === 'SEARCH' ? 'bg-emerald-600 text-white' : 'text-slate-400'}`}>Search</button>
+                                    <button onClick={() => setOpType('DELETE')} className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${opType === 'DELETE' ? 'bg-rose-600 text-white' : 'text-slate-400'}`}>Delete</button>
+                                </div>
                                 <input type="number" value={opVal} onChange={e => setOpVal(Number(e.target.value))} className="w-16 bg-slate-800 border border-slate-700 rounded-lg px-2 py-1.5 font-bold text-blue-400 outline-none focus:border-blue-500" />
-                                <button onClick={() => { setTreeData([...treeData, opVal]); setOpVal(Math.floor(Math.random() * 90) + 10); setCurrentStep(0); setIsPlaying(true); }} className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg font-bold transition-all shadow-lg shadow-blue-900/20">Add Node</button>
+                                <button onClick={commitOperation} className="bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg font-bold transition-all shadow-lg shadow-blue-900/20">Execute</button>
+                                <button onClick={() => setShowSidebar(!showSidebar)} className={`flex items-center gap-2 px-4 py-2 rounded-lg font-bold transition-all ${showSidebar ? 'bg-slate-700 text-white' : 'bg-slate-800 text-slate-400 hover:text-white'}`}>{showSidebar ? "Hide Stats" : "Show Stats"}</button>
                             </div>
                         </div>
                     </div>
 
                     <div className="flex flex-1 overflow-hidden relative">
                         <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.2, z-e.deltaY*0.001), 1.5))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper') && !e.target.closest('.top-nav-area')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
-                            <div className={`absolute left-0 top-0 w-full h-full ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${manualOffset.x}px, ${manualOffset.y}px) scale(${zoom})` }}>
+                            <div className={`absolute left-0 top-0 w-full h-full ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${manualOffset.x + 0}px, ${manualOffset.y + 0}px) scale(${zoom})` }}>
                                 <svg className="absolute top-0 left-0 w-full h-full overflow-visible">
                                     {state.tree && renderTree(state.tree, 500, 100, 1)}
                                 </svg>
@@ -301,7 +380,7 @@
 
                     <div className="absolute bottom-6 left-1/2 w-full max-w-4xl px-4 z-50 control-panel-wrapper" style={{ transform: `translate(calc(-50% + ${panelOffset.x}px), ${panelOffset.y}px)` }}>
                         <div className={`bg-slate-900/40 hover:bg-slate-900/85 backdrop-blur-md border border-slate-600/30 rounded-2xl shadow-2xl flex flex-col relative box-border transition-all duration-300 ${isMinimized ? 'w-fit min-w-[180px] mx-auto px-4 pb-3 pt-1' : 'px-5 pb-4 pt-2'}`}>
-                            <div className="w-full h-6 cursor-grab active:cursor-grabbing flex justify-center items-center mb-1" onMouseDown={(e) => {e.preventDefault(); setIsDraggingPanel(true); panelDragStart.current={x:e.clientX-panelOffset.x, y:e.clientY-panelDragStart.current.y}; e.stopPropagation();}}>
+                            <div className="w-full h-6 cursor-grab active:cursor-grabbing flex justify-center items-center mb-1" onMouseDown={(e) => {e.preventDefault(); setIsDraggingPanel(true); panelDragStart.current={x:e.clientX-panelOffset.x, y:e.clientY-panelOffset.y}; e.stopPropagation();}}>
                                 <div className="bg-white/10 rounded-full px-6 py-0.5"><GripHorizontal size={12} className="text-white/50" /></div>
                             </div>
                             <button onClick={() => setIsMinimized(!isMinimized)} className="absolute top-2 right-2 p-1 hover:bg-slate-700/50 rounded-md text-slate-400 hover:text-white transition-colors z-50">{isMinimized ? <ChevronUp size={16}/> : <ChevronDown size={18}/>}</button>
