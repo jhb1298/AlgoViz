@@ -27,10 +27,17 @@ const SEARCH_SCRIPT = {
     },
     "BFS": {
         "START": (src) => `Time for Breadth First Search! We're starting at ${src} and spreading out like a ripple in a pond.`,
-        "VISITING": (node) => `Visiting node ${node}. We explore everyone at this distance before moving further away.`,
+        "VISITING": (node) => `Visiting node node ${node}. We explore everyone at this distance before moving further away.`,
         "ENQUEUE": (node) => `Spotted node ${node}! Adding it to our queue of neighbors to visit very soon.`,
         "ALREADY_VISITED": (node) => `Node ${node} is already on our list or visited. No need to double back!`,
         "SUCCESS": () => `The ripples have reached every corner! We've explored the graph layer by layer.`
+    },
+    "GREEDY": {
+        "START": (src, target) => `Let's start Greedy Best-First Search! We want to find node ${target}, starting from ${src}. We'll always pick the node that "looks" closest to our goal.`,
+        "VISITING": (node, h) => `Visiting node ${node}. Its estimated distance to the target is ${h.toFixed(1)}. It's our best bet right now!`,
+        "ENQUEUE": (node, h) => `Spotted node ${node}! Its heuristic value is ${h.toFixed(1)}. Adding it to our priority list.`,
+        "TARGET_FOUND": (node) => `Target ${node} reached! Greedy Search found a path by always heading straight for the goal.`,
+        "SUCCESS": () => `Search complete! We've successfully navigated the graph using only our best guesses.`
     },
     "ASTAR": {
         "START": () => `Welcome to A-Star Search! It's like Dijkstra, but smarter! It uses a 'Heuristic'—a best guess of the remaining distance—to head straight for the target.`,
@@ -46,8 +53,14 @@ const SEARCH_SCRIPT = {
         "DAMPING": () => `Applying the Damping Factor. This represents a "random surfer" who might jump to any page at random, keeping the math stable.`,
         "CONVERGED": () => `The scores have stabilized! We've found the true hierarchy of importance in our graph.`,
         "SUCCESS": () => `PageRank complete! The nodes with the most links from other important nodes have risen to the top.`
-    }
-};
+        },
+        "FLOYD_WARSHALL": {
+        "START": () => `Welcome to the Floyd-Warshall algorithm! We're going to find the shortest path between every single pair of nodes simultaneously.`,
+        "PHASE": (k) => `Phase ${k}: Let's see if we can find shorter routes by using node ${k} as an intermediate "stepping stone."`,
+        "UPDATING": (i, j, k, oldDist, newDist) => `Checking path from ${i} to ${j}. Going through ${k} gives us a distance of ${newDist.toFixed(1)}, which is better than our current knowledge. Updating matrix!`,
+        "SUCCESS": () => `All pairs shortest paths calculated! The distance matrix is now complete and optimized.`
+        }
+        };
 
 const BIPARTITE_SCRIPT = {
     "START": () => `Let's check if this graph is Bipartite! We'll try to color every node using only two colors, ensuring no two neighbors share the same one.`,

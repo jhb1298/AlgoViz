@@ -25,5 +25,14 @@ const TREE_SCRIPT = {
         "ROTATE_LEFT": (node) => `Performing a Left Rotation on ${node} to restore balance. Swing it round!`,
         "ROTATE_RIGHT": (node) => `Performing a Right Rotation on ${node}. Pivot and shift!`,
         "BALANCED": () => `The tree is perfectly balanced once again. Efficient and fast!`
+    },
+    "BPLUS": {
+        "START": (order) => `Welcome to the B+ Tree! This is a multi-way search tree with an order of ${order}. All values live in the leaves, making range searches incredibly fast.`,
+        "INSERT": (val) => `Inserting ${val}. We'll traverse down to the leaf level where all our actual data lives.`,
+        "SEARCH": (val) => `Searching for ${val}. We'll follow the internal node pointers to find the correct leaf bucket.`,
+        "LEAF_REACHED": (leaf) => `We've reached leaf node [${leaf.join(', ')}]. This is where the data resides!`,
+        "SPLIT": () => `Node overflow! This node is too full. Let's split it in two and promote the middle key to the parent.`,
+        "PROMOTE": (val) => `Promoting key ${val} to the parent node to maintain the tree structure.`,
+        "SUCCESS": () => `Operation complete! The B+ tree remains balanced and efficient for both searches and range scans.`
     }
 };

@@ -39,5 +39,38 @@ const SORTING_SCRIPT = {
         "BUCKETING": (val, digit, place) => `Looking at the ${place}s place of ${val}. It's a ${digit}, so into bucket ${digit} it goes!`,
         "COLLECTING": (place) => `Buckets full! Let's collect them back into the array, now sorted by their ${place}s place.`,
         "SUCCESS": () => `We've checked every digit! The numbers have been sorted through the power of place-values.`
+    },
+    "COUNTING": {
+        "START": () => `Welcome to Counting Sort! Instead of comparing numbers, we'll just count how many times each one appears. It's like taking a census!`,
+        "COUNTING": (val) => `Spotted a ${val}! Let's increment our count for ${val}.`,
+        "CUMULATIVE": (val, count) => `Calculating the position: everything up to ${val} needs ${count} spots in our final array.`,
+        "PLACING": (val, pos) => `Placing ${val} into its correct spot at index ${pos}. No guessing needed!`,
+        "SUCCESS": () => `The census is complete! Every number knows its place, and the array is perfectly sorted.`
+    },
+    "BUCKET": {
+        "START": () => `Time for Bucket Sort! We'll distribute these numbers into different buckets based on their range, then sort each bucket individually.`,
+        "BUCKETING": (val, bucket) => `${val} belongs in the range for bucket ${bucket}. Off it goes!`,
+        "SORTING_BUCKET": (bucket) => `Now let's sort the contents of bucket ${bucket} so they're in perfect order.`,
+        "COLLECTING": (bucket) => `Bucket ${bucket} is ready! Let's pour its sorted contents back into our main array.`,
+        "SUCCESS": () => `All buckets have been emptied and combined! Our scattered numbers are now one harmonious sorted list.`
+    },
+    "COMB": {
+        "START": () => `Let's try Comb Sort! It improves on Bubble Sort by using a gap to eliminate "turtles"—small values near the end of the list.`,
+        "GAP": (gap) => `Setting our comparison gap to ${gap}. We'll compare elements that are this far apart.`,
+        "COMPARING": (a, b) => `Comparing ${a} and ${b} with our current gap. Do they need a swap?`,
+        "SUCCESS": () => `The gap has shrunk to one and all swaps are done! The turtles have been defeated and the array is sorted.`
+    },
+    "CYCLE": {
+        "START": () => `Welcome to Cycle Sort! This is an in-place, unstable sorting algorithm that is theoretically optimal in terms of the total number of writes.`,
+        "PICK_ITEM": (val) => `Picking up ${val}. We're going to find its absolute correct position in the entire array.`,
+        "FIND_POS": (val, pos) => `Counting elements smaller than ${val}... it belongs at index ${pos}.`,
+        "SWAPPING": (val, target) => `Placing ${val} into its new home and picking up ${target} to continue the cycle.`,
+        "SUCCESS": () => `Every item has completed its cycle and landed in its final destination. Minimal writes, maximum efficiency!`
+    },
+    "SHELL": {
+        "START": () => `Shell Sort is here! It's a generalized version of Insertion Sort that allows for the exchange of items that are far apart.`,
+        "GAP": (gap) => `Starting a new pass with a gap of ${gap}. This helps move distant elements closer to their final spots.`,
+        "INSERTION": (val, gap) => `Performing a gap-based insertion for ${val} using our ${gap}-step interval.`,
+        "SUCCESS": () => `The gaps have closed and the final insertion pass is complete! The array is now fully organized.`
     }
 };
