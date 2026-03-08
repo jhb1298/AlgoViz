@@ -107,6 +107,15 @@
 
             const state = history[currentStep] || { arr: [], activeIdx: -1, sortedCount: 0 };
 
+            const getColor = (val) => {
+                const ratio = val / 100;
+                // Interpolate between Indigo (6366f1) and Amber (f59e0b)
+                const r = Math.floor(99 + (245 - 99) * ratio);
+                const g = Math.floor(102 + (158 - 102) * ratio);
+                const b = Math.floor(241 + (11 - 241) * ratio);
+                return `rgb(${r}, ${g}, ${b})`;
+            };
+
             return (
                 <div className="h-screen w-screen flex flex-col relative overflow-hidden bg-slate-900 text-white select-none" onMouseMove={(e) => { if(isDraggingPanel) setPanelOffset({x: e.clientX-panelDragStart.current.x, y: e.clientY-panelDragStart.current.y}); else if(isDraggingCanvas) setManualOffset({x: e.clientX-canvasDragStart.current.x, y: e.clientY-canvasDragStart.current.y}); }} onMouseUp={() => {setIsDraggingCanvas(false); setIsDraggingPanel(false);}}>
                     <div className="absolute top-0 left-0 right-0 z-[60] top-nav-area">
@@ -123,18 +132,19 @@
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.5, z-e.deltaY*0.001), 2))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
                         <div className={`absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-end justify-center gap-2 ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(calc(-50% + ${manualOffset.x}px), calc(-50% + ${manualOffset.y}px)) scale(${zoom})` }}>
                             {state.arr.map((val, i) => {
-                                let bgColor = "bg-slate-700";
+                                let barColor = getColor(val);
+                                let opacity = 0.4;
                                 let transform = "translateY(0)";
                                 
-                                if (i < state.sortedCount) bgColor = "bg-emerald-500 shadow-[0_0_15px_rgba(16,185,129,0.3)]";
+                                if (i < state.sortedCount) opacity = 1;
                                 if (i === state.activeIdx) {
-                                    bgColor = "bg-blue-500 shadow-[0_0_25px_rgba(59,130,246,0.6)] scale-110";
+                                    opacity = 1;
                                     transform = "translateY(-20px)";
                                 }
                                 
                                 return (
-                                    <div key={i} className={`flex flex-col items-center gap-2 bar-transition`} style={{ width: 60, transform }}>
-                                        <div className={`w-full rounded-t-lg rounded-b-sm border border-white/10 ${bgColor}`} style={{ height: val * 3 }}></div>
+                                    <div key={i} className={`flex flex-col items-center gap-2 bar-transition`} style={{ width: 60, transform, opacity }}>
+                                        <div className={`w-full rounded-t-lg rounded-b-sm border-2 border-white/20 shadow-lg`} style={{ height: val * 3, backgroundColor: barColor }}></div>
                                         <span className="font-mono font-bold text-sm text-slate-400">{val}</span>
                                     </div>
                                 );

@@ -59,10 +59,21 @@ const SEARCH_SCRIPT = {
         "PHASE": (k) => `Phase ${k}: Let's see if we can find shorter routes by using node ${k} as an intermediate "stepping stone."`,
         "UPDATING": (i, j, k, oldDist, newDist) => `Checking path from ${i} to ${j}. Going through ${k} gives us a distance of ${newDist.toFixed(1)}, which is better than our current knowledge. Updating matrix!`,
         "SUCCESS": () => `All pairs shortest paths calculated! The distance matrix is now complete and optimized.`
+        },
+        "GRAPH_COLORING": {
+            "START": (k) => `Let's color this graph using only ${k} colors! Our goal is to ensure no two connected nodes share the same hue.`,
+            "TRY_COLOR": (node, color) => `Attempting to paint node ${node} with ${color}. Checking for conflicts...`,
+            "CONFLICT": (u, v, color) => `Conflict detected! Both ${u} and ${v} would have the color ${color}. This won't work.`,
+            "BACKTRACK": (node) => `No valid colors left for node ${node}. Let's backtrack and change a previous choice!`,
+            "SUCCESS": () => `Graph perfectly colored! We've solved the puzzle without any adjacent nodes clashing.`
+        },
+        "MAP_COLORING": {
+            "START": () => `Welcome to the Map Coloring challenge! Based on the Four Color Theorem, any planar map can be colored with just four colors so that no touching regions share a color.`,
+            "TRY_REGION": (region, color) => `Attempting to shade region ${region} with ${color}. Checking all neighboring borders...`,
+            "CONFLICT": (r1, r2, color) => `Boundary conflict! Region ${r1} and ${r2} share a border and cannot both be ${color}.`,
+            "SUCCESS": () => `Map complete! Every territory is distinct, and all boundaries are respected using a minimal palette.`
         }
-        };
-
-const BIPARTITE_SCRIPT = {
+        };const BIPARTITE_SCRIPT = {
     "START": () => `Let's check if this graph is Bipartite! We'll try to color every node using only two colors, ensuring no two neighbors share the same one.`,
     "COLORING": (node, color) => `Coloring node ${node} with ${color === 0 ? 'Blue' : 'Pink'}. Let's see if its neighbors can take the opposite color!`,
     "ENQUEUE": (node) => `Adding node ${node} to the queue to check its neighbors very soon.`,
