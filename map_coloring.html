@@ -20,6 +20,7 @@
         .region-conflict { stroke: #f43f5e !important; stroke-width: 5; animation: pulse 0.5s infinite; }
         @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
     </style>
+    <script src="settings_manager.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -120,6 +121,14 @@
         }
 
         const App = () => {
+            const { SettingsIcon, SettingsModal, AlgorithmPanel } = useMemo(() => window.initSettingsComponents(React), []);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
             const [k, setK] = useState(4);
             const [currentStep, setCurrentStep] = useState(0);
             const [isPlaying, setIsPlaying] = useState(false);
@@ -169,7 +178,7 @@
                                 <div className="flex items-center gap-2">
                                     <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
                                     <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Planar Dual-Graph Solver</span>
-                                </div>
+                                <button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white shadow-lg"><SettingsIcon size={20}/></button></div>
                             </div>
                         </div>
                         <div className="pointer-events-auto flex items-center gap-2 bg-slate-900 px-4 py-2 rounded-2xl border border-slate-800 shadow-2xl">
@@ -178,6 +187,8 @@
                         </div>
                     </div>
 
+                    
+                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
                     <div className="flex-1 relative overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.2, z-e.deltaY*0.001), 2))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
                         <div className={`absolute left-1/2 top-1/2 flex items-center justify-center ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(calc(-50% + ${manualOffset.x}px), calc(-50% + ${manualOffset.y}px)) scale(${zoom})` }}>
                             <svg width="800" height="800" viewBox="0 0 800 800" className="overflow-visible">

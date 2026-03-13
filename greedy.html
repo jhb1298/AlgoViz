@@ -23,6 +23,7 @@
         .node-queued { border-color: #3b82f6 !important; border-style: dashed; }
         .node-target { border-color: #f43f5e !important; box-shadow: 0 0 20px rgba(244, 63, 94, 0.4); }
     </style>
+    <script src="settings_manager.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -79,8 +80,13 @@ G H`;
             const history = [];
             const visited = new Set();
             const queued = new Set();
+            const gScores = {};
+            const hScores = {};
             const adj = {};
-            graph.nodes.forEach(n => adj[n.id] = []);
+            graph.nodes.forEach(n => {
+                adj[n.id] = [];
+                gScores[n.id] = Infinity;
+            });
             graph.edges.forEach(e => {
                 adj[e.from].push(e.to);
                 adj[e.to].push(e.from);
@@ -95,12 +101,14 @@ G H`;
                 return Math.sqrt(Math.pow(n.x - target.x, 2) + Math.pow(n.y - target.y, 2)) / 50;
             };
 
+            gScores[source] = 0;
             const openList = [{ id: source, h: getHeuristic(source) }];
             queued.add(source);
             
             history.push({ 
                 stepId: 0, activeNode: source, visited: new Set(), 
                 queued: new Set(queued), openList: [...openList], 
+                gScores: { ...gScores },
                 status: 'START', desc: `Starting Greedy Search for ${target.id}`, 
                 speech: SEARCH_SCRIPT.GREEDY.START(source, target.id) 
             });
@@ -115,6 +123,7 @@ G H`;
                 history.push({ 
                     stepId: history.length, activeNode: u, visited: new Set(visited), 
                     queued: new Set(queued), openList: [...openList], 
+                    gScores: { ...gScores },
                     status: 'VISITING', desc: `Visiting ${u} (h=${current.h.toFixed(1)})`, 
                     speech: SEARCH_SCRIPT.GREEDY.VISITING(u, current.h) 
                 });
@@ -123,6 +132,7 @@ G H`;
                     history.push({ 
                         stepId: history.length, activeNode: u, visited: new Set(visited), 
                         queued: new Set(queued), openList: [...openList], 
+                        gScores: { ...gScores },
                         status: 'SUCCESS', desc: `Target ${u} found!`, 
                         speech: SEARCH_SCRIPT.GREEDY.TARGET_FOUND(u) 
                     });
@@ -132,12 +142,14 @@ G H`;
                 for (const v of adj[u]) {
                     if (!visited.has(v) && !queued.has(v)) {
                         const h = getHeuristic(v);
+                        gScores[v] = gScores[u] + 1; // Simplistic node distance (edge count)
                         queued.add(v);
                         openList.push({ id: v, h });
                         history.push({ 
                             stepId: history.length, activeNode: u, targetNode: v,
                             activeEdge: {from: u, to: v}, visited: new Set(visited), 
                             queued: new Set(queued), openList: [...openList], 
+                            gScores: { ...gScores },
                             status: 'ENQUEUE', desc: `Enqueuing ${v} (h=${h.toFixed(1)})`, 
                             speech: SEARCH_SCRIPT.GREEDY.ENQUEUE(v, h) 
                         });
@@ -145,20 +157,44 @@ G H`;
                 }
             }
 
-            history.push({ stepId: history.length, status: 'FAIL', visited: new Set(visited), queued: new Set(queued), openList: [], desc: "Target not reachable", speech: "I couldn't find a path to the target node." });
+            history.push({ stepId: history.length, status: 'FAIL', visited: new Set(visited), queued: new Set(queued), openList: [], gScores: { ...gScores }, desc: "Target not reachable", speech: "I couldn't find a path to the target node." });
             return history;
         }
 
-        const NodeComponent = ({ node, isActive, isVisited, isQueued, isTarget, onSetTarget }) => (
-            <div 
-                className={`absolute w-20 h-20 rounded-full bg-slate-800 border-4 flex flex-col items-center justify-center transition-all duration-500 z-20 cursor-pointer ${isActive ? 'node-active' : (isTarget ? 'node-target' : (isVisited ? 'node-visited' : (isQueued ? 'node-queued' : 'border-slate-700')))}`} 
-                style={{ left: node.x - 40, top: node.y - 40 }}
-                onClick={() => onSetTarget(node.id)}
-            >
-                <span className="text-xl font-black text-white">{node.id}</span>
-                {isTarget && <Target size={14} className="text-rose-400 mt-0.5" />}
-            </div>
-        );
+        const NodeComponent = ({ node, isActive, isVisited, isQueued, isTarget, onSetTarget, g, targetNode }) => {
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
+            const h = targetNode ? Math.sqrt(Math.pow(node.x - targetNode.x, 2) + Math.pow(node.y - targetNode.y, 2)) / 50 : null;
+            const showStats = isVisited || isQueued || isActive;
+
+            return (
+                <div 
+                    className={`absolute w-20 h-20 rounded-full bg-slate-800 border-4 flex flex-col items-center justify-center transition-all duration-500 z-20 cursor-pointer ${isActive ? 'node-active' : (isTarget ? 'node-target' : (isVisited ? 'node-visited' : (isQueued ? 'node-queued' : 'border-slate-700')))}`} 
+                    style={{ left: node.x - 40, top: node.y - 40, fontSize: settings.fontSize + "px", borderColor: isActive ? settings.nodeColor : undefined, boxShadow: isActive ? `0 0 20px ${settings.nodeColor}80` : undefined }}
+                    onClick={() => onSetTarget(node.id)}
+                >
+                    <span className="text-xl font-black text-white">{node.id}</span>
+                    {isTarget && <Target size={14} className="text-rose-400 mt-0.5" />}
+                    
+                    {showStats && !isTarget && (
+                        <div className="absolute -right-16 top-0 flex flex-col gap-0.5 bg-slate-900/90 backdrop-blur-sm border border-slate-700 p-1.5 rounded-lg shadow-xl z-30 pointer-events-none scale-90 origin-left">
+                            <div className="flex items-center gap-1.5">
+                                <span className="text-[8px] font-bold text-slate-500 uppercase">Dist (g)</span>
+                                <span className="text-[10px] font-mono font-bold text-blue-400">{g === Infinity ? '∞' : g}</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 border-t border-slate-800 pt-0.5 mt-0.5">
+                                <span className="text-[8px] font-bold text-slate-500 uppercase">Heur (h)</span>
+                                <span className="text-[10px] font-mono font-bold text-emerald-400">{h?.toFixed(1)}</span>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            );
+        };
 
         const EdgeComponent = ({ edge, nodes, isActive, isVisited }) => {
             const u = nodes.find(n => n.id === edge.from);
@@ -186,6 +222,14 @@ G H`;
         };
 
         const App = () => {
+            const { SettingsIcon, SettingsModal, AlgorithmPanel } = useMemo(() => window.initSettingsComponents(React), []);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
             const [inputText, setInputText] = useState(DEFAULT_EDGES);
             const [isEditing, setIsEditing] = useState(false);
             const [targetNodeId, setTargetNodeId] = useState(null);
@@ -196,8 +240,7 @@ G H`;
             const [isMuted, setIsMuted] = useState(false);
             const [isMinimized, setIsMinimized] = useState(false);
             
-            const [camTarget, setCamTarget] = useState({ x: 0, y: 0 });
-            const [manualOffset, setManualOffset] = useState({ x: 0, y: 0 });
+            const [manualOffset, setManualOffset] = useState({ x: window.innerWidth / 2 - 400, y: window.innerHeight / 2 - 400 });
             const [panelOffset, setPanelOffset] = useState({ x: 0, y: 0 });
             const [isDraggingCanvas, setIsDraggingCanvas] = useState(false);
             const [isDraggingPanel, setIsDraggingPanel] = useState(false);
@@ -234,16 +277,6 @@ G H`;
                 else window.speechSynthesis.cancel();
             }, [isPlaying, currentStep]);
 
-            useEffect(() => {
-                const activeId = history[currentStep]?.activeNode;
-                const node = graph.nodes.find(n => n.id === activeId) || graph.nodes[0];
-                if (node) {
-                    const targetX = (window.innerWidth/2) - (node.x)*zoom, targetY = (window.innerHeight/2) - (node.y)*zoom;
-                    setCamTarget({ x: targetX, y: targetY });
-                    if(!isDraggingCanvas && isPlaying) setManualOffset({ x: 0, y: 0 });
-                }
-            }, [currentStep, zoom, isPlaying, graph]);
-
             const state = history[currentStep] || { visited: new Set(), queued: new Set(), openList: [] };
 
             return (
@@ -251,7 +284,7 @@ G H`;
                     <div className="absolute top-0 left-0 right-0 z-[60] top-nav-area">
                         <div className="absolute top-0 left-0 w-full h-4 z-[70] peer"></div>
                         <div className="relative h-16 bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50 flex items-center justify-between px-6 shadow-2xl transition-transform duration-300 -translate-y-full peer-hover:translate-y-0 hover:translate-y-0 z-[60]">
-                            <div className="flex items-center gap-4"><a href="index.html" className="bg-slate-800 p-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-400 hover:text-white"><Home size={20} /></a><div><h1 className="font-bold text-lg leading-none tracking-tight">Greedy Search Visualizer</h1><span className="text-xs text-slate-400 font-mono">Greedy Best-First Search</span></div></div>
+                            <div className="flex items-center gap-4"><a href="index.html" className="bg-slate-800 p-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-400 hover:text-white"><Home size={20} /></a><div><h1 className="font-bold text-lg leading-none tracking-tight">Greedy Search Visualizer</h1><span className="text-xs text-slate-400 font-mono">Greedy Best-First Search</span><button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white shadow-lg"><SettingsIcon size={20}/></button></div></div>
                             <div className="flex gap-3">
                                 <div className="hidden md:flex items-center px-3 py-1 bg-rose-500/10 border border-rose-500/20 rounded-full text-[10px] text-rose-400 font-bold uppercase tracking-wider">Click any node to set Target</div>
                                 <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg font-bold transition-all shadow-lg"><Edit size={18}/> Edit Graph</button>
@@ -273,8 +306,10 @@ G H`;
                         </div>
                     )}
 
+                    
+                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.2, z-e.deltaY*0.001), 1.5))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper') && !e.target.closest('.node-container')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
-                        <div className={`node-container absolute origin-top-left ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${camTarget.x + manualOffset.x}px, ${camTarget.y + manualOffset.y}px) scale(${zoom})` }}>
+                        <div className={`node-container absolute origin-top-left ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${manualOffset.x}px, ${manualOffset.y}px) scale(${zoom})` }}>
                             <svg className="absolute top-0 left-0 overflow-visible" style={{ width: 1000, height: 1000 }}>
                                 {graph.edges.map((edge, i) => {
                                     const isEdgeVisited = state.visited.has(edge.from) && state.visited.has(edge.to);
@@ -291,6 +326,8 @@ G H`;
                                     isQueued={state.queued.has(node.id)} 
                                     isTarget={targetNodeId === node.id}
                                     onSetTarget={(id) => { setTargetNodeId(id); setCurrentStep(0); setIsPlaying(false); }}
+                                    g={state.gScores ? state.gScores[node.id] : Infinity}
+                                    targetNode={graph.nodes.find(n => n.id === targetNodeId)}
                                 />
                             ))}
                         </div>

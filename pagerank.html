@@ -20,6 +20,7 @@
         .camera-layer { transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); will-change: transform; }
         .infinite-bg { background-image: radial-gradient(#334155 1px, transparent 1px); background-size: 30px 30px; }
     </style>
+    <script src="settings_manager.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -151,6 +152,14 @@ D C`;
         };
 
         const App = () => {
+            const { SettingsIcon, SettingsModal, AlgorithmPanel } = useMemo(() => window.initSettingsComponents(React), []);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
             const [inputText, setInputText] = useState(DEFAULT_EDGES);
             const [currentStep, setCurrentStep] = useState(0);
             const [isPlaying, setIsPlaying] = useState(false);
@@ -159,6 +168,15 @@ D C`;
             const [isMuted, setIsMuted] = useState(false);
             const [isMinimized, setIsMinimized] = useState(false);
             
+            const [manualOffset, setManualOffset] = useState({ x: window.innerWidth / 2 - 500, y: window.innerHeight / 2 - 500 });
+            const [panelOffset, setPanelOffset] = useState({ x: 0, y: 0 });
+            const [isDraggingCanvas, setIsDraggingCanvas] = useState(false);
+            const [isDraggingPanel, setIsDraggingPanel] = useState(false);
+            const canvasDragStart = useRef({ x: 0, y: 0 });
+            const panelDragStart = useRef({ x: 0, y: 0 });
+            const isPlayingRef = useRef(false);
+            isPlayingRef.current = isPlaying;
+
             const graph = useMemo(() => parseGraph(inputText), [inputText]);
             const history = useMemo(() => generateSimulation(graph), [graph]);
             const state = history[currentStep] || history[0];
@@ -185,7 +203,7 @@ D C`;
             }, [isPlaying, currentStep]);
 
             return (
-                <div className="h-screen w-screen flex flex-col relative overflow-hidden bg-slate-900 text-white select-none">
+                <div className="h-screen w-screen flex flex-col relative overflow-hidden bg-slate-900 text-white select-none" onMouseMove={(e) => { if(isDraggingPanel) setPanelOffset({x: e.clientX-panelDragStart.current.x, y: e.clientY-panelDragStart.current.y}); else if(isDraggingCanvas) setManualOffset({x: e.clientX-canvasDragStart.current.x, y: e.clientY-canvasDragStart.current.y}); }} onMouseUp={() => {setIsDraggingCanvas(false); setIsDraggingPanel(false);}}>
                     <div className="absolute top-0 left-0 right-0 z-[60]">
                         <div className="relative h-16 bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50 flex items-center justify-between px-6 shadow-2xl">
                             <div className="flex items-center gap-4">
@@ -193,36 +211,54 @@ D C`;
                                 <div>
                                     <h1 className="font-bold text-lg leading-none tracking-tight">PageRank Algorithm</h1>
                                     <span className="text-xs text-slate-400 font-mono">Measuring Node Importance</span>
-                                </div>
+                                <button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white shadow-lg"><SettingsIcon size={20}/></button></div>
                             </div>
                         </div>
                     </div>
 
-                    <div className="flex-1 relative infinite-bg overflow-hidden flex items-center justify-center">
-                        <svg width="1000" height="1000" style={{ transform: `scale(${zoom})` }} className="camera-layer overflow-visible">
-                            <defs>
-                                <ArrowHead color="#334155" />
-                                <ArrowHead color="#6366f1" />
-                            </defs>
-                            {graph.edges.map((edge, i) => (
-                                <EdgeComponent key={i} edge={edge} nodes={graph.nodes} isActive={state.activeEdge === edge} />
-                            ))}
-                            {graph.nodes.map(node => {
-                                const rank = state.ranks[node.id] || 0;
-                                const radius = 20 + rank * 200;
-                                return (
-                                    <g key={node.id} transform={`translate(${node.x}, ${node.y})`}>
-                                        <circle r={radius} fill="#1e293b" stroke="#475569" strokeWidth="2" className="node-circle" />
-                                        <text textAnchor="middle" dy=".3em" fill="white" fontSize={12 + rank * 50} fontWeight="black">{node.id}</text>
-                                        <text textAnchor="middle" dy="2.5em" fill="#94a3b8" fontSize="10">{(rank * 100).toFixed(1)}%</text>
-                                    </g>
-                                );
-                            })}
-                        </svg>
+                    
+                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+                    <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.2, z-e.deltaY*0.001), 1.5))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
+                        <div className={`absolute origin-top-left ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${manualOffset.x}px, ${manualOffset.y}px) scale(${zoom})` }}>
+                            <svg width="1000" height="1000" className="overflow-visible">
+                                <defs>
+                                    <ArrowHead color="#334155" />
+                                    <ArrowHead color="#6366f1" />
+                                </defs>
+                                {graph.edges.map((edge, i) => {
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
+
+            return (
+
+                                    <EdgeComponent key={i} edge={edge} nodes={graph.nodes} isActive={state.activeEdge === edge} />
+                                ))}
+                                {graph.nodes.map(node => {
+                                    const rank = state.ranks[node.id] || 0;
+                                    const radius = 20 + rank * 200;
+                                    return (
+                                        <g key={node.id} transform={`translate(${node.x}, ${node.y})`}>
+                                            <circle r={radius} fill="#1e293b" stroke="#475569" strokeWidth="2" className="node-circle" />
+                                            <text textAnchor="middle" dy=".3em" fill="white" fontSize={12 + rank * 50} fontWeight="black">{node.id}</text>
+                                            <text textAnchor="middle" dy="2.5em" fill="#94a3b8" fontSize={settings.fontSize}>{(rank * 100).toFixed(1)}%</text>
+                                        </g>
+                                    
+            );
+        };
+                                })}
+                            </svg>
+                        </div>
                     </div>
 
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 z-50">
-                        <div className={`bg-slate-900/80 backdrop-blur-md border border-slate-700/50 rounded-2xl shadow-2xl flex flex-col relative transition-all duration-300 ${isMinimized ? 'w-fit mx-auto px-4 pb-3 pt-1' : 'px-5 pb-4 pt-2'}`}>
+                    <div className="absolute bottom-6 left-1/2 w-full max-w-4xl px-4 z-50 control-panel-wrapper" style={{ transform: `translate(calc(-50% + ${panelOffset.x}px), ${panelOffset.y}px)` }}>
+                        <div className={`bg-slate-900/40 hover:bg-slate-900/85 backdrop-blur-md border border-slate-700/50 rounded-2xl shadow-2xl flex flex-col relative transition-all duration-300 ${isMinimized ? 'w-fit mx-auto px-4 pb-3 pt-1' : 'px-5 pb-4 pt-2'}`}>
+                            <div className="w-full h-6 cursor-grab active:cursor-grabbing flex justify-center items-center mb-1" onMouseDown={(e) => {e.preventDefault(); setIsDraggingPanel(true); panelDragStart.current={x:e.clientX-panelOffset.x, y:e.clientY-panelOffset.y}; e.stopPropagation();}}>
+                                <div className="bg-white/10 rounded-full px-6 py-0.5"><GripHorizontal size={12} className="text-white/50" /></div>
+                            </div>
                             <button onClick={() => setIsMinimized(!isMinimized)} className="absolute top-2 right-2 p-1 hover:bg-slate-700/50 rounded-md text-slate-400 hover:text-white transition-colors">{isMinimized ? <ChevronUp size={16}/> : <ChevronDown size={18}/>}</button>
                             {isMinimized ? (
                                 <div className="flex items-center justify-center gap-4">

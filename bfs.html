@@ -9,6 +9,8 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="graph_script.js"></script>
+    <script src="settings_manager.js"></script>
+    <script src="algorithm_data.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -43,6 +45,39 @@
         const ChevronUp = (props) => <IconWrapper {...props}><polyline points="18 15 12 9 6 15"></polyline></IconWrapper>;
         const ChevronDown = (props) => <IconWrapper {...props}><polyline points="6 9 12 15 18 9"></polyline></IconWrapper>;
         const Edit = (props) => <IconWrapper {...props}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></IconWrapper>;
+        const Settings = (props) => <IconWrapper {...props}><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"></path><circle cx="12" cy="12" r="3"></circle></IconWrapper>;
+
+        const SettingsModal = ({ isOpen, onClose }) => {
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            const handleSave = (key, value) => {
+                const newSettings = { ...settings, [key]: value };
+                setSettings(newSettings);
+                window.saveGlobalSettings(newSettings);
+            };
+            if (!isOpen) return null;
+            return (
+                <div className="absolute inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-6">
+                    <div className="bg-slate-900 border border-slate-700 rounded-3xl p-8 max-w-sm w-full shadow-2xl">
+                        <h2 className="text-2xl font-bold mb-6 flex items-center gap-2"><Settings size={24}/> Global Settings</h2>
+                        <div className="space-y-6">
+                            <div>
+                                <label className="block text-sm font-bold text-slate-400 uppercase tracking-widest mb-3">Font Size ({settings.fontSize}px)</label>
+                                <input type="range" min="10" max="32" value={settings.fontSize} onChange={(e) => handleSave('fontSize', parseInt(e.target.value))} className="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500" />
+                            </div>
+                            <div>
+                                <label className="block text-sm font-bold text-slate-400 uppercase tracking-widest mb-3">Node Accent Color</label>
+                                <div className="flex gap-3">
+                                    {['#3b82f6', '#10b981', '#f43f5e', '#f59e0b', '#8b5cf6'].map(color => (
+                                        <button key={color} onClick={() => handleSave('nodeColor', color)} className={`w-10 h-10 rounded-full border-2 transition-transform active:scale-90 ${settings.nodeColor === color ? 'border-white scale-110' : 'border-transparent'}`} style={{ backgroundColor: color }} />
+                                    ))}
+                                </div>
+                            </div>
+                        </div>
+                        <button onClick={onClose} className="w-full mt-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold transition-all shadow-lg">Close</button>
+                    </div>
+                </div>
+            );
+        };
 
         const DEFAULT_EDGES = `A B
 A C
@@ -87,7 +122,7 @@ E F`;
             const queue = [source];
             queued.add(source);
             
-            history.push({ stepId: 0, activeNode: source, visited: new Set(), queued: new Set(queued), queue: [...queue], status: 'START', desc: `Starting BFS at ${source}`, speech: SEARCH_SCRIPT.BFS.START(source) });
+            history.push({ stepId: 0, activeNode: source, visited: new Set(), queued: new Set(queued), queue: [...queue], status: 'START', desc: `Starting BFS at ${source}`, speech: SEARCH_SCRIPT.BFS.START(source), algoLine: 0 });
 
             while (queue.length > 0) {
                 const u = queue.shift();
@@ -95,7 +130,7 @@ E F`;
                 history.push({ 
                     stepId: history.length, activeNode: u, visited: new Set(visited), 
                     queued: new Set(queued), queue: [...queue], status: 'VISITING', desc: `Visiting ${u}`, 
-                    speech: SEARCH_SCRIPT.BFS.VISITING(u) 
+                    speech: SEARCH_SCRIPT.BFS.VISITING(u), algoLine: 3
                 });
 
                 for (const v of adj[u]) {
@@ -106,7 +141,7 @@ E F`;
                             stepId: history.length, activeNode: u, targetNode: v,
                             activeEdge: {from: u, to: v}, visited: new Set(visited), 
                             queued: new Set(queued), queue: [...queue], status: 'ENQUEUE', desc: `Enqueuing ${v}`, 
-                            speech: SEARCH_SCRIPT.BFS.ENQUEUE(v) 
+                            speech: SEARCH_SCRIPT.BFS.ENQUEUE(v), algoLine: 7
                         });
                     }
                 }
@@ -116,11 +151,20 @@ E F`;
             return history;
         }
 
-        const NodeComponent = ({ node, isActive, isVisited, isQueued }) => (
-            <div className={`absolute w-20 h-20 rounded-full bg-slate-800 border-4 flex flex-col items-center justify-center transition-all duration-500 z-20 ${isActive ? 'node-active' : (isVisited ? 'node-visited' : (isQueued ? 'node-queued' : 'border-slate-700'))}`} style={{ left: node.x - 40, top: node.y - 40 }}>
-                <span className="text-xl font-black text-white">{node.id}</span>
-            </div>
-        );
+        const NodeComponent = ({ node, isActive, isVisited, isQueued }) => {
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleSettingsUpdate = () => { setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}')); };
+                window.addEventListener('storage', handleSettingsUpdate);
+                const interval = setInterval(handleSettingsUpdate, 1000);
+                return () => { window.removeEventListener('storage', handleSettingsUpdate); clearInterval(interval); };
+            }, []);
+            return (
+                <div className={`absolute w-20 h-20 rounded-full bg-slate-800 border-4 flex flex-col items-center justify-center transition-all duration-500 z-20 ${isActive ? 'scale-110' : (isVisited ? 'node-visited' : (isQueued ? 'node-queued' : 'border-slate-700'))}`} style={{ left: node.x - 40, top: node.y - 40, borderColor: isActive ? settings.nodeColor : (isVisited ? '#10b981' : (isQueued ? '#3b82f6' : '#334155')), boxShadow: isActive ? `0 0 25px ${settings.nodeColor}80` : '', fontSize: settings.fontSize + "px", borderColor: isActive ? settings.nodeColor : undefined, boxShadow: isActive ? `0 0 20px ${settings.nodeColor}80` : undefined }}>
+                    <span className="font-black text-white" style={{ fontSize: settings.fontSize + 'px' }}>{node.id}</span>
+                </div>
+            );
+        };
 
         const EdgeComponent = ({ edge, nodes, isActive, isVisited }) => {
             const u = nodes.find(n => n.id === edge.from);
@@ -144,8 +188,10 @@ E F`;
         );
 
         const App = () => {
+            const { SettingsIcon, SettingsModal, AlgorithmPanel } = useMemo(() => window.initSettingsComponents(React), []);
             const [inputText, setInputText] = useState(DEFAULT_EDGES);
             const [isEditing, setIsEditing] = useState(false);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
             const [currentStep, setCurrentStep] = useState(0);
             const [isPlaying, setIsPlaying] = useState(false);
             const [speedMultiplier, setSpeedMultiplier] = useState(1);
@@ -153,8 +199,7 @@ E F`;
             const [isMuted, setIsMuted] = useState(false);
             const [isMinimized, setIsMinimized] = useState(false);
             
-            const [camTarget, setCamTarget] = useState({ x: 0, y: 0 });
-            const [manualOffset, setManualOffset] = useState({ x: 0, y: 0 });
+            const [manualOffset, setManualOffset] = useState({ x: window.innerWidth / 2 - 400, y: window.innerHeight / 2 - 400 });
             const [panelOffset, setPanelOffset] = useState({ x: 0, y: 0 });
             const [isDraggingCanvas, setIsDraggingCanvas] = useState(false);
             const [isDraggingPanel, setIsDraggingPanel] = useState(false);
@@ -184,16 +229,6 @@ E F`;
                 else window.speechSynthesis.cancel();
             }, [isPlaying, currentStep]);
 
-            useEffect(() => {
-                const activeId = history[currentStep]?.activeNode;
-                const node = graph.nodes.find(n => n.id === activeId) || graph.nodes[0];
-                if (node) {
-                    const targetX = (window.innerWidth/2) - (node.x)*zoom, targetY = (window.innerHeight/2) - (node.y)*zoom;
-                    setCamTarget({ x: targetX, y: targetY });
-                    if(!isDraggingCanvas && isPlaying) setManualOffset({ x: 0, y: 0 });
-                }
-            }, [currentStep, zoom, isPlaying, graph]);
-
             const state = history[currentStep] || { visited: new Set(), queued: new Set() };
 
             return (
@@ -202,9 +237,15 @@ E F`;
                         <div className="absolute top-0 left-0 w-full h-4 z-[70] peer"></div>
                         <div className="relative h-16 bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50 flex items-center justify-between px-6 shadow-2xl transition-transform duration-300 -translate-y-full peer-hover:translate-y-0 hover:translate-y-0 z-[60]">
                             <div className="flex items-center gap-4"><a href="index.html" className="bg-slate-800 p-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-400 hover:text-white"><Home size={20} /></a><div><h1 className="font-bold text-lg leading-none tracking-tight">BFS Visualizer</h1><span className="text-xs text-slate-400 font-mono">Breadth First Search Traversal</span></div></div>
-                            <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg font-bold transition-all shadow-lg"><Edit size={18}/> Edit Graph</button>
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white shadow-lg"><SettingsIcon size={20}/></button>
+                                <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg font-bold transition-all shadow-lg"><Edit size={18}/> Edit Graph</button>
+                            </div>
                         </div>
                     </div>
+
+                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+                    <AlgorithmPanel algoKey="BFS" currentLine={state.algoLine} />
 
                     {isEditing && (
                         <div className="absolute inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-6">
@@ -221,7 +262,7 @@ E F`;
                     )}
 
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.2, z-e.deltaY*0.001), 1.5))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
-                        <div className={`node-container absolute origin-top-left ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${camTarget.x + manualOffset.x}px, ${camTarget.y + manualOffset.y}px) scale(${zoom})` }}>
+                        <div className={`node-container absolute origin-top-left ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${manualOffset.x}px, ${manualOffset.y}px) scale(${zoom})` }}>
                             <svg className="absolute top-0 left-0 overflow-visible" style={{ width: 1000, height: 1000 }}>
                                 {graph.edges.map((edge, i) => {
                                     const isEdgeVisited = state.visited.has(edge.from) && state.visited.has(edge.to);

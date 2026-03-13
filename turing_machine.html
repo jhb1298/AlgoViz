@@ -21,6 +21,7 @@
         .state-pulse { animation: pulse 2s infinite; }
         @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
     </style>
+    <script src="settings_manager.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -130,6 +131,14 @@
         }
 
         const App = () => {
+            const { SettingsIcon, SettingsModal, AlgorithmPanel } = useMemo(() => window.initSettingsComponents(React), []);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
             const [input, setInput] = useState("1011");
             const [transitions, setTransitions] = useState(DEFAULT_TRANSITIONS);
             const [currentStep, setCurrentStep] = useState(0);
@@ -179,13 +188,15 @@
                                 <div className="flex items-center gap-2">
                                     <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
                                     <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Universal Computability Engine</span>
-                                </div>
+                                <button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white shadow-lg"><SettingsIcon size={20}/></button></div>
                             </div>
                         </div>
                         <button onClick={() => setShowConfig(true)} className="pointer-events-auto bg-slate-900 p-2.5 rounded-xl border border-slate-800 flex items-center gap-2 hover:bg-slate-800 transition-all font-bold text-xs"><Settings size={18} /> Configuration</button>
                     </div>
 
                     {/* Machine View */}
+                    
+                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
                     <div className="flex-1 flex flex-col items-center justify-center gap-12 relative">
                         {/* State Register */}
                         <div className="flex flex-col items-center gap-2 state-pulse">

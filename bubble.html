@@ -9,6 +9,7 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="sorting_script.js"></script>
+    <script src="settings_manager.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -92,7 +93,17 @@
         }
 
         const App = () => {
+            const { SettingsIcon, SettingsModal, AlgorithmPanel } = useMemo(() => window.initSettingsComponents(React), []);
             const [input, setInput] = useState("45,20,89,12,67,34");
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => {
+                    setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                };
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
             const [currentStep, setCurrentStep] = useState(0);
             const [isPlaying, setIsPlaying] = useState(false);
             const [speedMultiplier, setSpeedMultiplier] = useState(1);
@@ -174,13 +185,17 @@
                         <div className="absolute top-0 left-0 w-full h-4 z-[70] peer"></div>
                         <div className="relative h-16 bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50 flex items-center justify-between px-6 shadow-2xl transition-transform duration-300 -translate-y-full peer-hover:translate-y-0 hover:translate-y-0 z-[60]">
                             <div className="flex items-center gap-4"><a href="index.html" className="bg-slate-800 p-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-400 hover:text-white"><Home size={20} /></a><div><h1 className="font-bold text-lg leading-none tracking-tight">Bubble Sort Visualizer</h1><span className="text-xs text-slate-400 font-mono">Bubbling up the largest values</span></div></div>
-                            <div className="flex items-center gap-2 bg-slate-800/80 p-1 pr-3 rounded-lg border border-slate-700/50">
-                                <span className="bg-slate-700/80 px-2 py-1 rounded text-slate-300 text-xs font-bold uppercase mr-1">Array</span>
-                                <input type="text" value={input} onChange={(e) => { setInput(e.target.value); setCurrentStep(0); setIsPlaying(false); }} className="bg-transparent font-bold outline-none text-blue-400 w-48 border-b border-blue-500/30 text-center" />
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white shadow-lg"><SettingsIcon size={20}/></button>
+                                <div className="flex items-center gap-2 bg-slate-800/80 p-1 pr-3 rounded-lg border border-slate-700/50">
+                                    <span className="bg-slate-700/80 px-2 py-1 rounded text-slate-300 text-xs font-bold uppercase mr-1">Array</span>
+                                    <input type="text" value={input} onChange={(e) => { setInput(e.target.value); setCurrentStep(0); setIsPlaying(false); }} className="bg-transparent font-bold outline-none text-blue-400 w-48 border-b border-blue-500/30 text-center" />
+                                </div>
                             </div>
                         </div>
                     </div>
 
+                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.5, z-e.deltaY*0.001), 2))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
                         <div className={`absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center gap-2 ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(calc(-50% + ${manualOffset.x}px), calc(-50% + ${manualOffset.y}px)) scale(${zoom})` }}>
                             <div className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] mb-4">Surface</div>
@@ -190,32 +205,39 @@
                                     let borderColor = "border-white/10";
                                     if (state.comparing.includes(i)) {
                                         bgColor = state.status === 'SWAPPING' ? "bg-rose-500/20" : "bg-blue-500/20";
-                                        borderColor = state.status === 'SWAPPING' ? "border-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.3)]" : "border-blue-500 shadow-[0_0_20px_rgba(59,130,246,0.3)]";
+                                        borderColor = state.status === 'SWAPPING' ? "border-rose-500 shadow-[0_0_20px_rgba(244,63,94,0.3)]" : `${settings.nodeColor} shadow-[0_0_20px_${settings.nodeColor}80]`;
+                                        if (state.status !== 'SWAPPING') borderColor = settings.nodeColor;
                                     }
                                     if (state.fixedIndex !== undefined && i >= state.fixedIndex) {
                                         bgColor = "bg-emerald-500/10";
                                         borderColor = "border-emerald-500/50 shadow-[0_0_15px_rgba(16,185,129,0.1)]";
                                     }
                                     
+                                    const isComparing = state.comparing.includes(i);
+                                    const isFixed = state.fixedIndex !== undefined && i >= state.fixedIndex;
+
                                     return (
-                                        <div key={i} className={`flex items-center gap-6 bar-transition px-8 py-4 rounded-3xl border-2 ${bgColor} ${borderColor}`} style={{ width: 450 }}>
+                                        <div key={i} className={`flex items-center gap-6 bar-transition px-8 py-4 rounded-3xl border-2 ${bgColor}`} style={{ width: 450, borderColor: isComparing ? (state.status === 'SWAPPING' ? '#f43f5e' : settings.nodeColor) : (isFixed ? '#10b981' : '#1e293b') }}>
                                             <span className="font-mono font-black text-sm text-slate-500 w-8">#{i}</span>
                                             
                                             {/* Bubble Representation */}
                                             <div className="flex-1 flex justify-center items-center h-24 relative">
                                                 <div 
-                                                    className={`rounded-full border-4 flex items-center justify-center font-black text-xl transition-all duration-500 shadow-2xl ${state.comparing.includes(i) ? (state.status === 'SWAPPING' ? 'bg-rose-500/40 border-rose-400' : 'bg-blue-500/40 border-blue-400') : (state.fixedIndex !== undefined && i >= state.fixedIndex ? 'bg-emerald-500/40 border-emerald-400' : 'bg-slate-700/40 border-slate-500')}`}
+                                                    className={`rounded-full border-4 flex items-center justify-center font-black transition-all duration-500 shadow-2xl ${isComparing ? (state.status === 'SWAPPING' ? 'bg-rose-500/40 border-rose-400' : `bg-[${settings.nodeColor}40]`) : (isFixed ? 'bg-emerald-500/40 border-emerald-400' : 'bg-slate-700/40 border-slate-500')}`}
                                                     style={{ 
                                                         width: val + 20, 
                                                         height: val + 20,
-                                                        boxShadow: state.comparing.includes(i) ? `0 0 30px ${state.status === 'SWAPPING' ? '#f43f5e' : '#3b82f6'}44` : 'none'
+                                                        fontSize: settings.fontSize + 'px',
+                                                        borderColor: isComparing ? (state.status === 'SWAPPING' ? '#f43f5e' : settings.nodeColor) : (isFixed ? '#10b981' : '#64748b'),
+                                                        backgroundColor: isComparing ? (state.status === 'SWAPPING' ? 'rgba(244,63,94,0.4)' : `${settings.nodeColor}40`) : (isFixed ? 'rgba(16,185,129,0.4)' : 'rgba(71,85,105,0.4)'),
+                                                        boxShadow: isComparing ? `0 0 30px ${state.status === 'SWAPPING' ? '#f43f5e' : settings.nodeColor}44` : 'none'
                                                     }}
                                                 >
                                                     <span className="drop-shadow-md">{val}</span>
                                                 </div>
                                             </div>
 
-                                            <span className={`font-mono font-black text-2xl w-12 text-right ${state.comparing.includes(i) ? 'text-white' : 'text-slate-400'}`}>{String(val).padStart(2, '0')}</span>
+                                            <span className={`font-mono font-black text-2xl w-12 text-right ${isComparing ? 'text-white' : 'text-slate-400'}`}>{String(val).padStart(2, '0')}</span>
                                         </div>
                                     );
                                 })}

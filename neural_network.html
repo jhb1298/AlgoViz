@@ -13,14 +13,15 @@
         body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
-        .neuron { transition: all 0.5s; border: 2px solid #334155; }
-        .neuron-active { transform: scale(1.1); border-color: #6366f1; box-shadow: 0 0 20px rgba(99, 102, 241, 0.6); }
+        .neuron { transition: all 0.5s; border: 2px solid #475569; }
+        .neuron-active { transform: scale(1.1); border-color: #818cf8; box-shadow: 0 0 25px rgba(129, 140, 248, 0.8); }
         .weight-line { transition: stroke-width 0.5s, stroke 0.5s; stroke-linecap: round; }
         .signal-particle { offset-path: path(attr(d)); animation: flow 1s linear infinite; }
         @keyframes flow { 0% { offset-distance: 0%; opacity: 0; } 50% { opacity: 1; } 100% { offset-distance: 100%; opacity: 0; } }
         .camera-layer { transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); will-change: transform; }
-        .infinite-bg { background-image: radial-gradient(#334155 1px, transparent 1px); background-size: 30px 30px; }
+        .infinite-bg { background-image: radial-gradient(#475569 1px, transparent 1px); background-size: 30px 30px; }
     </style>
+    <script src="settings_manager.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -143,17 +144,27 @@
             return history;
         }
 
-        const NeuronComponent = ({ x, y, value, label, isActive }) => (
+        const NeuronComponent = ({ x, y, value, label, isActive }) => {
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
+
+            return (
             <g transform={`translate(${x}, ${y})`}>
-                <circle r="25" className={`neuron ${isActive ? 'neuron-active' : ''}`} fill="#1e293b" />
+                <circle r="25" className={`neuron ${isActive ? 'neuron-active' : ''}`} fill="#334155" />
                 <text textAnchor="middle" dy=".3em" fill="white" fontSize="12" fontWeight="bold">{value !== undefined ? value.toFixed(2) : label}</text>
-                <text textAnchor="middle" dy="2.5em" fill="#94a3b8" fontSize="10">{label}</text>
+                <text textAnchor="middle" dy="2.5em" fill="#cbd5e1" fontSize={settings.fontSize}>{label}</text>
             </g>
-        );
+        
+            );
+        };
 
         const Connection = ({ x1, y1, x2, y2, weight, isActive }) => {
-            const opacity = Math.min(1, Math.abs(weight) + 0.1);
-            const color = weight > 0 ? "#34d399" : "#fb7185";
+            const opacity = Math.min(1, Math.abs(weight) + 0.4);
+            const color = weight > 0 ? "#10b981" : "#f43f5e";
             return (
                 <g>
                     <line x1={x1} y1={y1} x2={x2} y2={y2} stroke={color} strokeWidth={Math.abs(weight) * 5} opacity={opacity} className="weight-line" />
@@ -167,6 +178,14 @@
         };
 
         const App = () => {
+            const { SettingsIcon, SettingsModal, AlgorithmPanel } = useMemo(() => window.initSettingsComponents(React), []);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
             const [currentStep, setCurrentStep] = useState(0);
             const [isPlaying, setIsPlaying] = useState(false);
             const [speedMultiplier, setSpeedMultiplier] = useState(1);
@@ -213,7 +232,7 @@
                                 <div>
                                     <h1 className="font-bold text-lg leading-none tracking-tight">Neural Network</h1>
                                     <span className="text-xs text-slate-400 font-mono">Multilayer Perceptron (XOR)</span>
-                                </div>
+                                <button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white shadow-lg"><SettingsIcon size={20}/></button></div>
                             </div>
                             <div className="flex items-center gap-8">
                                 <div className="text-right">
@@ -228,6 +247,8 @@
                         </div>
                     </div>
 
+                    
+                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
                     <div className="flex-1 relative infinite-bg overflow-hidden flex items-center justify-center">
                         <svg width="1000" height="1000" style={{ transform: `scale(${zoom})` }} className="camera-layer overflow-visible">
                             {/* Weights Input -> Hidden */}

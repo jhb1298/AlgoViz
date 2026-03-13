@@ -20,6 +20,7 @@
         .camera-layer { transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); will-change: transform; }
         .infinite-bg { background-image: radial-gradient(#334155 1px, transparent 1px); background-size: 30px 30px; }
     </style>
+    <script src="settings_manager.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -164,6 +165,14 @@
         }
 
         const App = () => {
+            const { SettingsIcon, SettingsModal, AlgorithmPanel } = useMemo(() => window.initSettingsComponents(React), []);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
             const [currentStep, setCurrentStep] = useState(0);
             const [isPlaying, setIsPlaying] = useState(false);
             const [speedMultiplier, setSpeedMultiplier] = useState(1);
@@ -205,7 +214,7 @@
                                 <div>
                                     <h1 className="font-bold text-lg leading-none tracking-tight">K-Means Clustering</h1>
                                     <span className="text-xs text-slate-400 font-mono">Unsupervised Learning</span>
-                                </div>
+                                <button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white shadow-lg"><SettingsIcon size={20}/></button></div>
                             </div>
                             <div className="flex items-center gap-6">
                                 <div className="text-right">
@@ -216,6 +225,8 @@
                         </div>
                     </div>
 
+                    
+                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
                     <div className="flex-1 relative infinite-bg overflow-hidden flex items-center justify-center">
                         <svg width="1000" height="1000" style={{ transform: `scale(${zoom})` }} className="camera-layer overflow-visible">
                             {/* Lines */}

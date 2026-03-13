@@ -1,0 +1,158 @@
+// Global settings manager for all simulations
+window.applyGlobalSettings = function() {
+    const settings = JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}');
+    document.documentElement.style.setProperty('--global-font-size', settings.fontSize + 'px');
+    document.documentElement.style.setProperty('--global-node-color', settings.nodeColor);
+    
+    if (!document.getElementById('global-settings-style')) {
+        const style = document.createElement('style');
+        style.id = 'global-settings-style';
+        style.innerHTML = `
+            :root {
+                --global-font-size: ${settings.fontSize}px;
+                --global-node-color: ${settings.nodeColor};
+            }
+            .global-font { font-size: var(--global-font-size) !important; }
+            .global-node-bg { background-color: var(--global-node-color) !important; }
+            .global-node-border { border-color: var(--global-node-color) !important; }
+        `;
+        document.head.appendChild(style);
+    } else {
+        document.getElementById('global-settings-style').innerHTML = `
+            :root {
+                --global-font-size: ${settings.fontSize}px;
+                --global-node-color: ${settings.nodeColor};
+            }
+            .global-font { font-size: var(--global-font-size) !important; }
+            .global-node-bg { background-color: var(--global-node-color) !important; }
+            .global-node-border { border-color: var(--global-node-color) !important; }
+        `;
+    }
+};
+
+window.saveGlobalSettings = function(newSettings) {
+    localStorage.setItem('simulation_settings', JSON.stringify(newSettings));
+    window.applyGlobalSettings();
+    // Dispatch event for local components to update
+    window.dispatchEvent(new Event('simulation_settings_updated'));
+};
+
+// React Components for Settings
+window.initSettingsComponents = (React) => {
+    const { useState, useEffect } = React;
+    const e = React.createElement;
+
+    const SettingsIcon = ({ size = 20, className = "" }) => (
+        e('svg', {
+            xmlns: "http://www.w3.org/2000/svg",
+            width: size,
+            height: size,
+            viewBox: "0 0 24 24",
+            fill: "none",
+            stroke: "currentColor",
+            strokeWidth: "2",
+            strokeLinecap: "round",
+            strokeLinejoin: "round",
+            className: className
+        },
+            e('path', { d: "M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" }),
+            e('circle', { cx: "12", cy: "12", r: "3" })
+        )
+    );
+
+    const SettingsModal = ({ isOpen, onClose }) => {
+        const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+
+        const handleSave = (key, value) => {
+            const newSettings = { ...settings, [key]: value };
+            setSettings(newSettings);
+            window.saveGlobalSettings(newSettings);
+        };
+
+        if (!isOpen) return null;
+
+        return e('div', { className: "fixed inset-0 z-[200] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-6" },
+            e('div', { className: "bg-slate-900 border border-slate-700 rounded-3xl p-8 max-w-sm w-full shadow-2xl" },
+                e('h2', { className: "text-2xl font-bold mb-6 flex items-center gap-2" },
+                    e(SettingsIcon, { size: 24 }),
+                    " Global Settings"
+                ),
+                e('div', { className: "space-y-6" },
+                    e('div', null,
+                        e('label', { className: "block text-sm font-bold text-slate-400 uppercase tracking-widest mb-3" }, `Font Size (${settings.fontSize}px)`),
+                        e('input', {
+                            type: "range",
+                            min: "10",
+                            max: "32",
+                            value: settings.fontSize,
+                            onChange: (e) => handleSave('fontSize', parseInt(e.target.value)),
+                            className: "w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-blue-500"
+                        })
+                    ),
+                    e('div', null,
+                        e('label', { className: "block text-sm font-bold text-slate-400 uppercase tracking-widest mb-3" }, "Node Accent Color"),
+                        e('div', { className: "flex gap-3" },
+                            ['#3b82f6', '#10b981', '#f43f5e', '#f59e0b', '#8b5cf6'].map(color =>
+                                e('button', {
+                                    key: color,
+                                    onClick: () => handleSave('nodeColor', color),
+                                    className: `w-10 h-10 rounded-full border-2 transition-transform active:scale-90 ${settings.nodeColor === color ? 'border-white scale-110' : 'border-transparent'}`,
+                                    style: { backgroundColor: color }
+                                })
+                            )
+                        )
+                    )
+                ),
+                e('button', {
+                    onClick: onClose,
+                    className: "w-full mt-8 py-3 bg-blue-600 hover:bg-blue-500 rounded-xl font-bold transition-all shadow-lg text-white"
+                }, "Close")
+            )
+        );
+    };
+
+    const AlgorithmPanel = ({ algoKey, currentLine }) => {
+        const [isOpen, setIsOpen] = useState(true);
+        const code = window.getAlgorithmPseudocode ? window.getAlgorithmPseudocode(algoKey) : [];
+
+        if (!code || !code.length) return null;
+
+        return e('div', { className: `fixed left-6 top-24 z-40 transition-all duration-500 ${isOpen ? 'w-80' : 'w-12'}` },
+            e('div', { className: "bg-slate-900/80 backdrop-blur-md border border-slate-700 rounded-2xl shadow-2xl overflow-hidden flex flex-col h-fit max-h-[60vh]" },
+                e('button', {
+                    onClick: () => setIsOpen(!isOpen),
+                    className: "w-full flex items-center justify-between p-4 hover:bg-white/5 transition-colors border-b border-slate-800"
+                },
+                    e('span', { className: `font-bold uppercase text-[10px] tracking-[0.2em] text-slate-400 ${!isOpen && 'hidden'}` }, "Algorithm"),
+                    e('svg', {
+                        xmlns: "http://www.w3.org/2000/svg",
+                        width: "16",
+                        height: "16",
+                        viewBox: "0 0 24 24",
+                        fill: "none",
+                        stroke: "currentColor",
+                        strokeWidth: "2",
+                        strokeLinecap: "round",
+                        strokeLinejoin: "round",
+                        className: `transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`
+                    },
+                        e('polyline', { points: "6 9 12 15 18 9" })
+                    )
+                ),
+                isOpen && e('div', { className: "p-4 overflow-y-auto font-mono text-[11px] leading-relaxed" },
+                    code.map((line, i) =>
+                        e('div', {
+                            key: i,
+                            className: `px-2 py-1 rounded transition-colors duration-200 ${currentLine === i ? 'bg-blue-500/20 text-blue-300 border-l-2 border-blue-500 font-bold' : 'text-slate-500'}`
+                        }, line)
+                    )
+                )
+            )
+        );
+    };
+
+    return { SettingsIcon, SettingsModal, AlgorithmPanel };
+};
+
+// Initial apply
+window.applyGlobalSettings();

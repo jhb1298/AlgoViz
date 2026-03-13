@@ -21,6 +21,7 @@
         .node-updated { border-color: #fb7185 !important; box-shadow: 0 0 20px rgba(251, 113, 133, 0.4); transform: scale(1.05); }
         .table-row-active { background-color: rgba(251, 113, 133, 0.2); border-left: 4px solid #fb7185; }
     </style>
+    <script src="settings_manager.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -116,14 +117,30 @@ D B -2`;
             return history;
         }
 
-        const NodeComponent = ({ node, dist, isActive, isUpdated }) => (
-            <div className={`absolute w-20 h-20 rounded-xl bg-slate-800 border-4 flex flex-col items-center justify-center transition-all duration-500 z-20 ${isActive ? 'border-blue-500 scale-110 shadow-lg' : (isUpdated ? 'node-updated' : 'border-slate-700')}`} style={{ left: node.x - 40, top: node.y - 40 }}>
+        const NodeComponent = ({  node, dist, isActive, isUpdated  }) => {
+
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
+
+            return (
+            <div className={`absolute w-20 h-20 rounded-xl bg-slate-800 border-4 flex flex-col items-center justify-center transition-all duration-500 z-20 ${isActive ? 'border-blue-500 scale-110 shadow-lg' : (isUpdated ? 'node-updated' : 'border-slate-700')}`} style={{ left: node.x - 40, top: node.y - 40, fontSize: settings.fontSize + "px", borderColor: isActive ? settings.nodeColor : undefined, boxShadow: isActive ? `0 0 20px ${settings.nodeColor}80` : undefined }}>
                 <span className="text-xl font-black text-white">{node.id}</span>
                 <span className={`text-xs font-mono font-bold ${dist === Infinity ? 'text-slate-500' : 'text-rose-400'}`}>{dist === Infinity ? '∞' : dist}</span>
             </div>
         );
+        };
 
         const EdgeComponent = ({ edge, nodes, isActive, isShortest }) => {
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
             const u = nodes.find(n => n.id === edge.from);
             const v = nodes.find(n => n.id === edge.to);
             if(!u || !v) return null;
@@ -139,12 +156,20 @@ D B -2`;
                     <line x1={u.x} y1={u.y} x2={x2} y2={y2} stroke={strokeColor} strokeWidth={isActive ? 4 : (isShortest ? 5 : 2)} className={isActive ? 'edge-active' : (isShortest ? 'edge-shortest' : '')} style={{ transition: 'stroke 0.3s, stroke-width 0.3s' }} />
                     <polygon points={`${x2},${y2} ${x2-headlen*Math.cos(angle-Math.PI/6)},${y2-headlen*Math.sin(angle-Math.PI/6)} ${x2-headlen*Math.cos(angle+Math.PI/6)},${y2-headlen*Math.sin(angle+Math.PI/6)}`} fill={strokeColor} />
                     <rect x={midX-12} y={midY-10} width="24" height="20" rx="4" fill="#0f172a" />
-                    <text x={midX} y={midY} textAnchor="middle" dy=".3em" fontSize="10" fontWeight="bold" fill={isShortest ? "#10b981" : "#94a3b8"}>{edge.weight}</text>
+                    <text x={midX} y={midY} textAnchor="middle" dy=".3em" fontSize={settings.fontSize} fontWeight="bold" fill={isShortest ? "#10b981" : "#94a3b8"}>{edge.weight}</text>
                 </g>
             );
         };
 
         const App = () => {
+            const { SettingsIcon, SettingsModal, AlgorithmPanel } = useMemo(() => window.initSettingsComponents(React), []);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
             const [inputText, setInputText] = useState(DEFAULT_EDGES);
             const [isEditing, setIsEditing] = useState(false);
             const [currentStep, setCurrentStep] = useState(0);
@@ -154,8 +179,7 @@ D B -2`;
             const [isMuted, setIsMuted] = useState(false);
             const [isMinimized, setIsMinimized] = useState(false);
             
-            const [camTarget, setCamTarget] = useState({ x: 0, y: 0 });
-            const [manualOffset, setManualOffset] = useState({ x: 0, y: 0 });
+            const [manualOffset, setManualOffset] = useState({ x: window.innerWidth / 2 - 400, y: window.innerHeight / 2 - 400 });
             const [panelOffset, setPanelOffset] = useState({ x: 0, y: 0 });
             const [isDraggingCanvas, setIsDraggingCanvas] = useState(false);
             const [isDraggingPanel, setIsDraggingPanel] = useState(false);
@@ -185,13 +209,6 @@ D B -2`;
                 else window.speechSynthesis.cancel();
             }, [isPlaying, currentStep]);
 
-            useEffect(() => {
-                if(graph.nodes.length > 0) {
-                    const node = graph.nodes[0];
-                    setCamTarget({ x: (window.innerWidth/2) - (node.x)*zoom, y: (window.innerHeight/2) - (node.y)*zoom });
-                }
-            }, [zoom, graph]);
-
             const state = history[currentStep] || { distances: {}, parents: {}, iteration: 0 };
 
             return (
@@ -199,7 +216,7 @@ D B -2`;
                     <div className="absolute top-0 left-0 right-0 z-[60] top-nav-area">
                         <div className="absolute top-0 left-0 w-full h-4 z-[70] peer"></div>
                         <div className="relative h-16 bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50 flex items-center justify-between px-6 shadow-2xl transition-transform duration-300 -translate-y-full peer-hover:translate-y-0 hover:translate-y-0 z-[60]">
-                            <div className="flex items-center gap-4"><a href="index.html" className="bg-slate-800 p-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-400 hover:text-white"><Home size={20} /></a><div><h1 className="font-bold text-lg leading-none tracking-tight">Bellman-Ford Algorithm</h1><span className="text-xs text-slate-400 font-mono">Distance Update Table</span></div></div>
+                            <div className="flex items-center gap-4"><a href="index.html" className="bg-slate-800 p-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-400 hover:text-white"><Home size={20} /></a><div><h1 className="font-bold text-lg leading-none tracking-tight">Bellman-Ford Algorithm</h1><span className="text-xs text-slate-400 font-mono">Distance Update Table</span><button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white shadow-lg"><SettingsIcon size={20}/></button></div></div>
                             <div className="flex items-center gap-4">
                                 <div className="bg-rose-500/10 border border-rose-500/30 px-3 py-1.5 rounded-lg flex items-center gap-2">
                                     <span className="text-[10px] font-black uppercase text-rose-400 tracking-wider">Iteration</span>
@@ -214,7 +231,7 @@ D B -2`;
                         <div className="absolute inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-6">
                             <div className="bg-slate-900 border border-slate-700 rounded-3xl p-8 max-w-lg w-full shadow-2xl">
                                 <h2 className="text-2xl font-bold mb-2">Edit Graph Edges</h2>
-                                <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} className="w-full h-64 bg-slate-950 border border-slate-700 rounded-xl p-4 font-mono text-rose-400 outline-none focus:border-rose-500 mb-6" />
+                                <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} className="w-full h-64 bg-slate-950 border border-rose-400 outline-none focus:border-rose-500 mb-6" />
                                 <div className="flex justify-end gap-4"><button onClick={() => setIsEditing(false)} className="px-6 py-2 rounded-xl font-bold text-slate-400 hover:bg-slate-800">Cancel</button><button onClick={() => { setIsEditing(false); setCurrentStep(0); setIsPlaying(false); }} className="px-8 py-2 rounded-xl font-bold bg-rose-600 hover:bg-rose-500 shadow-lg shadow-rose-900/40">Apply Graph</button></div>
                             </div>
                         </div>
@@ -235,8 +252,10 @@ D B -2`;
                         </div>
                     </div>
 
+                    
+                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.2, z-e.deltaY*0.001), 1.5))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper') && !e.target.closest('.top-nav-area')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
-                        <div className={`node-container absolute origin-top-left ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${camTarget.x + manualOffset.x}px, ${camTarget.y + manualOffset.y}px) scale(${zoom})` }}>
+                        <div className={`node-container absolute origin-top-left ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${manualOffset.x}px, ${manualOffset.y}px) scale(${zoom})` }}>
                             <svg className="absolute top-0 left-0 overflow-visible" style={{ width: 1000, height: 1000 }}>
                                 {graph.edges.map((edge, i) => <EdgeComponent key={i} edge={edge} nodes={graph.nodes} isActive={state.activeEdge === edge} isShortest={state.parents[edge.to] === edge.from} />)}
                             </svg>

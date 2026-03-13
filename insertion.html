@@ -9,6 +9,7 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="sorting_script.js"></script>
+    <script src="settings_manager.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -72,6 +73,9 @@
             const [zoom, setZoom] = useState(1);
             const [isMuted, setIsMuted] = useState(false);
             const [isMinimized, setIsMinimized] = useState(false);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const { SettingsIcon, SettingsModal } = useMemo(() => window.initSettingsComponents(React), []);
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
             
             const [manualOffset, setManualOffset] = useState({ x: 0, y: 0 });
             const [panelOffset, setPanelOffset] = useState({ x: 0, y: 0 });
@@ -81,6 +85,12 @@
             const panelDragStart = useRef({ x: 0, y: 0 });
             const isPlayingRef = useRef(false);
             isPlayingRef.current = isPlaying;
+
+            useEffect(() => {
+                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
 
             const history = useMemo(() => {
                 const arr = input.split(',').map(Number).filter(n => !isNaN(n));

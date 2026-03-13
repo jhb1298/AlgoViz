@@ -9,6 +9,8 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="graph_script.js"></script>
+    <script src="settings_manager.js"></script>
+    <script src="algorithm_data.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -113,7 +115,8 @@ E F 5`;
                 visited: new Set(), 
                 status: 'START', 
                 desc: `Starting A* Search from ${source} to ${goal}`, 
-                speech: SEARCH_SCRIPT.ASTAR.START() 
+                speech: SEARCH_SCRIPT.ASTAR.START(),
+                algoLine: 0
             });
 
             const openSet = [source];
@@ -134,7 +137,8 @@ E F 5`;
                         visited: new Set(visited), 
                         status: 'TARGET_FOUND', 
                         desc: `Goal ${goal} reached!`, 
-                        speech: SEARCH_SCRIPT.ASTAR.TARGET_FOUND() 
+                        speech: SEARCH_SCRIPT.ASTAR.TARGET_FOUND(),
+                        algoLine: 3
                     });
                     break;
                 }
@@ -150,7 +154,8 @@ E F 5`;
                     visited: new Set(visited), 
                     status: 'VISITING', 
                     desc: `Visiting ${u} (f=${fScore[u]})`, 
-                    speech: SEARCH_SCRIPT.ASTAR.VISITING(u, fScore[u], gScore[u], fScore[u] - gScore[u]) 
+                    speech: SEARCH_SCRIPT.ASTAR.VISITING(u, fScore[u], gScore[u], fScore[u] - gScore[u]),
+                    algoLine: 2
                 });
 
                 const neighbors = graph.edges.filter(e => e.from === u || e.to === u);
@@ -181,7 +186,8 @@ E F 5`;
                             visited: new Set(visited), 
                             status: 'RELAXING', 
                             desc: `Updating ${v}: g=${gScore[v]}, f=${fScore[v]}`, 
-                            speech: SEARCH_SCRIPT.ASTAR.RELAXING(v, fScore[v]) 
+                            speech: SEARCH_SCRIPT.ASTAR.RELAXING(v, fScore[v]),
+                            algoLine: 7
                         });
                     } else {
                         history.push({ 
@@ -195,7 +201,8 @@ E F 5`;
                             parents: { ...parents }, 
                             visited: new Set(visited), 
                             status: 'CHECKING', 
-                            desc: `No better path to ${v}` 
+                            desc: `No better path to ${v}`,
+                            algoLine: 6
                         });
                     }
                 }
@@ -210,22 +217,42 @@ E F 5`;
                 parents: { ...parents }, 
                 visited: new Set(visited), 
                 desc: "Search Complete", 
-                speech: SEARCH_SCRIPT.ASTAR.SUCCESS() 
+                speech: SEARCH_SCRIPT.ASTAR.SUCCESS(),
+                algoLine: 3
             });
             return history;
         }
 
-        const NodeComponent = ({ node, g, f, isActive, isVisited, isGoal }) => (
-            <div className={`absolute w-20 h-20 rounded-full bg-slate-800 border-4 flex flex-col items-center justify-center transition-all duration-500 z-20 ${isActive ? 'node-active' : (isGoal ? 'node-target' : (isVisited ? 'node-visited' : 'border-slate-700'))}`} style={{ left: node.x - 40, top: node.y - 40 }}>
-                <span className="text-xl font-black text-white">{node.id}</span>
-                <div className="flex flex-col items-center leading-none">
-                    <span className={`text-[10px] font-mono font-bold ${g === Infinity ? 'text-slate-500' : 'text-blue-400'}`}>g: {g === Infinity ? '∞' : g}</span>
-                    <span className={`text-[10px] font-mono font-bold ${f === Infinity ? 'text-slate-500' : 'text-amber-400'}`}>f: {f === Infinity ? '∞' : f}</span>
+        const NodeComponent = ({ node, g, f, isActive, isVisited, isGoal }) => {
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => {
+                    setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                };
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
+
+            return (
+                <div className={`absolute w-20 h-20 rounded-full bg-slate-800 border-4 flex flex-col items-center justify-center transition-all duration-500 z-20 ${isActive ? 'node-active' : (isGoal ? 'node-target' : (isVisited ? 'node-visited' : 'border-slate-700'))}`} style={{ left: node.x - 40, top: node.y - 40, borderColor: isActive ? settings.nodeColor : (isGoal ? '#f59e0b' : (isVisited ? '#10b981' : '#334155')), boxShadow: isActive ? `0 0 25px ${settings.nodeColor}80` : '', fontSize: settings.fontSize + "px", borderColor: isActive ? settings.nodeColor : undefined, boxShadow: isActive ? `0 0 20px ${settings.nodeColor}80` : undefined }}>
+                    <span className="font-black text-white" style={{ fontSize: settings.fontSize + 'px' }}>{node.id}</span>
+                    <div className="flex flex-col items-center leading-none">
+                        <span className={`text-[10px] font-mono font-bold ${g === Infinity ? 'text-slate-500' : 'text-blue-400'}`}>g: {g === Infinity ? '∞' : g}</span>
+                        <span className={`text-[10px] font-mono font-bold ${f === Infinity ? 'text-slate-500' : 'text-amber-400'}`}>f: {f === Infinity ? '∞' : f}</span>
+                    </div>
                 </div>
-            </div>
-        );
+            );
+        };
 
         const EdgeComponent = ({ edge, nodes, isActive, isShortest }) => {
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => {
+                    setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                };
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
             const u = nodes.find(n => n.id === edge.from);
             const v = nodes.find(n => n.id === edge.to);
             if(!u || !v) return null;
@@ -236,14 +263,16 @@ E F 5`;
                 <g>
                     <line x1={u.x} y1={u.y} x2={v.x} y2={v.y} stroke={strokeColor} strokeWidth={isActive ? 4 : (isShortest ? 5 : 2)} className={isActive ? 'edge-active' : (isShortest ? 'edge-shortest' : '')} style={{ transition: 'stroke 0.3s, stroke-width 0.3s' }} />
                     <circle cx={midX} cy={midY} r="12" fill="#0f172a" />
-                    <text x={midX} y={midY} textAnchor="middle" dy=".3em" fontSize="10" fontWeight="bold" fill={isShortest ? "#10b981" : "#94a3b8"}>{edge.weight}</text>
+                    <text x={midX} y={midY} textAnchor="middle" dy=".3em" fontSize={settings.fontSize} fontWeight="bold" fill={isShortest ? "#10b981" : "#94a3b8"}>{edge.weight}</text>
                 </g>
             );
         };
 
         const App = () => {
+            const { SettingsIcon, SettingsModal, AlgorithmPanel } = useMemo(() => window.initSettingsComponents(React), []);
             const [inputText, setInputText] = useState(DEFAULT_EDGES);
             const [isEditing, setIsEditing] = useState(false);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
             const [currentStep, setCurrentStep] = useState(0);
             const [isPlaying, setIsPlaying] = useState(false);
             const [speedMultiplier, setSpeedMultiplier] = useState(1);
@@ -251,8 +280,7 @@ E F 5`;
             const [isMuted, setIsMuted] = useState(false);
             const [isMinimized, setIsMinimized] = useState(false);
             
-            const [camTarget, setCamTarget] = useState({ x: 0, y: 0 });
-            const [manualOffset, setManualOffset] = useState({ x: 0, y: 0 });
+            const [manualOffset, setManualOffset] = useState({ x: window.innerWidth / 2 - 400, y: window.innerHeight / 2 - 400 });
             const [panelOffset, setPanelOffset] = useState({ x: 0, y: 0 });
             const [isDraggingCanvas, setIsDraggingCanvas] = useState(false);
             const [isDraggingPanel, setIsDraggingPanel] = useState(false);
@@ -282,16 +310,6 @@ E F 5`;
                 else window.speechSynthesis.cancel();
             }, [isPlaying, currentStep]);
 
-            useEffect(() => {
-                const activeId = history[currentStep]?.activeNode;
-                const node = graph.nodes.find(n => n.id === activeId);
-                if (node) {
-                    const targetX = (window.innerWidth/2) - (node.x)*zoom, targetY = (window.innerHeight/2) - (node.y)*zoom;
-                    setCamTarget({ x: targetX, y: targetY });
-                    if(!isDraggingCanvas && isPlaying) setManualOffset({ x: 0, y: 0 });
-                }
-            }, [currentStep, zoom, isPlaying, graph]);
-
             const state = history[currentStep] || { gScore: {}, fScore: {}, visited: new Set(), parents: {} };
 
             return (
@@ -300,9 +318,15 @@ E F 5`;
                         <div className="absolute top-0 left-0 w-full h-4 z-[70] peer"></div>
                         <div className="relative h-16 bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50 flex items-center justify-between px-6 shadow-2xl transition-transform duration-300 -translate-y-full peer-hover:translate-y-0 hover:translate-y-0 z-[60]">
                             <div className="flex items-center gap-4"><a href="index.html" className="bg-slate-800 p-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-400 hover:text-white"><Home size={20} /></a><div><h1 className="font-bold text-lg leading-none tracking-tight">A* Search Algorithm</h1><span className="text-xs text-slate-400 font-mono">Heuristic-based pathfinding</span></div></div>
-                            <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg font-bold transition-all shadow-lg shadow-blue-900/20"><Edit size={18}/> Edit Graph</button>
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white shadow-lg"><SettingsIcon size={20}/></button>
+                                <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg font-bold transition-all shadow-lg shadow-blue-900/20"><Edit size={18}/> Edit Graph</button>
+                            </div>
                         </div>
                     </div>
+
+                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+                    <AlgorithmPanel algoKey="ASTAR" currentLine={state.algoLine} />
 
                     {isEditing && (
                         <div className="absolute inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-6">
@@ -335,7 +359,7 @@ E F 5`;
                     </div>
 
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.2, z-e.deltaY*0.001), 1.5))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper') && !e.target.closest('.top-nav-area')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
-                        <div className={`node-container absolute origin-top-left ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${camTarget.x + manualOffset.x}px, ${camTarget.y + manualOffset.y}px) scale(${zoom})` }}>
+                        <div className={`node-container absolute origin-top-left ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${manualOffset.x}px, ${manualOffset.y}px) scale(${zoom})` }}>
                             <svg className="absolute top-0 left-0 overflow-visible" style={{ width: 1000, height: 1000 }}>
                                 {graph.edges.map((edge, i) => {
                                     const isShortest = state.parents[edge.to] === edge.from || state.parents[edge.from] === edge.to;

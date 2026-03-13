@@ -24,6 +24,7 @@
         .pq-item { transition: all 0.3s; }
         .pq-active { background-color: rgba(99, 102, 241, 0.2); border-color: #6366f1 !important; transform: translateY(-4px); }
     </style>
+    <script src="settings_manager.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -167,7 +168,16 @@
             return result;
         }
 
-        const NodeComponent = ({ node, isActive }) => (
+        const NodeComponent = ({  node, isActive  }) => {
+
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
+
+            return (
             <g>
                 {node.left && (
                     <g>
@@ -185,11 +195,20 @@
                 )}
                 <circle cx={node.x} cy={node.y} r="25" className={`node-circle ${node.char ? 'node-leaf' : 'node-internal'} ${isActive ? 'node-active' : ''}`} />
                 <text x={node.x} y={node.y - 2} textAnchor="middle" fill="white" fontSize="14" fontWeight="black">{node.char || node.freq}</text>
-                {node.char && <text x={node.x} y={node.y + 12} textAnchor="middle" fill="#94a3b8" fontSize="10">{node.freq}</text>}
+                {node.char && <text x={node.x} y={node.y + 12} textAnchor="middle" fill="#94a3b8" fontSize={settings.fontSize}>{node.freq}</text>}
             </g>
         );
+        };
 
         const App = () => {
+            const { SettingsIcon, SettingsModal, AlgorithmPanel } = useMemo(() => window.initSettingsComponents(React), []);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
             const [currentStep, setCurrentStep] = useState(0);
             const [isPlaying, setIsPlaying] = useState(false);
             const [speedMultiplier, setSpeedMultiplier] = useState(1);
@@ -231,7 +250,7 @@
                                 <div>
                                     <h1 className="font-bold text-lg leading-none tracking-tight">Huffman Coding</h1>
                                     <span className="text-xs text-slate-400 font-mono">Greedy Compression Tree</span>
-                                </div>
+                                <button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white shadow-lg"><SettingsIcon size={20}/></button></div>
                             </div>
                             <div className="flex items-center gap-6">
                                 <div className="text-right">
@@ -280,6 +299,8 @@
                         ))}
                     </div>
 
+                    
+                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
                     <div className="flex-1 relative infinite-bg overflow-hidden flex items-center justify-center">
                         <svg width="1000" height="1000" style={{ transform: `scale(${zoom})` }} className="camera-layer overflow-visible">
                             {treeLayout && <NodeComponent node={treeLayout} isActive={false} />}

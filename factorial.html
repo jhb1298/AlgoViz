@@ -9,6 +9,7 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="factorial_script.js"></script>
+    <script src="settings_manager.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -88,41 +89,56 @@
 
         const NodeComponent = ({ nodeData, isActive, isBreadcrumb, latestState }) => {
             const { val } = nodeData;
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => {
+                    setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                };
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
+
             let highlightLine = -1, statusColor = "bg-slate-700", statusText = "IDLE", borderColor = "border-slate-700", shadow = "", opacity = 0.3, isWaiting = false;
             if (latestState) {
                 if (isActive) {
-                    opacity = 1; shadow = 'shadow-yellow-500/20'; highlightLine = latestState.line;
-                    if (latestState.status === 'START') { statusColor = "bg-emerald-600"; statusText = "START"; borderColor="border-emerald-500"; }
-                    if (latestState.status === 'BASE') { statusColor = "bg-emerald-600"; statusText = "BASE"; borderColor="border-emerald-500"; }
-                    if (latestState.status === 'RETURN') { statusColor = "bg-rose-600"; statusText = "RETURN"; borderColor="border-rose-500"; }
-                    if (latestState.status === 'THINKING') { statusColor = "bg-blue-600"; statusText = "CALLING"; borderColor="border-blue-500"; }
+                    opacity = 1; shadow = `shadow-[0_0_20px_${settings.nodeColor}80]`; highlightLine = latestState.line;
+                    if (latestState.status === 'START') { statusColor = "bg-emerald-600"; statusText = "START"; borderColor=`style={{borderColor: settings.nodeColor}}`; }
+                    if (latestState.status === 'BASE') { statusColor = "bg-emerald-600"; statusText = "BASE"; borderColor=`style={{borderColor: settings.nodeColor}}`; }
+                    if (latestState.status === 'RETURN') { statusColor = "bg-rose-600"; statusText = "RETURN"; borderColor=`style={{borderColor: settings.nodeColor}}`; }
+                    if (latestState.status === 'THINKING') { statusColor = "bg-blue-600"; statusText = "CALLING"; borderColor=`style={{borderColor: settings.nodeColor}}`; }
+                    borderColor = settings.nodeColor;
                 } else {
-                    if (latestState.status === 'RETURN') { statusColor = "bg-slate-600"; statusText = "DONE"; borderColor = "border-slate-600"; opacity = 0.8; }
-                    else if (latestState.status === 'THINKING') { statusColor = "bg-indigo-600"; statusText = "WAITING"; borderColor = "border-indigo-500/50"; highlightLine = latestState.line; opacity = 1; isWaiting = true; }
-                    else { statusColor = "bg-slate-600"; statusText = "PAUSED"; opacity = 0.9; }
+                    if (latestState.status === 'RETURN') { statusColor = "bg-slate-600"; statusText = "DONE"; borderColor = "#475569"; opacity = 0.8; }
+                    else if (latestState.status === 'THINKING') { statusColor = "bg-indigo-600"; statusText = "WAITING"; borderColor = "#6366f1"; highlightLine = latestState.line; opacity = 1; isWaiting = true; }
+                    else { statusColor = "bg-slate-600"; statusText = "PAUSED"; opacity = 0.9; borderColor = "#475569"; }
                 }
+            } else {
+                borderColor = "#334155";
             }
-            if (isBreadcrumb && !isActive) { borderColor = 'border-indigo-500/70'; shadow = 'shadow-indigo-500/20'; opacity = 1; }
+            if (isBreadcrumb && !isActive) { borderColor = settings.nodeColor; shadow = `shadow-[0_0_15px_${settings.nodeColor}40]`; opacity = 1; }
+            
             const getCodeClass = (line) => {
                 if (highlightLine !== line) return "px-2 rounded";
                 if (line === 2 && isWaiting) return "px-2 rounded code-highlight-waiting text-indigo-300";
                 return "px-2 rounded code-highlight text-yellow-200";
             };
             return (
-                <div className={`absolute rounded-xl shadow-2xl overflow-hidden transition-all duration-300 border-2 bg-slate-800 flex flex-col justify-between ${borderColor} ${shadow}`} style={{ left: nodeData.x, top: nodeData.y, width: NODE_WIDTH, height: NODE_HEIGHT, transform: isActive ? 'scale(1.05)' : 'scale(1)', zIndex: isActive ? 50 : (isBreadcrumb ? 40 : 10), opacity: opacity }}>
+                <div className={`absolute rounded-xl shadow-2xl overflow-hidden transition-all duration-300 border-2 bg-slate-800 flex flex-col justify-between ${shadow}`} style={{ left: nodeData.x, top: nodeData.y, width: NODE_WIDTH, height: NODE_HEIGHT, transform: isActive ? 'scale(1.05)' : 'scale(1)', zIndex: isActive ? 50 : (isBreadcrumb ? 40 : 10), opacity: opacity, borderColor: borderColor, fontSize: settings.fontSize + "px", borderColor: isActive ? settings.nodeColor : undefined, boxShadow: isActive ? `0 0 20px ${settings.nodeColor}80` : undefined }}>
                     <div className="bg-slate-900/80 px-4 py-2 flex justify-between items-center border-b border-slate-700"><span className={`font-mono font-bold text-sm ${isActive || isBreadcrumb ? 'text-blue-200' : 'text-slate-400'}`}>fact({val})</span><span className={`text-[10px] font-bold px-2 py-0.5 rounded ${statusColor} text-white shadow-sm`}>{statusText}</span></div>
                     <div className="px-3 py-2 text-[11px] font-mono text-slate-400 bg-slate-900 leading-relaxed border-b border-slate-700">
                         <div className={getCodeClass(1)}>1. if (n &lt;= 1) return 1</div>
                         <div className={getCodeClass(2)}>2. res = fact(n - 1)</div>
                         <div className={getCodeClass(3)}>3. return n * res</div>
                     </div>
-                    <div className="bg-slate-800 flex-1 relative p-3 flex flex-col items-center justify-center"><div className="text-4xl font-black text-white">{val}<span className="text-blue-500">!</span></div>{latestState?.result && <div className="text-emerald-400 font-bold font-mono animate-bounce text-lg mt-1">= {latestState.result}</div>}</div>
+                    <div className="bg-slate-800 flex-1 relative p-3 flex flex-col items-center justify-center"><div className="font-black text-white" style={{fontSize: (val > 9 ? settings.fontSize * 2 : settings.fontSize * 2.5) + 'px'}}>{val}<span className="text-blue-500">!</span></div>{latestState?.result && <div className="text-emerald-400 font-bold font-mono animate-bounce text-lg mt-1">= {latestState.result}</div>}</div>
                 </div>
             );
         };
 
         const App = () => {
+            const { SettingsIcon, SettingsModal, AlgorithmPanel } = useMemo(() => window.initSettingsComponents(React), []);
             const [n, setN] = useState(5);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
             const [currentStep, setCurrentStep] = useState(0);
             const [isPlaying, setIsPlaying] = useState(false);
             const [speedMultiplier, setSpeedMultiplier] = useState(1);
@@ -190,9 +206,14 @@
                         <div className="absolute top-0 left-0 w-full h-4 z-[70] peer"></div>
                         <div className="relative h-16 bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50 flex items-center justify-between px-6 shadow-2xl transition-transform duration-300 -translate-y-full peer-hover:translate-y-0 hover:translate-y-0 z-[60]">
                             <div className="flex items-center gap-4"><a href="index.html" className="bg-slate-800 p-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-400 hover:text-white"><Home size={20} /></a><div><h1 className="font-bold text-lg leading-none tracking-tight">Recursive Factorial</h1><span className="text-xs text-slate-400 font-mono">Visualizing n! calculation</span></div></div>
-                            <div className="flex items-center gap-2 bg-slate-800/80 p-1 pr-3 rounded-lg border border-slate-700/50"><span className="bg-slate-700/80 px-2 py-1 rounded text-slate-300 text-xs font-bold uppercase mr-1">Input N</span><input type="number" value={n} onChange={(e) => { setN(Math.min(12, Math.max(1, Number(e.target.value)))); setCurrentStep(0); setIsPlaying(false); }} className="bg-transparent font-bold outline-none text-blue-400 w-12 border-b border-blue-500/30" /></div>
+                            <div className="flex items-center gap-3">
+                                <button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white shadow-lg"><SettingsIcon size={20}/></button>
+                                <div className="flex items-center gap-2 bg-slate-800/80 p-1 pr-3 rounded-lg border border-slate-700/50"><span className="bg-slate-700/80 px-2 py-1 rounded text-slate-300 text-xs font-bold uppercase mr-1">Input N</span><input type="number" value={n} onChange={(e) => { setN(Math.min(12, Math.max(1, Number(e.target.value)))); setCurrentStep(0); setIsPlaying(false); }} className="bg-transparent font-bold outline-none text-blue-400 w-12 border-b border-blue-500/30" /></div>
+                            </div>
                         </div>
                     </div>
+
+                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.2, z-e.deltaY*0.001), 1.5))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper') && !e.target.closest('.top-nav-area')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
                         <div className={`node-container absolute origin-top-left ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${camTarget.x + manualOffset.x}px, ${camTarget.y + manualOffset.y}px) scale(${zoom})` }}>
                             <svg className="absolute top-0 left-0 overflow-visible" style={{ width: 1, height: 1 }}>{flatNodes.map(node => node.children.map(child => (<path key={`${node.id}-${child.id}`} d={`M ${node.x+NODE_WIDTH/2} ${node.y+NODE_HEIGHT} C ${node.x+NODE_WIDTH/2} ${(node.y+child.y)/2}, ${child.x+NODE_WIDTH/2} ${(node.y+child.y)/2}, ${child.x+NODE_WIDTH/2} ${child.y}`} fill="none" stroke={activePathIds.has(child.id) ? "#818cf8" : (latestNodeStates[child.id] ? "#475569" : "#1e293b")} strokeWidth={activePathIds.has(child.id) ? 3 : 2} className={`edge-path ${activePathIds.has(child.id) ? 'edge-waiting' : ''}`} style={{ opacity: activePathIds.has(child.id) ? 1 : (latestNodeStates[child.id] ? 0.8 : 0.2) }} />)))}</svg>

@@ -19,6 +19,7 @@
         .node-swap { border-color: #f43f5e !important; box-shadow: 0 0 20px rgba(244, 63, 94, 0.5); }
         .line-active { stroke: #6366f1; stroke-width: 4; }
     </style>
+    <script src="settings_manager.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -79,13 +80,31 @@
             return history;
         }
 
-        const NodeComponent = ({ val, x, y, isActive, isSwap }) => (
-            <div className={`absolute w-14 h-14 rounded-full bg-slate-800 border-4 flex items-center justify-center font-black text-lg transition-all duration-500 z-20 ${isActive ? 'node-active' : (isSwap ? 'node-swap' : 'border-slate-700')}`} style={{ left: x - 28, top: y - 28 }}>
+        const NodeComponent = ({  val, x, y, isActive, isSwap  }) => {
+
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
+
+            return (
+            <div className={`absolute w-14 h-14 rounded-full bg-slate-800 border-4 flex items-center justify-center font-black text-lg transition-all duration-500 z-20 ${isActive ? 'node-active' : (isSwap ? 'node-swap' : 'border-slate-700')}`} style={{ left: x - 28, top: y - 28, fontSize: settings.fontSize + "px", borderColor: isActive ? settings.nodeColor : undefined, boxShadow: isActive ? `0 0 20px ${settings.nodeColor}80` : undefined }}>
                 {val}
             </div>
         );
+        };
 
         const App = () => {
+            const { SettingsIcon, SettingsModal, AlgorithmPanel } = useMemo(() => window.initSettingsComponents(React), []);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
             const [input, setInput] = useState("10,20,5,30,15,40,25");
             const [currentStep, setCurrentStep] = useState(0);
             const [isPlaying, setIsPlaying] = useState(false);
@@ -142,7 +161,7 @@
                     <div className="absolute top-0 left-0 right-0 z-[60] top-nav-area">
                         <div className="absolute top-0 left-0 w-full h-4 z-[70] peer"></div>
                         <div className="relative h-16 bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50 flex items-center justify-between px-6 shadow-2xl transition-transform duration-300 -translate-y-full peer-hover:translate-y-0 hover:translate-y-0 z-[60]">
-                            <div className="flex items-center gap-4"><a href="index.html" className="bg-slate-800 p-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-400 hover:text-white"><Home size={20} /></a><div><h1 className="font-bold text-lg leading-none tracking-tight">Max-Heapify Visualizer</h1><span className="text-xs text-slate-400 font-mono">Building a Max-Heap structure</span></div></div>
+                            <div className="flex items-center gap-4"><a href="index.html" className="bg-slate-800 p-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-400 hover:text-white"><Home size={20} /></a><div><h1 className="font-bold text-lg leading-none tracking-tight">Max-Heapify Visualizer</h1><span className="text-xs text-slate-400 font-mono">Building a Max-Heap structure</span><button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white shadow-lg"><SettingsIcon size={20}/></button></div></div>
                             <div className="flex items-center gap-2 bg-slate-800/80 p-1 pr-3 rounded-lg border border-slate-700/50">
                                 <span className="bg-slate-700/80 px-2 py-1 rounded text-slate-300 text-xs font-bold uppercase mr-1">Initial Array</span>
                                 <input type="text" value={input} onChange={(e) => { setInput(e.target.value); setCurrentStep(0); setIsPlaying(false); }} className="bg-transparent font-bold outline-none text-blue-400 w-48 border-b border-blue-500/30 text-center" />
@@ -150,6 +169,8 @@
                         </div>
                     </div>
 
+                    
+                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.2, z-e.deltaY*0.001), 1.5))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
                         <div className={`absolute left-0 top-0 w-full h-full ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${manualOffset.x}px, ${manualOffset.y}px) scale(${zoom})` }}>
                             <svg className="absolute top-0 left-0 w-full h-full overflow-visible">

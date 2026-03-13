@@ -20,6 +20,7 @@
         .item-row-active { background-color: rgba(99, 102, 241, 0.1); border-left: 4px solid #6366f1; }
         .item-row-selected { background-color: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; }
     </style>
+    <script src="settings_manager.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -148,6 +149,14 @@
         }
 
         const App = () => {
+            const { SettingsIcon, SettingsModal, AlgorithmPanel } = useMemo(() => window.initSettingsComponents(React), []);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
             const [currentStep, setCurrentStep] = useState(0);
             const [isPlaying, setIsPlaying] = useState(false);
             const [speedMultiplier, setSpeedMultiplier] = useState(1);
@@ -188,7 +197,7 @@
                                 <div>
                                     <h1 className="font-bold text-lg leading-none tracking-tight">0/1 Knapsack</h1>
                                     <span className="text-xs text-slate-400 font-mono">Dynamic Programming Table</span>
-                                </div>
+                                <button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white shadow-lg"><SettingsIcon size={20}/></button></div>
                             </div>
                             <div className="flex items-center gap-6">
                                 <div className="text-right">
@@ -199,6 +208,8 @@
                         </div>
                     </div>
 
+                    
+                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
                     <div className="flex-1 relative overflow-hidden flex items-center justify-center p-20">
                         {/* Table */}
                         <div className="flex flex-col gap-1 items-center" style={{ transform: `scale(${zoom})` }}>
