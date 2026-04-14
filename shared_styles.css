@@ -1,0 +1,6 @@
+body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+.camera-layer { transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); will-change: transform; }
+.infinite-bg { background-image: radial-gradient(#334155 1px, transparent 1px); background-size: 30px 30px; }
+.bar-transition { transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s; }
