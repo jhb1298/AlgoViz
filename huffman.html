@@ -9,22 +9,29 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="compression_script.js"></script>
+    <script src="settings_manager.js"></script>
+    <script src="algorithm_data.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
         .node-circle { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-        .node-active { stroke: #6366f1; stroke-width: 4; filter: drop-shadow(0 0 8px rgba(99, 102, 241, 0.5)); }
+        .node-active { stroke: #6366f1; stroke-width: 4; filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.6)); }
         .node-leaf { fill: #1e293b; stroke: #334155; }
         .node-internal { fill: #0f172a; stroke: #475569; }
         .edge-line { transition: all 0.5s; stroke: #334155; stroke-width: 2; }
         .edge-active { stroke: #6366f1; stroke-width: 3; }
         .camera-layer { transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); will-change: transform; }
         .infinite-bg { background-image: radial-gradient(#334155 1px, transparent 1px); background-size: 30px 30px; }
-        .pq-item { transition: all 0.3s; }
-        .pq-active { background-color: rgba(99, 102, 241, 0.2); border-color: #6366f1 !important; transform: translateY(-4px); }
+        .pq-item { transition: all 0.3s; border: 1px solid #1e293b; }
+        .pq-active { background-color: rgba(99, 102, 241, 0.2); border-color: #6366f1 !important; transform: translateY(-4px); box-shadow: 0 10px 20px rgba(0,0,0,0.3); }
+        .bit-tag { position: absolute; transform: translate(-50%, -50%); background: #0f172a; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 800; border: 1px solid #1e293b; }
+        .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #475569; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
     </style>
-    <script src="settings_manager.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -45,6 +52,7 @@
         const VolumeX = (props) => <IconWrapper {...props}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></IconWrapper>;
         const ChevronUp = (props) => <IconWrapper {...props}><polyline points="18 15 12 9 6 15"></polyline></IconWrapper>;
         const ChevronDown = (props) => <IconWrapper {...props}><polyline points="6 9 12 15 18 9"></polyline></IconWrapper>;
+        const Edit = (props) => <IconWrapper {...props}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></IconWrapper>;
 
         const DEFAULT_TEXT = "HUFFMAN CODING";
 
@@ -53,151 +61,191 @@
             const freqs = {};
             for (const char of text) freqs[char] = (freqs[char] || 0) + 1;
 
+            const clone = (obj) => JSON.parse(JSON.stringify(obj));
+
             history.push({
-                stepId: 0,
-                freqs: { ...freqs },
-                pq: [],
-                tree: null,
-                status: 'START',
-                desc: `Counting character frequencies...`,
+                stepId: 0, freqs: { ...freqs }, pq: [], tree: null, status: 'START', algoLine: 0,
+                desc: `Counting character frequencies in "${text}".`,
                 speech: COMPRESSION_SCRIPT.HUFFMAN.START(text)
             });
 
             let pq = Object.entries(freqs).map(([char, freq]) => ({
-                id: Math.random(),
-                char,
-                freq,
-                left: null,
-                right: null
+                id: Math.random().toString(36).substr(2, 9),
+                char, freq, left: null, right: null
             }));
             pq.sort((a, b) => a.freq - b.freq);
 
             history.push({
-                stepId: history.length,
-                freqs: { ...freqs },
-                pq: [...pq],
-                tree: null,
-                status: 'PQ_INIT',
-                desc: 'Initial priority queue created.',
+                stepId: history.length, 
+                freqs: { ...freqs }, 
+                pq: [...pq], 
+                forest: [], 
+                tree: null, 
+                status: 'PQ_INIT', 
+                algoLine: 1,
+                desc: 'Created leaf nodes and added to the Priority Queue. (Wait for merge)',
                 speech: COMPRESSION_SCRIPT.HUFFMAN.FREQUENCIES()
             });
+
+            let renderedIds = new Set();
+            let visibleForest = [];
 
             while (pq.length > 1) {
                 const left = pq.shift();
                 const right = pq.shift();
                 
+                const currentStepForest = [...visibleForest];
+                if (!renderedIds.has(left.id)) {
+                    currentStepForest.push(left);
+                    renderedIds.add(left.id);
+                    visibleForest.push(left);
+                }
+                if (!renderedIds.has(right.id)) {
+                    currentStepForest.push(right);
+                    renderedIds.add(right.id);
+                    visibleForest.push(right);
+                }
+
                 history.push({
-                    stepId: history.length,
-                    freqs: { ...freqs },
-                    pq: [left, right, ...pq],
+                    stepId: history.length, 
+                    freqs: { ...freqs }, 
+                    pq: [left, right, ...pq], 
+                    forest: clone(currentStepForest), 
                     activeIds: [left.id, right.id],
-                    status: 'PICK_TWO',
-                    desc: `Picking lowest: '${left.char || 'node'}' (${left.freq}) and '${right.char || 'node'}' (${right.freq})`,
+                    status: 'PICK_TWO', 
+                    algoLine: 3,
+                    desc: `Pulling ${!left.left ? 'leaf node' : 'subtree'} (${left.freq}) and ${!right.left ? 'leaf node' : 'subtree'} (${right.freq}) from queue.`,
                     speech: COMPRESSION_SCRIPT.HUFFMAN.PICK_TWO(left.char || 'node', right.char || 'node', left.freq, right.freq)
                 });
 
                 const parent = {
-                    id: Math.random(),
-                    char: null,
-                    freq: left.freq + right.freq,
-                    left,
+                    id: Math.random().toString(36).substr(2, 9),
+                    char: null, 
+                    freq: left.freq + right.freq, 
+                    left, 
                     right
                 };
+                
                 pq.push(parent);
                 pq.sort((a, b) => a.freq - b.freq);
 
+                visibleForest = visibleForest.filter(node => node.id !== left.id && node.id !== right.id);
+                visibleForest.push(parent);
+                renderedIds.add(parent.id);
+
                 history.push({
-                    stepId: history.length,
-                    freqs: { ...freqs },
-                    pq: [...pq],
+                    stepId: history.length, 
+                    freqs: { ...freqs }, 
+                    pq: [...pq], 
+                    forest: clone(visibleForest), 
                     activeIds: [parent.id],
-                    status: 'MERGE',
-                    desc: `Merged into parent with freq ${parent.freq}`,
+                    status: 'MERGE', 
+                    algoLine: 4,
+                    desc: `Created merged parent node (${parent.freq}) and replaced children in forest.`,
                     speech: COMPRESSION_SCRIPT.HUFFMAN.MERGE(parent.freq)
                 });
             }
 
             const root = pq[0];
+            const finalForest = root ? [root] : [];
             const codes = {};
             function assignCodes(node, code) {
                 if (!node) return;
-                if (node.char) {
-                    codes[node.char] = code;
-                    return;
-                }
+                if (node.char) { codes[node.char] = code; return; }
                 assignCodes(node.left, code + "0");
                 assignCodes(node.right, code + "1");
             }
-            assignCodes(root, "");
+            if (root) assignCodes(root, "");
 
             history.push({
-                stepId: history.length,
-                freqs: { ...freqs },
-                pq: [],
-                tree: root,
-                codes: { ...codes },
-                status: 'TREE_DONE',
-                desc: 'Tree complete! Assigning codes...',
+                stepId: history.length, freqs: { ...freqs }, pq: [], forest: clone(finalForest), tree: root, codes: { ...codes },
+                status: 'TREE_DONE', algoLine: 6,
+                desc: 'Huffman tree construction complete!',
                 speech: COMPRESSION_SCRIPT.HUFFMAN.TREE_COMPLETE()
             });
 
-            // Calculate savings
             const originalBits = text.length * 8;
-            const compressedBits = text.split('').reduce((sum, char) => sum + codes[char].length, 0);
+            const compressedBits = text.split('').reduce((sum, char) => sum + (codes[char] ? codes[char].length : 0), 0);
 
             history.push({
-                stepId: history.length,
-                freqs: { ...freqs },
-                pq: [],
-                tree: root,
-                codes: { ...codes },
-                status: 'SUCCESS',
-                desc: `Compressed: ${originalBits} bits → ${compressedBits} bits`,
+                stepId: history.length, freqs: { ...freqs }, pq: [], forest: clone(finalForest), tree: root, codes: { ...codes },
+                status: 'SUCCESS', algoLine: 7,
+                desc: `Compression Success! ${originalBits} bits saved down to ${compressedBits} bits.`,
                 speech: COMPRESSION_SCRIPT.HUFFMAN.SUCCESS(originalBits, compressedBits)
             });
-
-            return history;
+            return clone(history);
         }
 
-        // Layout engine for the tree
-        function layoutTree(node, x = 500, y = 100, level = 1, width = 400) {
+        // To show "merging up", we'll offset the whole SVG.
+        // Helper to count leaf nodes in a subtree (used for spatial allocation)
+        function countLeaves(node) {
+            if (!node) return 0;
+            if (!node.left && !node.right) return 1;
+            return countLeaves(node.left) + countLeaves(node.right);
+        }
+
+        // Tree Layout logic - LEAF-BASED SPATIAL ALLOCATION
+        // This ensures no overlap by giving each leaf a fixed width segment
+        function layoutTree(node, x, y, leafStartX) {
             if (!node) return null;
-            const result = { ...node, x, y };
-            if (node.left) result.left = layoutTree(node.left, x - width / level, y + 100, level + 1.5, width);
-            if (node.right) result.right = layoutTree(node.right, x + width / level, y + 100, level + 1.5, width);
+            
+            const leafWidth = 80; // Width allocated per leaf node
+            const totalLeaves = countLeaves(node);
+            const totalWidth = totalLeaves * leafWidth;
+            
+            // Calculate my own X as the center of my leaves' block
+            const myX = leafStartX + (totalWidth / 2);
+            const result = { ...node, x: myX, y };
+
+            const verticalGap = 120;
+            
+            if (node.left) {
+                const leftLeaves = countLeaves(node.left);
+                result.left = layoutTree(node.left, null, y + verticalGap, leafStartX);
+            }
+            
+            if (node.right) {
+                const leftLeaves = countLeaves(node.left || null);
+                // Right child starts its leaf block after the left child's leaf block
+                result.right = layoutTree(node.right, null, y + verticalGap, leafStartX + (leftLeaves * leafWidth));
+            }
+            
             return result;
         }
 
-        const NodeComponent = ({  node, isActive  }) => {
+        function getTreeDepth(node) {
+            if (!node) return 0;
+            return 1 + Math.max(getTreeDepth(node.left), getTreeDepth(node.right));
+        }
 
-            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
-            useEffect(() => {
-                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
-                window.addEventListener('simulation_settings_updated', handleUpdate);
-                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
-            }, []);
-
+        const TreeRenderer = ({ node, activeIds, settings }) => {
+            if (!node) return null;
+            const isActive = activeIds?.includes(node.id);
             return (
-            <g>
-                {node.left && (
-                    <g>
-                        <line x1={node.x} y1={node.y} x2={node.left.x} y2={node.left.y} className="edge-line" />
-                        <text x={(node.x + node.left.x)/2 - 10} y={(node.y + node.left.y)/2} fill="#6366f1" fontSize="12" fontWeight="bold">0</text>
-                        <NodeComponent node={node.left} isActive={isActive} />
-                    </g>
-                )}
-                {node.right && (
-                    <g>
-                        <line x1={node.x} y1={node.y} x2={node.right.x} y2={node.right.y} className="edge-line" />
-                        <text x={(node.x + node.right.x)/2 + 10} y={(node.y + node.right.y)/2} fill="#f59e0b" fontSize="12" fontWeight="bold">1</text>
-                        <NodeComponent node={node.right} isActive={isActive} />
-                    </g>
-                )}
-                <circle cx={node.x} cy={node.y} r="25" className={`node-circle ${node.char ? 'node-leaf' : 'node-internal'} ${isActive ? 'node-active' : ''}`} />
-                <text x={node.x} y={node.y - 2} textAnchor="middle" fill="white" fontSize="14" fontWeight="black">{node.char || node.freq}</text>
-                {node.char && <text x={node.x} y={node.y + 12} textAnchor="middle" fill="#94a3b8" fontSize={settings.fontSize}>{node.freq}</text>}
-            </g>
-        );
+                <g>
+                    {node.left && (
+                        <g>
+                            <line x1={node.x} y1={node.y} x2={node.left.x} y2={node.left.y} className={`edge-line ${activeIds?.includes(node.left.id) ? 'edge-active' : ''}`} />
+                            <foreignObject x={(node.x + node.left.x)/2 - 10} y={(node.y + node.left.y)/2 - 10} width="20" height="20">
+                                <div className="bit-tag text-blue-400">0</div>
+                            </foreignObject>
+                            <TreeRenderer node={node.left} activeIds={activeIds} settings={settings} />
+                        </g>
+                    )}
+                    {node.right && (
+                        <g>
+                            <line x1={node.x} y1={node.y} x2={node.right.x} y2={node.right.y} className={`edge-line ${activeIds?.includes(node.right.id) ? 'edge-active' : ''}`} />
+                            <foreignObject x={(node.x + node.right.x)/2 - 10} y={(node.y + node.right.y)/2 - 10} width="20" height="20">
+                                <div className="bit-tag text-amber-400">1</div>
+                            </foreignObject>
+                            <TreeRenderer node={node.right} activeIds={activeIds} settings={settings} />
+                        </g>
+                    )}
+                    <circle cx={node.x} cy={node.y} r="25" className={`node-circle ${node.char ? 'node-leaf' : 'node-internal'} ${isActive ? 'node-active' : ''}`} />
+                    <text x={node.x} y={node.y + (node.char ? -2 : 5)} textAnchor="middle" fill="white" fontSize="14" fontWeight="900">{node.char ? (node.char === " " ? "SPC" : node.char) : node.freq}</text>
+                    {node.char && <text x={node.x} y={node.y + 14} textAnchor="middle" fill="#94a3b8" fontSize="11" fontWeight="bold">[{node.freq}]</text>}
+                </g>
+            );
         };
 
         const App = () => {
@@ -209,30 +257,55 @@
                 window.addEventListener('simulation_settings_updated', handleUpdate);
                 return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
             }, []);
+
+            const [inputText, setInputText] = useState(DEFAULT_TEXT);
+            const [isEditing, setIsEditing] = useState(false);
             const [currentStep, setCurrentStep] = useState(0);
             const [isPlaying, setIsPlaying] = useState(false);
             const [speedMultiplier, setSpeedMultiplier] = useState(1);
             const [zoom, setZoom] = useState(0.8);
             const [isMuted, setIsMuted] = useState(false);
             const [isMinimized, setIsMinimized] = useState(false);
-            
-            const history = useMemo(() => generateSimulation(DEFAULT_TEXT), []);
+            const [manualOffset, setManualOffset] = useState({ x: window.innerWidth / 2 - 400, y: window.innerHeight / 2 - 300 });
+            const [panelOffset, setPanelOffset] = useState({ x: 0, y: 0 });
+            const [isDraggingCanvas, setIsDraggingCanvas] = useState(false);
+            const [isDraggingPanel, setIsDraggingPanel] = useState(false);
+            const canvasDragStart = useRef({ x: 0, y: 0 });
+            const panelDragStart = useRef({ x: 0, y: 0 });
+            const isPlayingRef = useRef(false);
+            isPlayingRef.current = isPlaying;
+
+            const history = useMemo(() => generateSimulation(inputText), [inputText]);
             const state = history[currentStep] || history[0];
-            const treeLayout = useMemo(() => layoutTree(state.tree || (state.pq.length > 0 ? state.pq[0] : null)), [state.tree, state.pq]);
+            const forestLayout = useMemo(() => {
+                const forest = state.forest || [];
+                if (forest.length === 0) return [];
+                
+                let currentStartX = 0;
+                const forestPadding = 150;
+
+                return forest.map((tree) => {
+                    const depth = getTreeDepth(tree);
+                    const leafWidth = 80;
+                    const treeWidth = countLeaves(tree) * leafWidth;
+                    const rootY = Math.max(100, 600 - ((depth - 1) * 120));
+                    
+                    const layout = layoutTree(tree, null, rootY, currentStartX);
+                    currentStartX += treeWidth + forestPadding;
+                    return layout;
+                });
+            }, [state.forest]);
 
             const nextStep = () => { setCurrentStep(prev => (prev < history.length - 1 ? prev + 1 : (setIsPlaying(false), prev))); };
             const prevStep = () => { setCurrentStep(prev => Math.max(0, prev - 1)); setIsPlaying(false); };
 
             const speak = (text) => {
                 const delay = (1000 / speedMultiplier);
-                if (isMuted || !text) { 
-                    if(isPlaying) setTimeout(nextStep, delay); 
-                    return; 
-                }
+                if (isMuted || !text) { setTimeout(() => { if(isPlayingRef.current) nextStep(); }, delay); return; }
                 window.speechSynthesis.cancel();
                 const utterance = new SpeechSynthesisUtterance(text);
                 utterance.pitch = 1.1; utterance.rate = 1.1 * speedMultiplier;
-                utterance.onend = () => { if(isPlaying) nextStep(); };
+                utterance.onend = () => { if(isPlayingRef.current) nextStep(); };
                 window.speechSynthesis.speak(utterance);
             };
 
@@ -242,46 +315,94 @@
             }, [isPlaying, currentStep]);
 
             return (
-                <div className="h-screen w-screen flex flex-col relative overflow-hidden bg-slate-900 text-white select-none">
-                    <div className="absolute top-0 left-0 right-0 z-[60]">
-                        <div className="relative h-16 bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50 flex items-center justify-between px-6 shadow-2xl">
+                <div className="h-screen w-screen flex flex-col relative overflow-hidden bg-slate-900 text-white select-none" onMouseMove={(e) => { if(isDraggingPanel) setPanelOffset({x: e.clientX-panelDragStart.current.x, y: e.clientY-panelDragStart.current.y}); else if(isDraggingCanvas) setManualOffset({x: e.clientX-canvasDragStart.current.x, y: e.clientY-canvasDragStart.current.y}); }} onMouseUp={() => {setIsDraggingCanvas(false); setIsDraggingPanel(false);}}>
+                    
+                    {/* Top Nav Area - Auto-hiding logic from Prim's */}
+                    <div className="absolute top-0 left-0 right-0 z-[60] top-nav-area">
+                        <div className="absolute top-0 left-0 w-full h-4 z-[70] peer"></div>
+                        <div className="relative h-16 bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50 flex items-center justify-between px-6 shadow-2xl transition-transform duration-300 -translate-y-full peer-hover:translate-y-0 hover:translate-y-0">
                             <div className="flex items-center gap-4">
-                                <a href="index.html" className="bg-slate-800 p-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-400 hover:text-white"><Home size={20} /></a>
+                                <a href="index.html" className="bg-slate-800 p-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-400 hover:text-white group">
+                                    <Home size={20} className="group-hover:scale-110 transition-transform"/>
+                                </a>
                                 <div>
-                                    <h1 className="font-bold text-lg leading-none tracking-tight">Huffman Coding</h1>
-                                    <span className="text-xs text-slate-400 font-mono">Greedy Compression Tree</span>
-                                <button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white shadow-lg"><SettingsIcon size={20}/></button></div>
-                            </div>
-                            <div className="flex items-center gap-6">
-                                <div className="text-right">
-                                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Input String</div>
-                                    <div className="font-mono text-emerald-400 font-bold tracking-widest">"{DEFAULT_TEXT}"</div>
+                                    <h1 className="font-bold text-lg leading-none tracking-tight uppercase">Huffman Coding</h1>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"/>
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">Greedy Compression</span>
+                                    </div>
+                                    <button onClick={() => setIsSettingsOpen(true)} className="ml-4 p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white shadow-lg"><SettingsIcon size={20}/></button>
                                 </div>
                             </div>
+
+                            <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg font-black text-[11px] uppercase tracking-widest transition-all shadow-lg active:scale-95">
+                                <Edit size={16}/> New Text
+                            </button>
                         </div>
                     </div>
 
-                    {/* Frequencies & Codes Sidebar */}
-                    <div className="absolute left-6 top-24 w-48 flex flex-col gap-4 z-40">
-                        <div className="bg-slate-800/80 backdrop-blur-md p-4 rounded-2xl border border-slate-700 shadow-xl">
-                            <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Char Frequencies</h3>
-                            <div className="flex flex-col gap-1 max-h-48 overflow-y-auto pr-2">
+                    {isEditing && (
+                        <div className="absolute inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-6">
+                            <div className="bg-slate-900 border border-slate-700 rounded-3xl p-8 max-w-lg w-full shadow-2xl">
+                                <h2 className="text-2xl font-bold mb-2 uppercase tracking-wide">Huffman Input</h2>
+                                <p className="text-slate-400 text-sm mb-4">Enter text to visualize frequency counting & tree construction.</p>
+                                <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} className="w-full h-32 bg-slate-950 border border-slate-700 rounded-xl p-4 font-mono text-blue-400 outline-none focus:border-blue-500 mb-6" maxLength="50" />
+                                <div className="flex justify-end gap-4">
+                                    <button onClick={() => setIsEditing(false)} className="px-6 py-2 rounded-xl font-bold text-slate-400 hover:bg-slate-800 transition-all">Cancel</button>
+                                    <button onClick={() => { setIsEditing(false); setCurrentStep(0); setIsPlaying(false); }} className="px-8 py-2 rounded-xl font-bold bg-blue-600 hover:bg-blue-500 shadow-lg text-white">Apply</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+                    <AlgorithmPanel algoKey="HUFFMAN" currentLine={state.algoLine} />
+
+                    {/* Stats & HUD - All Right Aligned */}
+                    <div className="absolute right-6 top-6 bottom-32 w-72 flex flex-col gap-4 z-40 pointer-events-none pt-4">
+                        <div className="pointer-events-auto bg-slate-900/60 backdrop-blur-2xl p-5 rounded-3xl border border-white/10 shadow-2xl flex-[0.35] flex flex-col min-h-0">
+                            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse"/> Frequencies
+                            </h3>
+                            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
                                 {Object.entries(state.freqs).sort((a,b) => b[1]-a[1]).map(([char, freq]) => (
-                                    <div key={char} className="flex justify-between items-center text-xs">
-                                        <span className="font-mono text-blue-400">'{char}'</span>
-                                        <span className="font-bold">{freq}</span>
+                                    <div key={char} className="flex justify-between items-center text-xs group">
+                                        <span className="font-mono bg-white/5 px-2 py-1 rounded text-blue-400 border border-white/5">'{char === " " ? "SPC" : char}'</span>
+                                        <span className="font-bold text-slate-300">{freq}</span>
                                     </div>
                                 ))}
                             </div>
                         </div>
+
+                        {/* Priority Queue Sidebar */}
+                        <div className="pointer-events-auto bg-slate-900/60 backdrop-blur-2xl p-5 rounded-3xl border border-white/10 shadow-2xl flex-[0.25] flex flex-col min-h-0">
+                            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <div className="w-1 h-1 rounded-full bg-amber-500 animate-pulse"/> Priority Queue
+                            </h3>
+                            <div className="flex flex-wrap gap-2 overflow-y-auto custom-scrollbar">
+                                {state.pq.map((item) => (
+                                    <div key={item.id} className={`pq-item shrink-0 flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-slate-800/80 border ${state.activeIds?.includes(item.id) ? 'pq-active ring-2 ring-blue-500/50' : 'border-white/5 shadow-lg relative'}`}>
+                                        <span className={`text-[10px] font-black ${item.char ? 'text-white' : 'text-slate-500 italic text-[8px]'}`}>{item.char ? (item.char === " " ? "␣" : item.char) : "Σ"}</span>
+                                        <span className="text-[9px] font-black text-blue-400 leading-none mt-0.5">{item.freq}</span>
+                                    </div>
+                                ))}
+                                {state.pq.length === 0 && <span className="text-[9px] font-bold text-slate-600 uppercase tracking-tighter italic">Queue Empty</span>}
+                            </div>
+                        </div>
+
                         {state.codes && (
-                            <div className="bg-slate-800/80 backdrop-blur-md p-4 rounded-2xl border border-slate-700 shadow-xl">
-                                <h3 className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Huffman Codes</h3>
-                                <div className="flex flex-col gap-1 max-h-48 overflow-y-auto pr-2">
+                            <div className="pointer-events-auto bg-slate-900/60 backdrop-blur-2xl p-5 rounded-3xl border border-white/10 shadow-2xl flex-[0.4] flex flex-col min-h-0">
+                                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse"/> Dictionary
+                                </h3>
+                                <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
                                     {Object.entries(state.codes).sort().map(([char, code]) => (
-                                        <div key={char} className="flex justify-between items-center text-[10px]">
-                                            <span className="font-mono text-blue-400">'{char}'</span>
-                                            <span className="font-bold text-emerald-400">{code}</span>
+                                        <div key={char} className="flex flex-col gap-1 group">
+                                            <div className="flex justify-between items-center text-[10px]">
+                                                <span className="font-mono text-slate-500 uppercase">'{char === " " ? "SPC" : char}'</span>
+                                                <span className="font-bold text-emerald-400 tracking-widest">{code}</span>
+                                            </div>
+                                            <div className="h-[1px] w-full bg-white/5 rounded-full" />
                                         </div>
                                     ))}
                                 </div>
@@ -289,47 +410,43 @@
                         )}
                     </div>
 
-                    {/* Priority Queue Bar */}
-                    <div className="absolute top-24 left-1/2 -translate-x-1/2 flex gap-2 z-40 bg-slate-950/50 p-2 rounded-xl backdrop-blur-sm">
-                        {state.pq.map(item => (
-                            <div key={item.id} className={`pq-item flex flex-col items-center justify-center w-12 h-12 rounded-lg border border-slate-700 bg-slate-800 ${state.activeIds?.includes(item.id) ? 'pq-active' : ''}`}>
-                                <span className="text-sm font-bold">{item.char || '•'}</span>
-                                <span className="text-[9px] text-slate-500">{item.freq}</span>
+                    {/* Draggable Main Canvas - Centered Logic from Prim's */}
+                    <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.2, z-e.deltaY*0.001), 2.0))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper') && !e.target.closest('.top-nav-area')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
+                        <div className={`node-container absolute origin-top-left ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${manualOffset.x}px, ${manualOffset.y}px) scale(${zoom})` }}>
+                            <svg width="4000" height="2000" className="overflow-visible pointer-events-none" style={{ marginLeft: -1000 }}>
+                                {forestLayout.map(tree => (
+                                    <TreeRenderer key={tree.id} node={tree} activeIds={state.activeIds} settings={settings} />
+                                ))}
+                            </svg>
+                        </div>
+                    </div>
+
+                    {/* Control Dock - Premium Prim's Style */}
+                    <div className="absolute bottom-6 left-1/2 w-full max-w-4xl px-4 z-50 control-panel-wrapper" style={{ transform: `translate(calc(-50% + ${panelOffset.x}px), ${panelOffset.y}px)` }}>
+                        <div className={`bg-slate-900/40 hover:bg-slate-900/85 backdrop-blur-md border border-slate-600/30 rounded-2xl shadow-2xl flex flex-col relative box-border transition-all duration-300 ${isMinimized ? 'w-fit min-w-[180px] mx-auto px-4 pb-3 pt-1' : 'px-5 pb-4 pt-2'}`}>
+                            <div className="w-full h-6 cursor-grab active:cursor-grabbing flex justify-center items-center mb-1" onMouseDown={(e) => {e.preventDefault(); setIsDraggingPanel(true); panelDragStart.current={x:e.clientX-panelOffset.x, y:e.clientY-panelOffset.y}; e.stopPropagation();}}>
+                                <div className="bg-white/10 rounded-full px-6 py-0.5"><GripHorizontal size={12} className="text-white/50" /></div>
                             </div>
-                        ))}
-                    </div>
-
-                    
-                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-                    <div className="flex-1 relative infinite-bg overflow-hidden flex items-center justify-center">
-                        <svg width="1000" height="1000" style={{ transform: `scale(${zoom})` }} className="camera-layer overflow-visible">
-                            {treeLayout && <NodeComponent node={treeLayout} isActive={false} />}
-                        </svg>
-                    </div>
-
-                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 z-50">
-                        <div className={`bg-slate-900/80 backdrop-blur-md border border-slate-700/50 rounded-2xl shadow-2xl flex flex-col relative transition-all duration-300 ${isMinimized ? 'w-fit mx-auto px-4 pb-3 pt-1' : 'px-5 pb-4 pt-2'}`}>
-                            <button onClick={() => setIsMinimized(!isMinimized)} className="absolute top-2 right-2 p-1 hover:bg-slate-700/50 rounded-md text-slate-400 hover:text-white transition-colors">{isMinimized ? <ChevronUp size={16}/> : <ChevronDown size={18}/>}</button>
+                            <button onClick={() => setIsMinimized(!isMinimized)} className="absolute top-2 right-2 p-1 hover:bg-slate-700/50 rounded-md text-slate-400 hover:text-white transition-colors z-50">{isMinimized ? <ChevronUp size={16}/> : <ChevronDown size={18}/>}</button>
                             {isMinimized ? (
                                 <div className="flex items-center justify-center gap-4">
                                     <button onClick={prevStep} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-200"><Rewind size={18}/></button>
-                                    <button onClick={() => setIsPlaying(!isPlaying)} className={`w-10 h-10 flex items-center justify-center rounded-full shadow-lg ${isPlaying ? 'bg-amber-500' : 'bg-blue-600'}`}>{isPlaying ? <Pause fill="white" size={18} /> : <Play fill="white" size={18} className="ml-1"/>}</button>
+                                    <button onClick={() => setIsPlaying(!isPlaying)} className={`w-10 h-10 flex items-center justify-center rounded-full shadow-lg transform transition-all active:scale-95 border border-white/20 ${isPlaying ? 'bg-amber-500' : 'bg-blue-600'}`}>{isPlaying ? <Pause fill="white" size={18} /> : <Play fill="white" size={18} className="ml-1"/>}</button>
                                     <button onClick={nextStep} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-200"><FastForward size={18}/></button>
                                 </div>
                             ) : (
                                 <>
-                                    <div className="relative w-full h-1.5 bg-slate-800 rounded-full mb-3 mt-1">
-                                        <div className="absolute top-0 left-0 h-full bg-blue-500 rounded-full transition-all duration-100" style={{ width: `${(currentStep / (history.length-1)) * 100}%` }}></div>
-                                        <input type="range" min="0" max={history.length - 1} value={currentStep} onChange={(e) => { setIsPlaying(false); setCurrentStep(Number(e.target.value)); }} className="absolute -top-2 left-0 w-full h-6 opacity-0 <input type="range" min="0" max={history.length - 1} value={currentStep} onChange={(e) => { setIsPlaying(false); setCurrentStep(Number(e.target.value)); }} className="absolute -top-2 left-0 w-full h-6 opacity-0 cursor-pointer z-10" />
-                                    </div>
+                                    <div className="relative w-full h-1.5 bg-slate-800/80 rounded-full mb-3 mt-1"><div className="absolute top-0 left-0 h-full bg-blue-500 rounded-full transition-all duration-100" style={{ width: `${(currentStep / (history.length-1)) * 100}%` }}></div><input type="range" min="0" max={history.length - 1} value={currentStep} onChange={(e) => { setIsPlaying(false); setCurrentStep(Number(e.target.value)); }} className="absolute -top-2 left-0 w-full h-6 opacity-0 cursor-pointer z-10" /></div>
                                     <div className="flex items-center justify-between w-full">
-                                        <div className="flex flex-col w-[30%]"><span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Step</span><span className="text-sm font-mono text-emerald-300 truncate">{state.desc}</span></div>
-                                        <div className="flex items-center justify-center gap-3 w-[40%]"><button onClick={prevStep} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-200"><Rewind size={18}/></button><button onClick={() => setIsPlaying(!isPlaying)} className={`w-12 h-12 flex items-center justify-center rounded-full shadow-lg ${isPlaying ? 'bg-amber-500' : 'bg-blue-600'}`}>{isPlaying ? <Pause fill="white" size={20} /> : <Play fill="white" size={20} className="ml-1"/>}</button><button onClick={nextStep} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-200"><FastForward size={18}/></button></div>
+                                        <div className="flex flex-col w-[30%] overflow-hidden pr-2"><span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Step {String(currentStep + 1).padStart(3, '0')}</span><span className="text-sm font-bold text-emerald-300 leading-tight truncate">{state?.desc}</span></div>
+                                        <div className="flex items-center justify-center gap-3 w-[40%]"><button onClick={() => setCurrentStep(0)} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-300 transition-colors"><SkipBack size={16}/></button><button onClick={prevStep} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-200 transition-colors"><Rewind size={18}/></button><button onClick={() => setIsPlaying(!isPlaying)} className={`w-12 h-12 flex items-center justify-center rounded-full shadow-lg transform transition-all active:scale-95 border border-white/20 ${isPlaying ? 'bg-amber-500' : 'bg-blue-600'}`}>{isPlaying ? <Pause fill="white" size={20} /> : <Play fill="white" size={20} className="ml-1"/>}</button><button onClick={nextStep} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-200 transition-colors"><FastForward size={18}/></button><button onClick={() => setCurrentStep(history.length - 1)} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-300 transition-colors"><SkipForward size={16}/></button></div>
                                         <div className="flex items-center justify-end gap-4 w-[30%]">
-                                            <button onClick={() => setZoom(z => Math.max(0.3, z - 0.1))} className="text-slate-400 hover:text-white">-</button>
-                                            <span className="text-xs font-mono text-slate-500">{Math.round(zoom*100)}%</span>
-                                            <button onClick={() => setZoom(z => Math.min(2, z + 0.1))} className="text-slate-400 hover:text-white">+</button>
-                                            <button onClick={() => setIsMuted(!isMuted)} className={`p-2 rounded-lg ${isMuted ? 'text-rose-400 bg-rose-400/10' : 'text-blue-400 bg-blue-400/10'}`}>{isMuted ? <VolumeX size={18}/> : <Volume2 size={18}/>}</button>
+                                             <div className="flex items-center gap-2 bg-slate-950/40 p-1.5 rounded-lg border border-white/5">
+                                                <button onClick={() => setZoom(z => Math.max(0.2, z - 0.1))} className="w-6 h-6 hover:bg-slate-800 rounded text-slate-400 font-bold">-</button>
+                                                <span className="text-[9px] font-black text-slate-500 w-8 text-center">{Math.round(zoom*100)}%</span>
+                                                <button onClick={() => setZoom(z => Math.min(2, z + 0.1))} className="w-6 h-6 hover:bg-slate-800 rounded text-slate-400 font-bold">+</button>
+                                            </div>
+                                            <button onClick={() => setIsMuted(!isMuted)} className={`p-2 rounded-lg transition-colors ${isMuted ? 'text-rose-400 bg-rose-400/10' : 'text-blue-400 bg-blue-400/10'}`}>{isMuted ? <VolumeX size={18}/> : <Volume2 size={18}/>}</button>
                                             <div className="flex flex-col gap-1 items-end w-24">
                                                 <span className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">Speed {speedMultiplier}x</span>
                                                 <input type="range" min="0.5" max="2.0" step="0.1" value={speedMultiplier} onChange={(e) => setSpeedMultiplier(Number(e.target.value))} className="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-400" />

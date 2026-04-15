@@ -116,6 +116,25 @@ const ALGORITHM_PSEUDOCODE = {
         "4.   res = fib(n-1) + fib(n-2)",
         "5.   memo[n] = res",
         "6.   Return res"
+    ],
+    "PAGERANK": [
+        "1. Initialize PR(u) = 1/N for all nodes",
+        "2. Repeat for each iteration:",
+        "3.   For each node u:",
+        "4.     new_PR[u] = (1-d)/N",
+        "5.     For each node v linking to u:",
+        "6.       new_PR[u] += d * (PR[v] / L[v])",
+        "7.   Update PR = new_PR"
+    ],
+    "HUFFMAN": [
+        "1. Count frequency of each character",
+        "2. Create a Leaf node for each char and add to Priority Queue PQ",
+        "3. While PQ has more than one node:",
+        "4.   Remove two nodes with lowest frequency (left, right)",
+        "5.   Create internal node with freq = left.freq + right.freq",
+        "6.   Set children to left and right, add to PQ",
+        "7. Remaining node is root of Huffman Tree",
+        "8. Traverse tree (left=0, right=1) to assign codes"
     ]
 };
 
