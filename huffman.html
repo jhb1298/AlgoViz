@@ -15,12 +15,16 @@
         body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
         ::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
-        .node-circle { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-        .node-active { stroke: #6366f1; stroke-width: 4; filter: drop-shadow(0 0 12px rgba(99, 102, 241, 0.6)); }
+        .node-circle { transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; }
+        .node-active { stroke: #6366f1; stroke-width: 4; filter: drop-shadow(0 0 15px rgba(99, 102, 241, 0.8)); }
         .node-leaf { fill: #1e293b; stroke: #334155; }
         .node-internal { fill: #0f172a; stroke: #475569; }
-        .edge-line { transition: all 0.5s; stroke: #334155; stroke-width: 2; }
-        .edge-active { stroke: #6366f1; stroke-width: 3; }
+        .node-ghost { opacity: 0.2; stroke-dasharray: 4; }
+        /* Transform-based lines ensure smooth animation on all browsers */
+        .edge-line-container { transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1); position: absolute; pointer-events: none; }
+        .edge-line { height: 1.5px; background: #334155; transform-origin: left center; transition: all 0.7s cubic-bezier(0.4, 0, 0.2, 1); }
+        .edge-active .edge-line { background: #6366f1; height: 2px; box-shadow: 0 0 8px rgba(99, 102, 241, 0.4); }
+        .node-text { transition: all 0.6s ease-in-out; pointer-events: none; }
         .camera-layer { transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); will-change: transform; }
         .infinite-bg { background-image: radial-gradient(#334155 1px, transparent 1px); background-size: 30px 30px; }
         .pq-item { transition: all 0.3s; border: 1px solid #1e293b; }
@@ -61,7 +65,10 @@
             const freqs = {};
             for (const char of text) freqs[char] = (freqs[char] || 0) + 1;
 
-            const clone = (obj) => JSON.parse(JSON.stringify(obj));
+            // WE MUST PRESERVE REFERENCES for animation! 
+            // JSON.parse(JSON.stringify) breaks object identity.
+            // We use a shallow clone for the array/history, but KEEP node references.
+            const clone = (forest) => [...forest];
 
             history.push({
                 stepId: 0, freqs: { ...freqs }, pq: [], tree: null, status: 'START', algoLine: 0,
@@ -88,50 +95,61 @@
             });
 
             let renderedIds = new Set();
-            let visibleForest = [];
+            let visibleForest = []; // Persistent registry of root nodes on canvas
 
             while (pq.length > 1) {
                 const left = pq.shift();
                 const right = pq.shift();
                 
-                const currentStepForest = [...visibleForest];
-                if (!renderedIds.has(left.id)) {
-                    currentStepForest.push(left);
-                    renderedIds.add(left.id);
-                    visibleForest.push(left);
-                }
-                if (!renderedIds.has(right.id)) {
-                    currentStepForest.push(right);
-                    renderedIds.add(right.id);
-                    visibleForest.push(right);
-                }
+                // 1. Ensure these nodes are considered "visible" so they can fly from their current spots
+                // If they are leaf nodes just being dequed, they start at their individual spots.
+                const alreadyInForest = new Set(visibleForest.map(n => n.id));
+                if (!alreadyInForest.has(left.id)) visibleForest.push(left);
+                if (!alreadyInForest.has(right.id)) visibleForest.push(right);
 
+                // PHASE A: SELECT (Highlight nodes in their current forest positions)
                 history.push({
                     stepId: history.length, 
                     freqs: { ...freqs }, 
                     pq: [left, right, ...pq], 
-                    forest: clone(currentStepForest), 
+                    forest: clone(visibleForest), 
                     activeIds: [left.id, right.id],
                     status: 'PICK_TWO', 
                     algoLine: 3,
-                    desc: `Pulling ${!left.left ? 'leaf node' : 'subtree'} (${left.freq}) and ${!right.left ? 'leaf node' : 'subtree'} (${right.freq}) from queue.`,
+                    desc: `Selected nodes (${left.freq}) and (${right.freq}) for merging.`,
                     speech: COMPRESSION_SCRIPT.HUFFMAN.PICK_TWO(left.char || 'node', right.char || 'node', left.freq, right.freq)
                 });
 
+                // PHASE B: GLIDE (Subtrees move toward the target parent coordinates)
                 const parent = {
                     id: Math.random().toString(36).substr(2, 9),
                     char: null, 
                     freq: left.freq + right.freq, 
                     left, 
-                    right
+                    right,
+                    isGhost: true 
                 };
-                
+
+                // Replace children with ghost parent in forest to trigger the glide
+                visibleForest = visibleForest.filter(n => n.id !== left.id && n.id !== right.id);
+                visibleForest.push(parent);
+
+                history.push({
+                    stepId: history.length, 
+                    freqs: { ...freqs }, 
+                    pq: [parent, ...pq], 
+                    forest: clone(visibleForest), 
+                    activeIds: [left.id, right.id],
+                    status: 'GLIDE', 
+                    algoLine: 4,
+                    desc: `Gliding subtrees into merge position...`,
+                    speech: null
+                });
+
+                // PHASE C: MERGE (Manifest parent node and connections)
+                parent.isGhost = false;
                 pq.push(parent);
                 pq.sort((a, b) => a.freq - b.freq);
-
-                visibleForest = visibleForest.filter(node => node.id !== left.id && node.id !== right.id);
-                visibleForest.push(parent);
-                renderedIds.add(parent.id);
 
                 history.push({
                     stepId: history.length, 
@@ -140,8 +158,8 @@
                     forest: clone(visibleForest), 
                     activeIds: [parent.id],
                     status: 'MERGE', 
-                    algoLine: 4,
-                    desc: `Created merged parent node (${parent.freq}) and replaced children in forest.`,
+                    algoLine: 5,
+                    desc: `Merged into parent node (${parent.freq}).`,
                     speech: COMPRESSION_SCRIPT.HUFFMAN.MERGE(parent.freq)
                 });
             }
@@ -189,28 +207,29 @@
         function layoutTree(node, x, y, leafStartX) {
             if (!node) return null;
             
-            const leafWidth = 80; // Width allocated per leaf node
+            const leafWidth = 80; 
             const totalLeaves = countLeaves(node);
             const totalWidth = totalLeaves * leafWidth;
             
-            // Calculate my own X as the center of my leaves' block
             const myX = leafStartX + (totalWidth / 2);
-            const result = { ...node, x: myX, y };
+            
+            // INJECT coordinates into the EXISTING node object to preserve reference stability
+            node.x = myX;
+            node.y = y;
 
             const verticalGap = 120;
             
             if (node.left) {
                 const leftLeaves = countLeaves(node.left);
-                result.left = layoutTree(node.left, null, y + verticalGap, leafStartX);
+                layoutTree(node.left, null, y + verticalGap, leafStartX);
             }
             
             if (node.right) {
-                const leftLeaves = countLeaves(node.left || null);
-                // Right child starts its leaf block after the left child's leaf block
-                result.right = layoutTree(node.right, null, y + verticalGap, leafStartX + (leftLeaves * leafWidth));
+                const leftLeaves = countLeaves(node.left);
+                layoutTree(node.right, null, y + verticalGap, leafStartX + (leftLeaves * leafWidth));
             }
             
-            return result;
+            return node;
         }
 
         function getTreeDepth(node) {
@@ -218,32 +237,83 @@
             return 1 + Math.max(getTreeDepth(node.left), getTreeDepth(node.right));
         }
 
-        const TreeRenderer = ({ node, activeIds, settings }) => {
+        const Edge = ({ x1, y1, x2, y2, isActive, isGhost }) => {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+            
+            return (
+                <g className={`edge-line-container ${isActive ? 'edge-active' : ''}`} style={{ transform: `translate(${x1}px, ${y1}px) rotate(${angle}deg)`, opacity: isGhost ? 0 : 1, transition: 'all 0.7s cubic-bezier(0.4, 0, 0.2, 1)' }}>
+                    <rect width={length} height="1.5" className="edge-line" />
+                </g>
+            );
+        };
+
+        // Collect all node positions from a laid-out tree recursively
+        function collectPositions(node, map) {
+            if (!node) return;
+            map.set(node.id, { x: node.x, y: node.y });
+            collectPositions(node.left, map);
+            collectPositions(node.right, map);
+        }
+
+        const TreeRenderer = ({ node, activeIds, settings, animPos }) => {
             if (!node) return null;
             const isActive = activeIds?.includes(node.id);
+            // Read position from the animated positions map — NOT from the node object directly
+            const pos = animPos?.get(node.id) || { x: node.x || 0, y: node.y || 0 };
+            const { x, y } = pos;
+            
             return (
-                <g>
+                <g key={node.id}>
                     {node.left && (
-                        <g>
-                            <line x1={node.x} y1={node.y} x2={node.left.x} y2={node.left.y} className={`edge-line ${activeIds?.includes(node.left.id) ? 'edge-active' : ''}`} />
-                            <foreignObject x={(node.x + node.left.x)/2 - 10} y={(node.y + node.left.y)/2 - 10} width="20" height="20">
-                                <div className="bit-tag text-blue-400">0</div>
-                            </foreignObject>
-                            <TreeRenderer node={node.left} activeIds={activeIds} settings={settings} />
+                        <g key={`${node.id}-left`}>
+                            <Edge 
+                                x1={x} y1={y} 
+                                x2={(animPos?.get(node.left.id) || { x: node.left.x, y: node.left.y }).x}
+                                y2={(animPos?.get(node.left.id) || { x: node.left.x, y: node.left.y }).y}
+                                isActive={activeIds?.includes(node.left.id) || activeIds?.includes(node.id)} 
+                                isGhost={node.isGhost}
+                            />
+                            <g className="node-text" style={{ transform: `translate(${(x + (animPos?.get(node.left.id)?.x ?? node.left.x))/2}px, ${(y + (animPos?.get(node.left.id)?.y ?? node.left.y))/2}px)`, opacity: node.isGhost ? 0 : 1 }}>
+                                <foreignObject x="-10" y="-10" width="20" height="20" className="overflow-visible">
+                                    <div className="bit-tag text-blue-400">0</div>
+                                </foreignObject>
+                            </g>
+                            <TreeRenderer node={node.left} activeIds={activeIds} settings={settings} animPos={animPos} />
                         </g>
                     )}
                     {node.right && (
-                        <g>
-                            <line x1={node.x} y1={node.y} x2={node.right.x} y2={node.right.y} className={`edge-line ${activeIds?.includes(node.right.id) ? 'edge-active' : ''}`} />
-                            <foreignObject x={(node.x + node.right.x)/2 - 10} y={(node.y + node.right.y)/2 - 10} width="20" height="20">
-                                <div className="bit-tag text-amber-400">1</div>
-                            </foreignObject>
-                            <TreeRenderer node={node.right} activeIds={activeIds} settings={settings} />
+                        <g key={`${node.id}-right`}>
+                            <Edge 
+                                x1={x} y1={y} 
+                                x2={(animPos?.get(node.right.id) || { x: node.right.x, y: node.right.y }).x}
+                                y2={(animPos?.get(node.right.id) || { x: node.right.x, y: node.right.y }).y}
+                                isActive={activeIds?.includes(node.right.id) || activeIds?.includes(node.id)} 
+                                isGhost={node.isGhost}
+                            />
+                            <g className="node-text" style={{ transform: `translate(${(x + (animPos?.get(node.right.id)?.x ?? node.right.x))/2}px, ${(y + (animPos?.get(node.right.id)?.y ?? node.right.y))/2}px)`, opacity: node.isGhost ? 0 : 1 }}>
+                                <foreignObject x="-10" y="-10" width="20" height="20" className="overflow-visible">
+                                    <div className="bit-tag text-amber-400">1</div>
+                                </foreignObject>
+                            </g>
+                            <TreeRenderer node={node.right} activeIds={activeIds} settings={settings} animPos={animPos} />
                         </g>
                     )}
-                    <circle cx={node.x} cy={node.y} r="25" className={`node-circle ${node.char ? 'node-leaf' : 'node-internal'} ${isActive ? 'node-active' : ''}`} />
-                    <text x={node.x} y={node.y + (node.char ? -2 : 5)} textAnchor="middle" fill="white" fontSize="14" fontWeight="900">{node.char ? (node.char === " " ? "SPC" : node.char) : node.freq}</text>
-                    {node.char && <text x={node.x} y={node.y + 14} textAnchor="middle" fill="#94a3b8" fontSize="11" fontWeight="bold">[{node.freq}]</text>}
+                    
+                    <circle 
+                        cx={x} cy={y} r="25" 
+                        className={`node-circle ${node.char ? 'node-leaf' : 'node-internal'} ${isActive ? 'node-active' : ''} ${node.isGhost ? 'node-ghost' : ''}`} 
+                        style={{ opacity: node.isGhost ? 0 : 1 }}
+                    />
+                    
+                    <g className="node-text" style={{ transform: `translate(${x}px, ${y}px)`, opacity: node.isGhost ? 0 : 1 }}>
+                        <text y={node.char ? -2 : 5} textAnchor="middle" fill="white" fontSize="14" fontWeight="900" style={{ pointerEvents: 'none' }}>
+                            {node.char ? (node.char === " " ? "SPC" : node.char) : node.freq}
+                        </text>
+                        {node.char && <text y="14" textAnchor="middle" fill="#94a3b8" fontSize="11" fontWeight="bold" style={{ pointerEvents: 'none' }}>[{node.freq}]</text>}
+                    </g>
                 </g>
             );
         };
@@ -275,26 +345,57 @@
             const isPlayingRef = useRef(false);
             isPlayingRef.current = isPlaying;
 
+            const [animPositions, setAnimPositions] = useState(() => new Map());
+            const rafRef = useRef(null);
+
             const history = useMemo(() => generateSimulation(inputText), [inputText]);
             const state = history[currentStep] || history[0];
+
             const forestLayout = useMemo(() => {
                 const forest = state.forest || [];
                 if (forest.length === 0) return [];
                 
-                let currentStartX = 0;
-                const forestPadding = 150;
+                const leafWidth = 80;
+                const forestPadding = 120;
+                let totalForestWidth = 0;
+                forest.forEach(tree => {
+                    totalForestWidth += (countLeaves(tree) * leafWidth) + forestPadding;
+                });
+                totalForestWidth -= forestPadding;
+
+                let currentStartX = -totalForestWidth / 2;
 
                 return forest.map((tree) => {
                     const depth = getTreeDepth(tree);
-                    const leafWidth = 80;
                     const treeWidth = countLeaves(tree) * leafWidth;
-                    const rootY = Math.max(100, 600 - ((depth - 1) * 120));
-                    
-                    const layout = layoutTree(tree, null, rootY, currentStartX);
+                    const rootY = 400 - ((depth - 1) * 120);
+                    layoutTree(tree, null, rootY, currentStartX);
                     currentStartX += treeWidth + forestPadding;
-                    return layout;
+                    return tree;
                 });
             }, [state.forest]);
+
+            // DOUBLE RAF — key to smooth animation:
+            // When the step changes, forestLayout runs and mutates node coordinates.
+            // We capture these NEW target coordinates, but we DON'T update animPositions yet.
+            // Frame 1 (RAF 1): browser paints the OLD animPositions (nodes at their old spots)
+            // Frame 2 (RAF 2): we set the NEW positions → CSS transition fires → nodes glide
+            useEffect(() => {
+                if (rafRef.current) cancelAnimationFrame(rafRef.current);
+                
+                // Collect new target positions from the laid-out forest
+                const newPositions = new Map();
+                forestLayout.forEach(tree => collectPositions(tree, newPositions));
+
+                // Double RAF: let the browser paint old positions first, then update
+                rafRef.current = requestAnimationFrame(() => {
+                    rafRef.current = requestAnimationFrame(() => {
+                        setAnimPositions(newPositions);
+                    });
+                });
+
+                return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+            }, [forestLayout]);
 
             const nextStep = () => { setCurrentStep(prev => (prev < history.length - 1 ? prev + 1 : (setIsPlaying(false), prev))); };
             const prevStep = () => { setCurrentStep(prev => Math.max(0, prev - 1)); setIsPlaying(false); };
@@ -415,7 +516,7 @@
                         <div className={`node-container absolute origin-top-left ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${manualOffset.x}px, ${manualOffset.y}px) scale(${zoom})` }}>
                             <svg width="4000" height="2000" className="overflow-visible pointer-events-none" style={{ marginLeft: -1000 }}>
                                 {forestLayout.map(tree => (
-                                    <TreeRenderer key={tree.id} node={tree} activeIds={state.activeIds} settings={settings} />
+                                    <TreeRenderer key={tree.id} node={tree} activeIds={state.activeIds} settings={settings} animPos={animPositions} />
                                 ))}
                             </svg>
                         </div>
