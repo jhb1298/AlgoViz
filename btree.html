@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>B+ Tree Visualizer | AlgoViz</title>
+    <title>B-Tree Visualizer | AlgoViz</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
@@ -16,8 +16,8 @@
         
         :root {
             --bg-deep: #0f172a;
+            --accent-indigo: #6366f1;
             --accent-blue: #3b82f6;
-            --accent-emerald: #10b981;
             --accent-rose: #f43f5e;
         }
 
@@ -46,20 +46,9 @@
         }
 
         .node-active { 
-            border-color: var(--accent-blue) !important; 
-            box-shadow: 0 0 30px rgba(59, 130, 246, 0.5); 
+            border-color: var(--accent-indigo) !important; 
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.5); 
             transform: scale(1.05); 
-        }
-
-        .node-split { 
-            border-color: var(--accent-rose) !important; 
-            animation: node-shake 0.4s ease-in-out;
-        }
-
-        @keyframes node-shake {
-            0%, 100% { transform: translateX(0); }
-            25% { transform: translateX(-5px); }
-            75% { transform: translateX(5px); }
         }
 
         .key-enter {
@@ -99,27 +88,25 @@
 
         // Dynamic Max Keys Configuration (Order m)
 
-        class BPlusNode {
+        class BNode {
             constructor(isLeaf = false) {
                 this.isLeaf = isLeaf;
                 this.keys = [];
-                this.children = []; // Internal nodes: child pointers; Leaf nodes: actual data entries
-                this.next = null; // Leaf level linked list
+                this.children = [];
                 this.id = Math.random().toString(36).substr(2, 9);
             }
         }
 
         function generateSimulation(initialKeys, opVals, maxKeys) {
             const history = [];
-            let root = new BPlusNode(true);
+            let root = new BNode(true);
 
             function cloneTree(node) {
                 if (!node) return null;
-                const newNode = new BPlusNode(node.isLeaf);
+                const newNode = new BNode(node.isLeaf);
                 newNode.keys = [...node.keys];
                 newNode.id = node.id;
                 newNode.children = node.children.map(cloneTree);
-                newNode.next = node.next ? node.next.id : null; 
                 return newNode;
             }
 
@@ -132,69 +119,50 @@
             }
 
             function split(node, path, val, valIdx, total) {
-                const midIdx = Math.floor(maxKeys / 2);
-                const newNode = new BPlusNode(node.isLeaf);
+                record('SPLIT', `(${valIdx}/${total}) Node full! Splitting node [${node.keys.join(', ')}]`, TREE_SCRIPT.BTREE.SPLIT(), node.id, 4);
                 
-                if (node.isLeaf) {
-                    record('SPLIT', `(${valIdx}/${total}) Leaf full! Splitting node ${node.keys.join(', ')}`, TREE_SCRIPT.BPLUS.SPLIT_LEAF(), node.id, 3);
-                    newNode.keys = node.keys.splice(midIdx);
-                    newNode.next = node.next;
-                    node.next = newNode;
-                    
-                    const promotedKey = newNode.keys[0];
-                    if (node === root) {
-                        const newRoot = new BPlusNode(false);
-                        newRoot.keys = [promotedKey];
-                        newRoot.children = [node, newNode];
-                        root = newRoot;
-                        record('NEW_ROOT', `(${valIdx}/${total}) Created new root with key ${promotedKey}`, TREE_SCRIPT.BPLUS.PROMOTE(promotedKey), root.id, 5);
-                    } else {
-                        const parent = path.pop();
-                        const idx = parent.children.indexOf(node);
-                        parent.keys.splice(idx, 0, promotedKey);
-                        parent.children.splice(idx + 1, 0, newNode);
-                        record('PROMOTED', `(${valIdx}/${total}) Promoted key ${promotedKey} to parent`, TREE_SCRIPT.BPLUS.PROMOTE(promotedKey), parent.id, 5);
-                        if (parent.keys.length > maxKeys) split(parent, path, val, valIdx, total);
-                    }
-                } else {
-                    record('SPLIT', `(${valIdx}/${total}) Internal node full! Splitting...`, TREE_SCRIPT.BPLUS.SPLIT_INTERNAL(), node.id, 6);
-                    newNode.keys = node.keys.splice(midIdx + 1);
+                const midIdx = Math.floor(maxKeys / 2);
+                const midKey = node.keys[midIdx];
+                
+                const newNode = new BNode(node.isLeaf);
+                newNode.keys = node.keys.splice(midIdx + 1);
+                if (!node.isLeaf) {
                     newNode.children = node.children.splice(midIdx + 1);
-                    const promotedKey = node.keys.pop();
+                }
+                node.keys.pop(); // Remove the promoted middle key from the current node
 
-                    if (node === root) {
-                        const newRoot = new BPlusNode(false);
-                        newRoot.keys = [promotedKey];
-                        newRoot.children = [node, newNode];
-                        root = newRoot;
-                        record('NEW_ROOT', `(${valIdx}/${total}) Created new root with key ${promotedKey}`, TREE_SCRIPT.BPLUS.PROMOTE(promotedKey), root.id, 7);
-                    } else {
-                        const parent = path.pop();
-                        const idx = parent.children.indexOf(node);
-                        parent.keys.splice(idx, 0, promotedKey);
-                        parent.children.splice(idx + 1, 0, newNode);
-                        record('PROMOTED', `(${valIdx}/${total}) Promoted key ${promotedKey} to parent`, TREE_SCRIPT.BPLUS.PROMOTE(promotedKey), parent.id, 7);
-                        if (parent.keys.length > maxKeys) split(parent, path, val, valIdx, total);
-                    }
+                if (node === root) {
+                    const newRoot = new BNode(false);
+                    newRoot.keys = [midKey];
+                    newRoot.children = [node, newNode];
+                    root = newRoot;
+                    record('NEW_ROOT', `(${valIdx}/${total}) Promoted ${midKey} to new root`, TREE_SCRIPT.BTREE.PROMOTE(midKey), root.id, 5);
+                } else {
+                    const parent = path.pop();
+                    const idx = parent.children.indexOf(node);
+                    parent.keys.splice(idx, 0, midKey);
+                    parent.children.splice(idx + 1, 0, newNode);
+                    record('PROMOTED', `(${valIdx}/${total}) Promoted ${midKey} to parent`, TREE_SCRIPT.BTREE.PROMOTE(midKey), parent.id, 5);
+                    if (parent.keys.length > maxKeys) split(parent, path, val, valIdx, total);
                 }
             }
 
             function insert(val, valIdx, total) {
                 let curr = root;
                 const path = [];
-                record('TRAVERSING', `(${valIdx}/${total}) Searching for correct leaf to insert ${val}`, TREE_SCRIPT.BPLUS.INSERT(val), curr.id, 0);
+                record('TRAVERSING', `(${valIdx}/${total}) Finding correct leaf for ${val}`, TREE_SCRIPT.BTREE.INSERT(val), curr.id, 0);
                 
                 while (!curr.isLeaf) {
                     path.push(curr);
                     let i = 0;
                     while (i < curr.keys.length && val >= curr.keys[i]) i++;
                     curr = curr.children[i];
-                    record('TRAVERSING', `(${valIdx}/${total}) Following pointer to node [${curr.keys.join(', ')}]`, null, curr.id, 0);
+                    record('TRAVERSING', `(${valIdx}/${total}) Traversing to child node [${curr.keys.join(', ')}]`, TREE_SCRIPT.BTREE.NODE_REACHED(curr.keys), curr.id, 0);
                 }
 
                 curr.keys.push(val);
                 curr.keys.sort((a, b) => a - b);
-                record('INSERTED', `(${valIdx}/${total}) Inserted ${val} into leaf`, TREE_SCRIPT.BPLUS.LEAF_REACHED(curr.keys), curr.id, 1);
+                record('INSERTED', `(${valIdx}/${total}) Inserted ${val} into leaf`, null, curr.id, 2);
 
                 if (curr.keys.length > maxKeys) {
                     split(curr, path, val, valIdx, total);
@@ -215,17 +183,19 @@
                 curr.keys.sort((a, b) => a - b);
                 if (curr.keys.length > maxKeys) {
                     const midIdx = Math.floor(maxKeys / 2);
-                    const newNode = new BPlusNode(curr.isLeaf);
-                    newNode.keys = curr.keys.splice(midIdx);
+                    const midKey = curr.keys[midIdx];
+                    const newNode = new BNode(curr.isLeaf);
+                    newNode.keys = curr.keys.splice(midIdx + 1);
+                    curr.keys.pop();
                     if (curr === root) {
-                        const nr = new BPlusNode(false);
-                        nr.keys = [newNode.keys[0]];
+                        const nr = new BNode(false);
+                        nr.keys = [midKey];
                         nr.children = [curr, newNode];
                         root = nr;
                     } else {
                         const parent = path.pop();
                         const idx = parent.children.indexOf(curr);
-                        parent.keys.splice(idx, 0, newNode.keys[0]);
+                        parent.keys.splice(idx, 0, midKey);
                         parent.children.splice(idx + 1, 0, newNode);
                     }
                 }
@@ -235,7 +205,7 @@
             opVals.forEach((v, idx) => {
                 insert(v, idx + 1, opVals.length);
             });
-            record('SUCCESS', `Successfully completed insertions`, TREE_SCRIPT.BPLUS.SUCCESS(), null, 2);
+            record('SUCCESS', `B-Tree insertions complete`, TREE_SCRIPT.BTREE.SUCCESS(), null, 3);
 
             return history;
         }
@@ -255,23 +225,23 @@
             const isActive = node.id === activeNodeId;
             const keysCount = node.keys.length;
             const totalWidth = (keysCount * KEY_WIDTH) + ((keysCount + 1) * SLOT_WIDTH);
-
+            
             return (
                 <div 
-                    className={`absolute flex flex-col items-center glass rounded-2xl overflow-hidden transition-all duration-500 border-2 ${isActive ? 'node-active' : 'border-white/10'} ${node.isLeaf ? 'bg-emerald-500/10' : 'bg-slate-800/40'}`}
+                    className={`absolute flex flex-col items-center glass rounded-2xl overflow-hidden transition-all duration-500 border-2 ${isActive ? 'node-active' : 'border-white/10'} bg-slate-800/40`}
                     style={{ left: x - totalWidth / 2 - 10, top: y, width: totalWidth + 20, height: NODE_HEIGHT }}
                 >
-                    <div className="w-full bg-white/5 px-2 py-0.5 text-[8px] font-black text-slate-500 border-b border-white/5 flex justify-between uppercase tracking-widest">
+                    <div className="w-full bg-white/5 px-2 py-0.5 text-[8px] font-black text-slate-500 border-b border-white/5 flex justify-between uppercase tracking-widest leading-none">
                         <span>{node.isLeaf ? 'Leaf' : 'Internal'}</span>
                     </div>
                     <div className="flex-1 flex items-center justify-between px-2 w-full">
                         {Array.from({ length: keysCount + 1 }).map((_, i) => (
                             <React.Fragment key={`slot-wrap-${i}`}>
-                                <div className={`w-5 h-5 rounded-full border border-dashed flex items-center justify-center transition-colors ${!node.isLeaf ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-white/10 bg-white/5'}`}>
-                                    <div className={`w-1.5 h-1.5 rounded-full ${!node.isLeaf ? 'bg-emerald-400' : 'bg-slate-600'}`}></div>
+                                <div className={`w-5 h-5 rounded-full border border-dashed flex items-center justify-center transition-colors ${!node.isLeaf ? 'border-indigo-500/50 bg-indigo-500/10' : 'border-white/10 bg-white/5'}`}>
+                                    <div className={`w-1.5 h-1.5 rounded-full ${!node.isLeaf ? 'bg-indigo-400' : 'bg-slate-600'}`}></div>
                                 </div>
                                 {i < keysCount && (
-                                    <div className="flex-1 flex items-center justify-center font-black text-lg text-emerald-400 key-enter min-w-[40px]">
+                                    <div className="flex-1 flex items-center justify-center font-black text-lg text-indigo-400 key-enter min-w-[40px]">
                                         {node.keys[i]}
                                     </div>
                                 )}
@@ -286,7 +256,7 @@
             const { SettingsIcon, SettingsModal, AlgorithmPanel } = useMemo(() => window.initSettingsComponents(React), []);
             const [isSettingsOpen, setIsSettingsOpen] = useState(false);
             
-            const [initialData, setInitialData] = useState([10, 20, 30, 40]);
+            const [initialData, setInitialData] = useState([15, 30, 45]);
             const [inputString, setInputString] = useState("25, 35");
             const [maxKeys, setMaxKeys] = useState(3);
             const opVals = useMemo(() => inputString.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n)), [inputString]);
@@ -367,7 +337,6 @@
                     }} 
                     onMouseUp={() => {setIsDraggingCanvas(false); setIsDraggingPanel(false);}}>
                     
-                    {/* Top Navigation Bar */}
                     <div className="absolute top-0 left-0 right-0 z-[60] group/nav">
                         <div className="absolute top-0 left-0 w-full h-4 z-[70] peer"></div>
                         <div className="relative h-20 glass border-b border-white/5 flex items-center justify-between px-8 shadow-2xl transition-all duration-500 -translate-y-[85%] peer-hover:translate-y-0 group-hover/nav:translate-y-0 hover:translate-y-0 z-[60]">
@@ -376,11 +345,11 @@
                                     <Home size={22} />
                                 </a>
                                 <div className="flex flex-col">
-                                    <h1 className="font-extrabold text-xl leading-tight tracking-tight bg-gradient-to-r from-emerald-400 to-teal-400 bg-clip-text text-transparent">B+ Tree Visualizer</h1>
+                                    <h1 className="font-extrabold text-xl leading-tight tracking-tight bg-gradient-to-r from-indigo-400 to-blue-400 bg-clip-text text-transparent">B-Tree Visualizer</h1>
                                     <div className="flex gap-2 items-center">
-                                        <span className="text-[10px] text-slate-500 font-mono uppercase tracking-[0.2em]">Balanced Database Structure</span>
+                                        <span className="text-[10px] text-slate-500 font-mono uppercase tracking-[0.2em]">Balanced Search Structure</span>
                                         <div className="w-1 h-1 bg-slate-700 rounded-full"></div>
-                                        <button onClick={() => setIsSettingsOpen(true)} className="text-[10px] text-emerald-400 hover:underline">SETTINGS</button>
+                                        <button onClick={() => setIsSettingsOpen(true)} className="text-[10px] text-indigo-400 hover:underline">SETTINGS</button>
                                     </div>
                                 </div>
                             </div>
@@ -389,22 +358,22 @@
                                 <div className="flex flex-col items-end">
                                     <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Max Keys</span>
                                     <input type="number" min="2" max="6" value={maxKeys} onChange={e => { setMaxKeys(Number(e.target.value)); setCurrentStep(0); setIsPlaying(false); }} 
-                                        className="w-12 bg-transparent font-black text-lg outline-none text-emerald-400 text-right border-b border-white/10" />
+                                        className="w-12 bg-transparent font-black text-lg outline-none text-indigo-400 text-right border-b border-white/10" />
                                 </div>
                                 <div className="flex flex-col items-end">
                                     <span className="text-[9px] font-bold text-slate-500 uppercase tracking-widest">Keys to Insert</span>
                                     <input type="text" value={inputString} onChange={e => { setInputString(e.target.value); setCurrentStep(0); setIsPlaying(false); }} 
-                                        className="w-32 bg-transparent font-black text-lg outline-none text-emerald-400 text-right border-b border-white/10" placeholder="25, 35..." />
+                                        className="w-32 bg-transparent font-black text-lg outline-none text-indigo-400 text-right border-b border-white/10" placeholder="25, 35..." />
                                 </div>
                                 <button onClick={() => { setCurrentStep(0); setIsPlaying(true); }} 
-                                    className="bg-emerald-600 hover:bg-emerald-500 w-12 h-12 rounded-2xl transition-all shadow-xl shadow-emerald-900/40 flex items-center justify-center group active:scale-95">
+                                    className="bg-indigo-600 hover:bg-indigo-500 w-12 h-12 rounded-2xl transition-all shadow-xl shadow-indigo-900/40 flex items-center justify-center group active:scale-95">
                                     <Play fill="white" size={24} className="group-hover:scale-110 transition-transform"/>
                                 </button>
                             </div>
                         </div>
                     </div>
 
-                    <AlgorithmPanel algoKey="BPLUS" currentLine={state.line} />
+                    <AlgorithmPanel algoKey="BTREE" currentLine={state.line} />
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
 
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab active:cursor-grabbing" 
@@ -419,7 +388,7 @@
                         <div className={`absolute left-1/2 top-1/4 ${isDraggingCanvas ? '' : 'camera-layer'}`} 
                             style={{ transform: `translate(calc(-50% + ${manualOffset.x}px), ${manualOffset.y}px) scale(${zoom})` }}>
                             
-                             <svg className="absolute top-0 left-0 w-[5000px] h-[5000px] overflow-visible pointer-events-none">
+                            <svg className="absolute top-0 left-0 w-[5000px] h-[5000px] overflow-visible pointer-events-none">
                                 {layoutData.nodes.map(item => {
                                     if (item.node.isLeaf) return null;
                                     return item.node.children.map((child, idx) => {
@@ -436,7 +405,7 @@
                                                 <line 
                                                     x1={startX} y1={item.y + 40} 
                                                     x2={childItem.x} y2={childItem.y} 
-                                                    stroke={state.activeNodeId === child.id ? '#3b82f6' : 'rgba(255,255,255,0.2)'} 
+                                                    stroke={state.activeNodeId === child.id ? '#6366f1' : 'rgba(255,255,255,0.2)'} 
                                                     strokeWidth="2" strokeLinecap="round" className="transition-all duration-500"
                                                 />
                                             </g>
@@ -451,12 +420,10 @@
                         </div>
                     </div>
 
-                    {/* Playback Controls Panel */}
                     <div className="absolute bottom-10 left-1/2 w-full max-w-4xl px-4 z-50 control-panel-wrapper" 
                         style={{ transform: `translate(calc(-50% + ${panelOffset.x}px), ${panelOffset.y}px)` }}>
                         
                         <div className={`glass rounded-[2rem] shadow-2xl flex flex-col relative overflow-hidden transition-all duration-300 ${isMinimized ? 'w-fit mx-auto px-6 py-4' : 'px-8 pb-6 pt-2'}`}>
-                            {/* Drag Handle */}
                             <div className="w-full h-8 cursor-grab flex justify-center items-center mb-1 group" 
                                 onMouseDown={(e) => {e.preventDefault(); setIsDraggingPanel(true); panelDragStart.current={x:e.clientX-panelOffset.x, y:e.clientY-panelOffset.y}; e.stopPropagation();}}>
                                 <div className="w-16 h-1.5 bg-white/10 rounded-full group-hover:bg-white/20 transition-colors"></div>
@@ -470,7 +437,7 @@
                             {!isMinimized && (
                                 <div className="flex flex-col gap-6">
                                     <div className="relative w-full h-2 bg-slate-950/50 rounded-full overflow-hidden">
-                                        <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-emerald-600 to-teal-500 transition-all duration-300" 
+                                        <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-indigo-600 to-blue-500 transition-all duration-300" 
                                             style={{ width: `${(currentStep / (history.length-1 || 1)) * 100}%` }}></div>
                                         <input type="range" min="0" max={history.length - 1} value={currentStep} 
                                             onChange={(e) => { setIsPlaying(false); setCurrentStep(Number(e.target.value)); }} 
@@ -480,7 +447,7 @@
                                     <div className="flex items-center justify-between">
                                         <div className="flex flex-col w-[35%]">
                                             <div className="flex items-center gap-2 mb-1">
-                                                <span className="text-[10px] font-black text-emerald-500 tracking-[0.2em] uppercase">Step {currentStep + 1}</span>
+                                                <span className="text-[10px] font-black text-indigo-500 tracking-[0.2em] uppercase">Step {currentStep + 1}</span>
                                                 <span className="text-[10px] text-slate-600 font-bold tracking-widest">/ {history.length}</span>
                                             </div>
                                             <span className="text-base font-bold text-white line-clamp-1">{state?.desc}</span>
@@ -489,7 +456,7 @@
                                         <div className="flex items-center justify-center gap-4 w-[30%]">
                                             <button onClick={prevStep} className="p-2 hover:bg-white/5 rounded-xl text-slate-400 transition-all active:scale-95"><Rewind size={24}/></button>
                                             <button onClick={() => setIsPlaying(!isPlaying)} 
-                                                className={`w-16 h-16 flex items-center justify-center rounded-3xl shadow-2xl transform transition-all active:scale-90 border border-white/10 ${isPlaying ? 'bg-amber-500' : 'bg-emerald-600'}`}>
+                                                className={`w-16 h-16 flex items-center justify-center rounded-3xl shadow-2xl transform transition-all active:scale-90 border border-white/10 ${isPlaying ? 'bg-amber-500' : 'bg-indigo-600'}`}>
                                                 {isPlaying ? <Pause fill="white" size={28} /> : <Play fill="white" size={28} className="ml-1.5"/>}
                                             </button>
                                             <button onClick={nextStep} className="p-2 hover:bg-white/5 rounded-xl text-slate-400 transition-all active:scale-95"><FastForward size={24}/></button>
@@ -499,14 +466,14 @@
                                             <div className="flex flex-col gap-2 items-end w-32">
                                                 <div className="flex justify-between w-full">
                                                     <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Velocity</span>
-                                                    <span className="text-[10px] font-bold text-emerald-400 font-mono">{speedMultiplier.toFixed(1)}x</span>
+                                                    <span className="text-[10px] font-bold text-indigo-400 font-mono">{speedMultiplier.toFixed(1)}x</span>
                                                 </div>
                                                 <input type="range" min="0.5" max="3" step="0.1" value={speedMultiplier} 
                                                     onChange={(e) => setSpeedMultiplier(Number(e.target.value))} 
-                                                    className="w-full h-1 bg-slate-800 rounded-full appearance-none cursor-pointer accent-emerald-500" />
+                                                    className="w-full h-1 bg-slate-800 rounded-full appearance-none cursor-pointer accent-indigo-500" />
                                             </div>
                                             <button onClick={() => setIsMuted(!isMuted)} 
-                                                className={`p-3 rounded-2xl transition-all shadow-lg ${isMuted ? 'text-rose-400 bg-rose-400/5' : 'text-emerald-400 bg-emerald-400/5'}`}>
+                                                className={`p-3 rounded-2xl transition-all shadow-lg ${isMuted ? 'text-rose-400 bg-rose-400/5' : 'text-indigo-400 bg-indigo-400/5'}`}>
                                                 {isMuted ? <VolumeX size={22}/> : <Volume2 size={22}/>}
                                             </button>
                                         </div>
@@ -517,7 +484,7 @@
                                 <div className="flex items-center justify-center gap-6">
                                     <button onClick={prevStep} className="p-2 hover:bg-white/5 rounded-xl text-slate-300 transition-all"><Rewind size={22}/></button>
                                     <button onClick={() => setIsPlaying(!isPlaying)} 
-                                        className={`w-14 h-14 flex items-center justify-center rounded-2xl shadow-xl transform transition-all active:scale-90 border border-white/10 ${isPlaying ? 'bg-amber-500' : 'bg-emerald-600'}`}>
+                                        className={`w-14 h-14 flex items-center justify-center rounded-2xl shadow-xl transform transition-all active:scale-90 border border-white/10 ${isPlaying ? 'bg-amber-500' : 'bg-indigo-600'}`}>
                                         {isPlaying ? <Pause fill="white" size={24} /> : <Play fill="white" size={24} className="ml-1"/>}
                                     </button>
                                     <button onClick={nextStep} className="p-2 hover:bg-white/5 rounded-xl text-slate-300 transition-all"><FastForward size={22}/></button>

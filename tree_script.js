@@ -27,12 +27,22 @@ const TREE_SCRIPT = {
         "BALANCED": () => `The tree is perfectly balanced once again. Efficient and fast!`
     },
     "BPLUS": {
-        "START": (order) => `Welcome to the B+ Tree! This is a multi-way search tree with an order of ${order}. All values live in the leaves, making range searches incredibly fast.`,
-        "INSERT": (val) => `Inserting ${val}. We'll traverse down to the leaf level where all our actual data lives.`,
-        "SEARCH": (val) => `Searching for ${val}. We'll follow the internal node pointers to find the correct leaf bucket.`,
-        "LEAF_REACHED": (leaf) => `We've reached leaf node [${leaf.join(', ')}]. This is where the data resides!`,
-        "SPLIT": () => `Node overflow! This node is too full. Let's split it in two and promote the middle key to the parent.`,
-        "PROMOTE": (val) => `Promoting key ${val} to the parent node to maintain the tree structure.`,
-        "SUCCESS": () => `Operation complete! The B+ tree remains balanced and efficient for both searches and range scans.`
+        "START": (order) => `Welcome to the B+ Tree! This is a multi-way search tree with an order of ${order}. All values live in the leaf level.`,
+        "INSERT": (val) => `Inserting ${val}. Let's traverse down to the leaf level where all our actual data lives.`,
+        "SEARCH": (val) => `Searching for ${val}. We follow the internal node pointers to reach the correct leaf bucket.`,
+        "LEAF_REACHED": (leaf) => `We've reached leaf node [${leaf.join(', ')}]. This is where the actual data resides!`,
+        "SPLIT_LEAF": () => `Leaf full! Splitting and copying the smallest key from the new leaf to the parent.`,
+        "SPLIT_INTERNAL": () => `Internal node full! Splitting and moving the middle key to the parent node.`,
+        "PROMOTE": (val) => `Promoting key ${val} to keep the tree balanced.`,
+        "SUCCESS": () => `Operation complete! The B+ tree is perfectly balanced and optimized for range scans.`
+    },
+    "BTREE": {
+        "START": (order) => `Welcome to the B-Tree! This is a balanced search tree designed for high-performance storage.`,
+        "INSERT": (val) => `Inserting ${val}. Unlike B+ trees, keys in a B-Tree can reside in internal nodes as well.`,
+        "SEARCH": (val) => `Searching for ${val}. We check each node's keys; if not found, we follow the correct child pointer.`,
+        "NODE_REACHED": (keys) => `Current node: [${keys.join(', ')}]. Let's check if our value is here or if we go deeper.`,
+        "SPLIT": () => `Node overflow! We must split this node and promote the median key to maintain tree constraints.`,
+        "PROMOTE": (val) => `Promoting ${val} to the parent node.`,
+        "SUCCESS": () => `B-Tree operation finished. The structure remains perfectly balanced.`
     }
 };

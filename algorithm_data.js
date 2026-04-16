@@ -135,6 +135,53 @@ const ALGORITHM_PSEUDOCODE = {
         "6.   Set children to left and right, add to PQ",
         "7. Remaining node is root of Huffman Tree",
         "8. Traverse tree (left=0, right=1) to assign codes"
+    ],
+    "HASH_CHAINING": [
+        "1. index = key % table_size",
+        "2. Access bucket[index]",
+        "3. If Collision: Insert key at head/tail of linked list",
+        "4. Else: Create new linked list with key"
+    ],
+    "HASH_LINEAR": [
+        "1. index = key % table_size",
+        "2. i = 0",
+        "3. while bucket[(index + i) % table_size] is occupied:",
+        "4.   i = i + 1",
+        "5. bucket[(index + i) % table_size] = key"
+    ],
+    "HASH_QUADRATIC": [
+        "1. index = key % table_size",
+        "2. i = 0",
+        "3. while bucket[(index + i²) % table_size] is occupied:",
+        "4.   i = i + 1",
+        "5. bucket[(index + i²) % table_size] = key"
+    ],
+    "HASH_DOUBLE": [
+        "1. index = hash1(key)",
+        "2. step = hash2(key)",
+        "3. i = 0",
+        "4. while bucket[(index + i * step) % table_size] is occupied:",
+        "5.   i = i + 1",
+        "6. bucket[(index + i * step) % table_size] = key"
+    ],
+    "BTREE": [
+        "1. Start at root, search for leaf node L",
+        "2. Find appropriate position for K in L",
+        "3. If L has space, Insert K",
+        "4. Else Split(L):",
+        "5.   Move median key to parent",
+        "6.   Split remaining keys into two nodes",
+        "7.   Repeat split up if parent becomes full"
+    ],
+    "BPLUS": [
+        "1. Search for leaf L containing K",
+        "2. If L has space, Insert K into L",
+        "3. Else SplitLeaf(L):",
+        "4.   Keep first half in L, move second half to L'",
+        "5.   Copy smallest key of L' to parent",
+        "6.   If parent full, SplitInternal(parent):",
+        "7.     Move median key to higher parent",
+        "8.     Split remaining keys/children"
     ]
 };
 
