@@ -9,6 +9,7 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="sorting_script.js"></script>
+    <script src="algorithm_data.js"></script>
     <script src="settings_manager.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
@@ -74,21 +75,21 @@
             let data = [...arr];
             const n = data.length;
             
-            history.push({ stepId: 0, arr: [...data], comparing: [], status: 'START', desc: "Starting Bubble Sort", speech: SORTING_SCRIPT.BUBBLE.START() });
+            history.push({ stepId: 0, arr: [...data], comparing: [], status: 'START', desc: "Starting Bubble Sort", speech: SORTING_SCRIPT.BUBBLE.START(), algoLine: 1 });
 
             for (let i = 0; i < n; i++) {
                 for (let j = 0; j < n - i - 1; j++) {
-                    history.push({ stepId: history.length, arr: [...data], comparing: [j, j + 1], status: 'COMPARING', desc: `Comparing ${data[j]} and ${data[j+1]}`, speech: SORTING_SCRIPT.BUBBLE.COMPARING(data[j], data[j+1]) });
+                    history.push({ stepId: history.length, arr: [...data], comparing: [j, j + 1], status: 'COMPARING', desc: `Comparing ${data[j]} and ${data[j+1]}`, speech: SORTING_SCRIPT.BUBBLE.COMPARING(data[j], data[j+1]), algoLine: 3 });
                     
                     if (data[j] > data[j+1]) {
                         [data[j], data[j+1]] = [data[j+1], data[j]];
-                        history.push({ stepId: history.length, arr: [...data], comparing: [j, j + 1], status: 'SWAPPING', desc: `Swapped ${data[j]} and ${data[j+1]}`, speech: SORTING_SCRIPT.BUBBLE.SWAPPING(data[j+1], data[j]) });
+                        history.push({ stepId: history.length, arr: [...data], comparing: [j, j + 1], status: 'SWAPPING', desc: `Swapped ${data[j]} and ${data[j+1]}`, speech: SORTING_SCRIPT.BUBBLE.SWAPPING(data[j+1], data[j]), algoLine: 4 });
                     }
                 }
-                history.push({ stepId: history.length, arr: [...data], comparing: [], fixedIndex: n - i - 1, status: 'FIXED', desc: `${data[n-i-1]} is in its final position`, speech: SORTING_SCRIPT.BUBBLE.FIXED(data[n-i-1]) });
+                history.push({ stepId: history.length, arr: [...data], comparing: [], fixedIndex: n - i - 1, status: 'FIXED', desc: `${data[n-i-1]} is in its final position`, speech: SORTING_SCRIPT.BUBBLE.FIXED(data[n-i-1]), algoLine: 2 });
             }
 
-            history.push({ stepId: history.length, arr: [...data], comparing: [], status: 'SUCCESS', desc: "Array Sorted!", speech: SORTING_SCRIPT.BUBBLE.SUCCESS() });
+            history.push({ stepId: history.length, arr: [...data], comparing: [], status: 'SUCCESS', desc: "Array Sorted!", speech: SORTING_SCRIPT.BUBBLE.SUCCESS(), algoLine: 4 });
             return history;
         }
 
@@ -196,6 +197,7 @@
                     </div>
 
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+                    <AlgorithmPanel algoKey="BUBBLE" currentLine={state.algoLine} />
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.5, z-e.deltaY*0.001), 2))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
                         <div className={`absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center gap-2 ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(calc(-50% + ${manualOffset.x}px), calc(-50% + ${manualOffset.y}px)) scale(${zoom})` }}>
                             <div className="text-[10px] font-black text-slate-600 uppercase tracking-[0.5em] mb-4">Surface</div>

@@ -22,6 +22,7 @@
         .node-active { border-color: #6366f1 !important; box-shadow: 0 0 25px rgba(99, 102, 241, 0.5); transform: scale(1.1); }
     </style>
     <script src="settings_manager.js"></script>
+    <script src="algorithm_data.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -234,6 +235,7 @@ D F 4`;
 
                     
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+                    <AlgorithmPanel algoKey="PRIMS" currentLine={state.algoLine} />
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.2, z-e.deltaY*0.001), 1.5))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper') && !e.target.closest('.top-nav-area')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
                         <div className={`node-container absolute origin-top-left ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${manualOffset.x}px, ${manualOffset.y}px) scale(${zoom})` }}>
                             <svg className="absolute top-0 left-0 overflow-visible" style={{ width: 1000, height: 1000 }}>

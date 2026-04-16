@@ -9,6 +9,7 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="tree_script.js"></script>
+    <script src="algorithm_data.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -56,9 +57,9 @@
             const history = [];
             let root = null;
 
-            function record(status, desc, speech, activeId = null) {
+            function record(status, desc, speech, activeId = null, line = 0) {
                 const snapshot = serializeTree(root);
-                history.push({ stepId: history.length, tree: snapshot, status, desc, speech, activeId });
+                history.push({ stepId: history.length, tree: snapshot, status, desc, speech, activeId, algoLine: line });
             }
 
             function insert(node, val) {
@@ -106,11 +107,70 @@
             // Build initial tree
             initialArr.forEach(v => { root = insert(root, v); });
             history.length = 0; // Clear setup history
-            record('START', "Tree Ready", TREE_SCRIPT.BST.START());
+            record('START', "Tree Ready", TREE_SCRIPT.BST.START(), null, 0);
 
-            if (opType === 'INSERT') root = insert(root, opVal);
-            if (opType === 'SEARCH') search(root, opVal);
-            if (opType === 'DELETE') root = remove(root, opVal);
+            if (opType === 'INSERT') {
+                const insertBST = (node, val) => {
+                    if (!node) {
+                        record('SUCCESS', `Created new node ${val}`, TREE_SCRIPT.BST.START(), null, 1);
+                        return new Node(val);
+                    }
+                    record('COMPARING', `Comparing ${val} with ${node.val}`, TREE_SCRIPT.BST.COMPARING(val, node.val), node.id, 2);
+                    if (val < node.val) {
+                        record('LEFT', `Going left from ${node.val}`, null, node.id, 2);
+                        node.left = insertBST(node.left, val);
+                    } else if (val > node.val) {
+                        record('RIGHT', `Going right from ${node.val}`, null, node.id, 3);
+                        node.right = insertBST(node.right, val);
+                    }
+                    return node;
+                };
+                root = insertBST(root, opVal);
+            }
+            
+            if (opType === 'SEARCH') {
+                const searchBST = (node, val) => {
+                    if (!node) { 
+                        record('NOT_FOUND', `${val} not found`, TREE_SCRIPT.BST.NOT_FOUND(val), null, 1); 
+                        return null; 
+                    }
+                    record('COMPARING', `Comparing ${val} with ${node.val}`, TREE_SCRIPT.BST.SEARCH(val, node.val), node.id, 2);
+                    if (val === node.val) { 
+                        record('FOUND', `Found ${val}!`, TREE_SCRIPT.BST.FOUND(val), node.id, 2); 
+                        return node; 
+                    }
+                    if (val < node.val) {
+                        record('LEFT', `Checking left subtree`, null, node.id, 3);
+                        return searchBST(node.left, val);
+                    }
+                    record('RIGHT', `Checking right subtree`, null, node.id, 4);
+                    return searchBST(node.right, val);
+                };
+                searchBST(root, opVal);
+            }
+            
+            if (opType === 'DELETE') {
+                const deleteBST = (node, val) => {
+                    if (!node) return null;
+                    record('COMPARING', `Searching for ${val}, at ${node.val}`, TREE_SCRIPT.BST.COMPARING(val, node.val), node.id, 1);
+                    if (val < node.val) node.left = deleteBST(node.left, val);
+                    else if (val > node.val) node.right = deleteBST(node.right, val);
+                    else {
+                        record('DELETE_TARGET', `Found node ${val} to delete`, TREE_SCRIPT.BST.DELETE(val), node.id, 2);
+                        if (!node.left || !node.right) {
+                            record('SUCCESS', `Removing node ${val}`, null, node.id, 2);
+                            return node.left || node.right;
+                        }
+                        record('SUCCESSOR', `Finding in-order successor for ${val}`, null, node.id, 3);
+                        let temp = findMin(node.right);
+                        node.val = temp.val;
+                        record('SWAP', `Swapping ${val} with successor ${temp.val}`, null, node.id, 4);
+                        node.right = deleteBST(node.right, temp.val);
+                    }
+                    return node;
+                };
+                root = deleteBST(root, opVal);
+            }
 
             return history;
         }
@@ -215,6 +275,7 @@
 
                     
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+                    <AlgorithmPanel algoKey={`BST_${opType}`} currentLine={state.algoLine} />
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.2, z-e.deltaY*0.001), 1.5))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
                         <div className={`absolute left-0 top-0 w-full h-full ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${manualOffset.x}px, ${manualOffset.y}px) scale(${zoom})` }}>
                             <svg className="absolute top-0 left-0 w-full h-full overflow-visible">

@@ -9,6 +9,7 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="search_script.js"></script>
+    <script src="algorithm_data.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -51,59 +52,71 @@
             history.push({ 
                 stepId: 0, arr: data, low, high, mid: -1, 
                 status: 'START', desc: `Searching for ${target}`, 
-                speech: SEARCH_SCRIPT.BINARY.START(target) 
+                speech: SEARCH_SCRIPT.BINARY.START(target),
+                algoLine: 1
             });
-
+            
             while (low <= high) {
+                history.push({ 
+                    stepId: history.length, arr: data, low, high, mid: -1, 
+                    status: 'WHILE', desc: `Check if range ${low}-${high} is valid`, 
+                    speech: null,
+                    algoLine: 2
+                });
+
                 const mid = Math.floor((low + high) / 2);
                 const val = data[mid];
 
                 history.push({ 
                     stepId: history.length, arr: data, low, high, mid, 
-                    status: 'MID', desc: `Mid is ${val}`, 
-                    speech: SEARCH_SCRIPT.BINARY.MID(val) 
+                    status: 'MID', desc: `Calculating mid index: ${mid}`, 
+                    speech: SEARCH_SCRIPT.BINARY.MID(val),
+                    algoLine: 3
                 });
 
                 if (val === target) {
                     history.push({ 
                         stepId: history.length, arr: data, low, high, mid, 
-                        status: 'FOUND', desc: `Found ${target}!`, 
-                        speech: SEARCH_SCRIPT.BINARY.FOUND(target, mid) 
+                        status: 'FOUND', desc: `Found match at index ${mid}!`, 
+                        speech: SEARCH_SCRIPT.BINARY.FOUND(target, mid),
+                        algoLine: 4
                     });
                     break;
                 }
 
                 if (val < target) {
-                    const oldLow = low;
+                    history.push({ 
+                        stepId: history.length, arr: data, low, high, mid, 
+                        status: 'TOO_LOW', desc: `${val} < ${target}, discarding left half`, 
+                        speech: SEARCH_SCRIPT.BINARY.TOO_LOW(val, target),
+                        algoLine: 5
+                    });
                     low = mid + 1;
-                    history.push({ 
-                        stepId: history.length, arr: data, low, high, mid, 
-                        status: 'TOO_LOW', desc: `${val} < ${target}, discarding left`, 
-                        speech: SEARCH_SCRIPT.BINARY.TOO_LOW(val, target) 
-                    });
                 } else {
-                    const oldHigh = high;
-                    high = mid - 1;
                     history.push({ 
                         stepId: history.length, arr: data, low, high, mid, 
-                        status: 'TOO_HIGH', desc: `${val} > ${target}, discarding right`, 
-                        speech: SEARCH_SCRIPT.BINARY.TOO_HIGH(val, target) 
+                        status: 'TOO_HIGH', desc: `${val} > ${target}, discarding right half`, 
+                        speech: SEARCH_SCRIPT.BINARY.TOO_HIGH(val, target),
+                        algoLine: 6
                     });
+                    high = mid - 1;
                 }
             }
 
             if (low > high) {
                 history.push({ 
                     stepId: history.length, arr: data, low, high, mid: -1, 
-                    status: 'NOT_FOUND', desc: `${target} not found`, 
-                    speech: SEARCH_SCRIPT.BINARY.NOT_FOUND(target) 
+                    status: 'NOT_FOUND', desc: `${target} not found in array`, 
+                    speech: SEARCH_SCRIPT.BINARY.NOT_FOUND(target),
+                    algoLine: 7
                 });
             }
 
             history.push({ 
                 stepId: history.length, arr: data, low, high, mid: -1, 
-                status: 'SUCCESS', desc: "Done!", 
-                speech: SEARCH_SCRIPT.BINARY.SUCCESS() 
+                status: 'SUCCESS', desc: "Search cycle completed", 
+                speech: SEARCH_SCRIPT.BINARY.SUCCESS(),
+                algoLine: 7
             });
             return history;
         }
@@ -181,6 +194,7 @@
 
                     
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+                    <AlgorithmPanel algoKey="BINARY_SEARCH" currentLine={state.algoLine} />
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.5, z-e.deltaY*0.001), 2))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
                         <div className={`absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-end justify-center gap-2 ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(calc(-50% + ${manualOffset.x}px), calc(-50% + ${manualOffset.y}px)) scale(${zoom})` }}>
                             {state.arr.map((val, i) => {

@@ -21,6 +21,7 @@
         .item-row-selected { background-color: rgba(16, 185, 129, 0.1); border-left: 4px solid #10b981; }
     </style>
     <script src="settings_manager.js"></script>
+    <script src="algorithm_data.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -210,6 +211,7 @@
 
                     
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+                    <AlgorithmPanel algoKey="KNAPSACK" currentLine={state.algoLine} />
                     <div className="flex-1 relative overflow-hidden flex items-center justify-center p-20">
                         {/* Table */}
                         <div className="flex flex-col gap-1 items-center" style={{ transform: `scale(${zoom})` }}>

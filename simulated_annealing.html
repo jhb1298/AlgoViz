@@ -20,6 +20,7 @@
         @keyframes pulse { 0% { r: 4; opacity: 0.5; } 50% { r: 8; opacity: 0.2; } 100% { r: 4; opacity: 0.5; } }
     </style>
     <script src="settings_manager.js"></script>
+    <script src="algorithm_data.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -228,6 +229,7 @@
 
                     
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+                    <AlgorithmPanel algoKey="SIMULATED_ANNEALING" currentLine={state.algoLine} />
                     <div className="flex-1 relative infinite-bg overflow-hidden flex items-center justify-center">
                         <svg width="1000" height="1000" style={{ transform: `scale(${zoom})` }} className="camera-layer overflow-visible">
                             {/* Path */}

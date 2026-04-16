@@ -60,124 +60,69 @@
             const history = [];
             let root = null;
 
-            function record(status, desc, speech, activeId = null, rotationType = null) {
+            function record(status, desc, speech, activeId = null, line = 0) {
                 const snapshot = serializeTree(root);
-                history.push({ 
-                    stepId: history.length, 
-                    tree: snapshot, 
-                    status, 
-                    desc, 
-                    speech, 
-                    activeId,
-                    rotationType 
-                });
+                history.push({ stepId: history.length, tree: snapshot, status, desc, speech, activeId, algoLine: line });
             }
 
             function getHeight(node) { return node ? node.height : 0; }
             function getBalance(node) { return node ? getHeight(node.left) - getHeight(node.right) : 0; }
 
-            function rightRotate(y, silent = false) {
+            function rightRotate(y) {
                 let x = y.left; let T2 = x.right;
                 x.right = y; y.left = T2;
                 y.height = Math.max(getHeight(y.left), getHeight(y.right)) + 1;
                 x.height = Math.max(getHeight(x.left), getHeight(x.right)) + 1;
-                
-                // Update closure root if needed
                 if (y === root) root = x;
-
-                if (!silent) record('ROTATE', `Right rotation on ${y.val}`, TREE_SCRIPT.AVL.ROTATE_RIGHT(y.val), y.id, 'LL');
                 return x;
             }
 
-            function leftRotate(x, silent = false) {
+            function leftRotate(x) {
                 let y = x.right; let T2 = y.left;
                 y.left = x; x.right = T2;
                 x.height = Math.max(getHeight(x.left), getHeight(x.right)) + 1;
                 y.height = Math.max(getHeight(y.left), getHeight(y.right)) + 1;
-                
-                // Update closure root if needed
                 if (x === root) root = y;
-
-                if (!silent) record('ROTATE', `Left rotation on ${x.val}`, TREE_SCRIPT.AVL.ROTATE_LEFT(x.val), x.id, 'RR');
                 return y;
             }
 
-            function rebalance(node, silent = false) {
-                if (!node) return null;
-                node.height = 1 + Math.max(getHeight(node.left), getHeight(node.right));
-                let balance = getBalance(node);
-
-                if (!silent && Math.abs(balance) > 1) {
-                    record('IMBALANCE', `Imbalance at ${node.val} (Factor: ${balance})`, TREE_SCRIPT.AVL.IMBALANCE(node.val), node.id);
+            function insertAVL(node, val) {
+                if (!node) {
+                    record('SUCCESS', `Created node ${val}`, TREE_SCRIPT.AVL.INSERT.START(val), null, 1);
+                    return new Node(val);
                 }
-
-                // LL Case
-                if (balance > 1 && getBalance(node.left) >= 0) {
-                    return rightRotate(node, silent);
-                }
-                // LR Case
-                if (balance > 1 && getBalance(node.left) < 0) {
-                    if (!silent) record('ROTATE', `Double Rotation: Left-Right Part 1`, `Rotating left child ${node.left.val} left.`, node.left.id, 'LR');
-                    node.left = leftRotate(node.left, silent);
-                    if (!silent) record('ROTATE', `Double Rotation: Left-Right Part 2`, `Now rotating ${node.val} right.`, node.id, 'LR');
-                    return rightRotate(node, silent);
-                }
-                // RR Case
-                if (balance < -1 && getBalance(node.right) <= 0) {
-                    return leftRotate(node, silent);
-                }
-                // RL Case
-                if (balance < -1 && getBalance(node.right) > 0) {
-                    if (!silent) record('ROTATE', `Double Rotation: Right-Left Part 1`, `Rotating right child ${node.right.val} right.`, node.right.id, 'RL');
-                    node.right = rightRotate(node.right, silent);
-                    if (!silent) record('ROTATE', `Double Rotation: Right-Left Part 2`, `Now rotating ${node.val} left.`, node.id, 'RL');
-                    return leftRotate(node, silent);
-                }
-                return node;
-            }
-
-            function insert(node, val, silent = false) {
-                if (!node) return new Node(val);
-                if (!silent) record('COMPARING', `Comparing ${val} with ${node.val}`, TREE_SCRIPT.BST.COMPARING(val, node.val), node.id);
-                
-                if (val < node.val) node.left = insert(node.left, val, silent);
-                else if (val > node.val) node.right = insert(node.right, val, silent);
+                record('COMPARING', `Comparing ${val} with ${node.val}`, TREE_SCRIPT.AVL.INSERT.COMPARING(val, node.val), node.id, 1);
+                if (val < node.val) node.left = insertAVL(node.left, val);
+                else if (val > node.val) node.right = insertAVL(node.right, val);
                 else return node;
 
-                return rebalance(node, silent);
-            }
-
-            function search(node, val) {
-                if (!node) { record('NOT_FOUND', `${val} not found`, TREE_SCRIPT.AVL.NOT_FOUND(val)); return null; }
-                record('COMPARING', `Comparing ${val} with ${node.val}`, TREE_SCRIPT.AVL.SEARCH(val, node.val), node.id);
-                if (val === node.val) { record('FOUND', `Found ${val}!`, TREE_SCRIPT.AVL.FOUND(val), node.id); return node; }
-                if (val < node.val) return search(node.left, val);
-                return search(node.right, val);
-            }
-
-            function findMin(node) {
-                while (node.left) node = node.left;
-                return node;
-            }
-
-            function remove(node, val, silent = false) {
-                if (!node) return null;
-                if (!silent) record('COMPARING', `Comparing ${val} with ${node.val}`, TREE_SCRIPT.BST.COMPARING(val, node.val), node.id);
+                node.height = 1 + Math.max(getHeight(node.left), getHeight(node.right));
+                record('HEIGHT', `Updating height of ${node.val} to ${node.height}`, null, node.id, 2);
                 
-                if (val < node.val) node.left = remove(node.left, val, silent);
-                else if (val > node.val) node.right = remove(node.right, val, silent);
-                else {
-                    if (!silent) record('DELETE', `Deleting node ${val}`, TREE_SCRIPT.AVL.DELETE(val), node.id);
-                    if (!node.left) return node.right;
-                    if (!node.right) return node.left;
-                    
-                    let temp = findMin(node.right);
-                    node.val = temp.val;
-                    // Stable ID update: if we swap values, we should swap IDs too or use stable ones
-                    node.id = `node-${temp.val}`; 
-                    node.right = remove(node.right, temp.val, silent);
+                const balance = getBalance(node);
+                record('BALANCE', `Balance Factor of ${node.val} is ${balance}`, TREE_SCRIPT.AVL.INSERT.BALANCE(node.val, balance), node.id, 3);
+
+                if (balance > 1) {
+                    if (val < node.left.val) {
+                        record('LL', `LL Case: Right Rotating ${node.val}`, TREE_SCRIPT.AVL.INSERT.LL(node.val), node.id, 5);
+                        return rightRotate(node);
+                    } else {
+                        record('LR', `LR Case: Double Rotating ${node.val}`, TREE_SCRIPT.AVL.INSERT.LR(node.val), node.id, 6);
+                        node.left = leftRotate(node.left);
+                        return rightRotate(node);
+                    }
                 }
-                return rebalance(node, silent);
+                if (balance < -1) {
+                    if (val > node.right.val) {
+                        record('RR', `RR Case: Left Rotating ${node.val}`, TREE_SCRIPT.AVL.INSERT.RR(node.val), node.id, 8);
+                        return leftRotate(node);
+                    } else {
+                        record('RL', `RL Case: Double Rotating ${node.val}`, TREE_SCRIPT.AVL.INSERT.RL(node.val), node.id, 9);
+                        node.right = rightRotate(node.right);
+                        return leftRotate(node);
+                    }
+                }
+                return node;
             }
 
             function serializeTree(node) {
@@ -193,20 +138,32 @@
                 };
             }
 
-            // Initialization
-            initialArr.forEach(v => { root = insert(root, v, true); });
+            initialArr.forEach(v => { root = insertAVL(root, v); });
             history.length = 0;
             record('START', "Initial Tree Ready", TREE_SCRIPT.AVL.START());
 
             if (opType === 'INSERT') {
-                record('COMPARING', `Inserting ${opVal}`, TREE_SCRIPT.AVL.INSERT(opVal));
-                root = insert(root, opVal);
+                root = insertAVL(root, opVal);
                 record('SUCCESS', "Tree Balanced!", TREE_SCRIPT.AVL.BALANCED());
             } else if (opType === 'SEARCH') {
-                search(root, opVal);
-            } else if (opType === 'DELETE') {
-                root = remove(root, opVal);
-                record('SUCCESS', "Tree Re-balanced!", TREE_SCRIPT.AVL.BALANCED());
+                const searchAVL = (node, val) => {
+                    if (!node) { 
+                        record('NOT_FOUND', `${val} not found`, TREE_SCRIPT.BST.NOT_FOUND(val), null, 1); 
+                        return null; 
+                    }
+                    record('COMPARING', `Comparing ${val} with ${node.val}`, TREE_SCRIPT.BST.SEARCH(val, node.val), node.id, 2);
+                    if (val === node.val) { 
+                        record('FOUND', `Found ${val}!`, TREE_SCRIPT.BST.FOUND(val), node.id, 2); 
+                        return node; 
+                    }
+                    if (val < node.val) {
+                        record('LEFT', `Checking left subtree`, null, node.id, 3);
+                        return searchAVL(node.left, val);
+                    }
+                    record('RIGHT', `Checking right subtree`, null, node.id, 3);
+                    return searchAVL(node.right, val);
+                };
+                searchAVL(root, opVal);
             }
 
             return history;
@@ -340,7 +297,9 @@
             };
 
             return (
-                <div className="h-screen w-screen flex flex-col relative overflow-hidden bg-slate-900 text-white select-none" onMouseMove={(e) => { if(isDraggingPanel) setPanelOffset({x: e.clientX-panelDragStart.current.x, y: e.clientY-panelDragStart.current.y}); else if(isDraggingCanvas) setManualOffset({x: e.clientX-canvasDragStart.current.x, y: e.clientY-canvasDragStart.current.y}); }} onMouseUp={() => {setIsDraggingCanvas(false); setIsDraggingPanel(false);}}>
+                <div className="h-screen w-screen flex flex-col relative overflow-hidden bg-[#0f172a] text-white select-none transition-all duration-500" onMouseMove={(e) => { if (isDraggingPanel) setPanelOffset({ x: e.clientX - panelDragStart.current.x, y: e.clientY - panelDragStart.current.y }); else if (isDraggingCanvas) setManualOffset({ x: e.clientX - canvasDragStart.current.x, y: e.clientY - canvasDragStart.current.y }); }} onMouseUp={() => { setIsDraggingCanvas(false); setIsDraggingPanel(false); }}>
+                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+                    <AlgorithmPanel algoKey={`AVL_${opType}`} currentLine={state.algoLine} />
                     <div className="absolute top-0 left-0 right-0 z-[60] top-nav-area">
                         <div className="absolute top-0 left-0 w-full h-4 z-[70] peer"></div>
                         <div className="relative h-16 bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50 flex items-center justify-between px-6 shadow-2xl transition-transform duration-300 -translate-y-full peer-hover:translate-y-0 hover:translate-y-0 z-[60]">
@@ -376,12 +335,6 @@
                                     </h3>
                                     <BalanceTable tree={state.tree} />
                                 </div>
-                                {state.rotationType && (
-                                    <div className="p-4 bg-rose-500/10 border border-rose-500/30 rounded-xl animate-bounce">
-                                        <h4 className="text-[10px] font-black uppercase text-rose-400 mb-1">Active Rotation</h4>
-                                        <p className="text-sm font-bold text-white">{ROTATION_TYPES[state.rotationType]}</p>
-                                    </div>
-                                )}
                                 <div className="p-4 bg-slate-800/50 rounded-xl border border-slate-700">
                                     <h4 className="text-[10px] font-black uppercase text-slate-500 mb-2">AVL Rules</h4>
                                     <ul className="text-[11px] text-slate-400 space-y-2 list-disc pl-4">

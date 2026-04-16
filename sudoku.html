@@ -25,6 +25,7 @@
         .infinite-bg { background-image: radial-gradient(#334155 1px, transparent 1px); background-size: 30px 30px; }
     </style>
     <script src="settings_manager.js"></script>
+    <script src="algorithm_data.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -195,6 +196,7 @@
 
                     
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+                    <AlgorithmPanel algoKey="SUDOKU" currentLine={state.algoLine} />
                     <div className="flex-1 relative infinite-bg overflow-hidden flex items-center justify-center p-20">
                         <div className="sudoku-grid grid grid-cols-9 bg-slate-800 shadow-2xl" style={{ width: '540px', height: '540px', transform: `scale(${zoom})` }}>
                             {state.board.map((row, r) => (
