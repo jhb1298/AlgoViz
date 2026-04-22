@@ -122,7 +122,7 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
             body: JSON.stringify({
                 model: GROQ_MODEL,
                 messages: [{ role: 'system', content: sys }, ...conversationMsgs.slice(-14)],
-                max_tokens: 600,
+                max_tokens: 1000,
                 temperature: 0.7
             })
         });
@@ -185,7 +185,7 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
 
         ._acb_win {
             position: fixed; bottom: 92px; right: 24px; z-index: 99999;
-            width: 390px; max-height: 600px;
+            width: 420px; max-height: min(700px, calc(100vh - 120px));
             background: rgba(6, 11, 28, 0.97);
             backdrop-filter: blur(24px) saturate(180%);
             border: 1px solid rgba(99,102,241,0.28);
@@ -395,10 +395,11 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
             const [language, setLanguage] = useState(saved.language || 'English');
             const [apiKeyDraft, setApiKeyDraft] = useState(saved.apiKey || '');
             const [languageDraft, setLanguageDraft] = useState(saved.language || 'English');
-            const [messages, setMessages] = useState([{
+            const INITIAL_MESSAGE = {
                 role: 'assistant',
                 content: '👋 Hello! I\'m your **AlgoViz assistant**. Ask me anything about the current algorithm, step, or pseudocode — I\'m here to help you understand!'
-            }]);
+            };
+            const [messages, setMessages] = useState([INITIAL_MESSAGE]);
             const [input, setInput] = useState('');
             const [isLoading, setIsLoading] = useState(false);
             const [error, setError] = useState('');
@@ -555,7 +556,8 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
                         ),
                         h('div', { style: { display: 'flex', gap: '6px', alignItems: 'center' } },
                             h('button', { className: '_acb_header_btn', onClick: openSettings, title: 'Settings' }, '⚙️'),
-                            h('button', { className: '_acb_header_btn', onClick: () => setIsOpen(false), title: 'Close' }, '✕')
+                            h('button', { className: '_acb_header_btn', onClick: () => setIsOpen(false), title: 'Minimize' }, '−'),
+                            h('button', { className: '_acb_header_btn', onClick: () => { setIsOpen(false); setMessages([INITIAL_MESSAGE]); }, title: 'Close & Reset' }, '✕')
                         )
                     ),
                     // API key hint
@@ -634,14 +636,9 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
                 onClick: () => setIsOpen(o => !o),
                 'aria-label': 'Open Algorithm Assistant'
             },
-                isOpen
-                    ? h('svg', { xmlns: 'http://www.w3.org/2000/svg', width: 20, height: 20, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2.5, strokeLinecap: 'round', strokeLinejoin: 'round' },
-                        h('line', { x1: 18, y1: 6, x2: 6, y2: 18 }),
-                        h('line', { x1: 6, y1: 6, x2: 18, y2: 18 })
-                    )
-                    : h('svg', { xmlns: 'http://www.w3.org/2000/svg', width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' },
-                        h('path', { d: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' })
-                    ),
+                h('svg', { xmlns: 'http://www.w3.org/2000/svg', width: 22, height: 22, viewBox: '0 0 24 24', fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round', strokeLinejoin: 'round' },
+                    h('path', { d: 'M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z' })
+                ),
                 unread > 0 && !isOpen && h('div', { className: '_acb_fab_badge' }, unread > 9 ? '9+' : unread)
             );
 
