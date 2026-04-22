@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -26,6 +26,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -79,6 +80,7 @@
                 board: board.map(r => [...r]),
                 fixed,
                 active: null,
+                algoLine: 1,
                 status: 'START',
                 desc: 'Let\'s begin solving the puzzle.',
                 speech: SUDOKU_SCRIPT.START()
@@ -97,6 +99,7 @@
                                     fixed,
                                     active: { row, col, val: num },
                                     status: check.safe ? 'SAFE' : 'CONFLICT',
+                                    algoLine: check.safe ? 5 : 4,
                                     reason: check.reason,
                                     desc: check.safe ? `Placing ${num} is safe.` : `Conflict in ${check.reason}!`,
                                     speech: history.length % 100 === 0 ? SUDOKU_SCRIPT.TRYING(num, row, col) : null
@@ -113,6 +116,7 @@
                                         fixed,
                                         active: { row, col },
                                         status: 'BACKTRACK',
+                                        algoLine: 7,
                                         desc: `Backtracking from (${row+1}, ${col+1})`,
                                         speech: history.length % 150 === 0 ? SUDOKU_SCRIPT.BACKTRACK(row, col) : null
                                     });
@@ -133,6 +137,7 @@
                 fixed,
                 active: null,
                 status: 'SUCCESS',
+                algoLine: 9,
                 desc: 'Sudoku Solved!',
                 speech: SUDOKU_SCRIPT.SUCCESS()
             });

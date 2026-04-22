@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,6 +11,7 @@
     <script src="graph_script.js"></script>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -94,7 +95,7 @@ E F`;
                     stepId: history.length, activeNode: u, visited: new Set(visited), 
                     stack: [...currentStack],
                     status: 'VISITING', desc: `Visiting ${u}`, 
-                    speech: SEARCH_SCRIPT.DFS.VISITING(u), algoLine: 4
+                    speech: SEARCH_SCRIPT.DFS.VISITING(u), algoLine: 5
                 });
 
                 for (const v of adj[u].sort()) {
@@ -112,16 +113,16 @@ E F`;
                             visited: new Set(visited), 
                             stack: [...currentStack],
                             status: 'BACK', 
-                            desc: `Back to ${u}`, speech: `Backtracking to ${u}`, algoLine: 4
+                            desc: `Back to ${u}`, speech: `Backtracking to ${u}`, algoLine: 3
                         });
                     }
                 }
                 currentStack.pop();
             }
 
-            history.push({ stepId: 0, activeNode: source, visited: new Set(), stack: [], status: 'START', desc: `Starting DFS at ${source}`, speech: SEARCH_SCRIPT.DFS.START(source), algoLine: 0 });
+            history.push({ stepId: 0, activeNode: source, visited: new Set(), stack: [], status: 'START', desc: `Starting DFS at ${source}`, speech: SEARCH_SCRIPT.DFS.START(source), algoLine: 1 });
             dfs(source);
-            history.push({ stepId: history.length, status: 'SUCCESS', visited: new Set(visited), stack: [], desc: "DFS Complete", speech: SEARCH_SCRIPT.DFS.SUCCESS(), algoLine: 4 });
+            history.push({ stepId: history.length, status: 'SUCCESS', visited: new Set(visited), stack: [], desc: "DFS Complete", speech: SEARCH_SCRIPT.DFS.SUCCESS(), algoLine: 2 });
             return history;
         }
 

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -23,6 +23,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -77,6 +78,7 @@
                 stepId: 0,
                 generation,
                 population: population.map(p => ({ genes: p, fitness: getFitness(p) })),
+                algoLine: 1,
                 status: 'START',
                 desc: 'Initializing Population',
                 speech: OPTIMIZATION_SCRIPT.GENETIC.START()
@@ -92,6 +94,7 @@
                     stepId: history.length,
                     generation,
                     population: popWithFitness,
+                    algoLine: 3,
                     status: 'NEW_GEN',
                     desc: `Generation ${generation}: Best Fitness ${Math.round(best.fitness * 100)}%`,
                     speech: generation % 10 === 0 ? OPTIMIZATION_SCRIPT.GENETIC.NEW_GENERATION(generation, best.fitness) : null
@@ -118,6 +121,7 @@
                 stepId: history.length,
                 generation,
                 population: population.map(genes => ({ genes, fitness: getFitness(genes) })),
+                algoLine: 8,
                 status: 'SUCCESS',
                 desc: 'Target Reached!',
                 speech: OPTIMIZATION_SCRIPT.GENETIC.SUCCESS(generation)
@@ -231,7 +235,7 @@
 
                     
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-                    <AlgorithmPanel algoKey="GENETIC" currentLine={state.algoLine} />
+                    <AlgorithmPanel algoKey="GENETIC" currentLine={state?.algoLine} />
                     <div className="flex-1 relative infinite-bg overflow-hidden flex items-center justify-center">
                         <div className="camera-layer grid grid-cols-4 lg:grid-cols-5 gap-4 p-10 max-w-6xl" style={{ transform: `scale(${zoom})` }}>
                             {state.population.map((ind, i) => (

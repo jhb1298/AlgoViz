@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -27,6 +27,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -62,22 +63,22 @@
                 const id = nodeIdCounter++;
                 const node = { id, parentId, val, children: [], depth, isMemo: false };
                 
-                history.push({ stepId: history.length, nodeId: id, val, memo: { ...memo }, line: 0, status: 'START', desc: `fib(${val}) call`, speech: val === n ? FIBONACCI_SCRIPT.DP_START(val) : FIBONACCI_SCRIPT.MEMO_CHECK(val) });
+                history.push({ stepId: history.length, nodeId: id, val, memo: { ...memo }, line: 0, algoLine: 1, status: 'START', desc: `fib(${val}) call`, speech: val === n ? FIBONACCI_SCRIPT.DP_START(val) : FIBONACCI_SCRIPT.MEMO_CHECK(val) });
 
                 if (memo[val] !== undefined) {
                     node.isMemo = true;
                     node.result = memo[val];
-                    history.push({ stepId: history.length, nodeId: id, val, memo: { ...memo }, line: 1, status: 'MEMO_FOUND', desc: `Found in Memo: ${memo[val]}`, speech: FIBONACCI_SCRIPT.MEMO_FOUND(val, memo[val]) });
+                    history.push({ stepId: history.length, nodeId: id, val, memo: { ...memo }, line: 1, algoLine: 2, status: 'MEMO_FOUND', desc: `Found in Memo: ${memo[val]}`, speech: FIBONACCI_SCRIPT.MEMO_FOUND(val, memo[val]) });
                     return { node, result: memo[val] };
                 }
 
                 if (val <= 1) {
                     memo[val] = val;
-                    history.push({ stepId: history.length, nodeId: id, val, memo: { ...memo }, line: 2, status: 'BASE', result: val, desc: `Base case: ${val}`, speech: FIBONACCI_SCRIPT.BASE(val) });
+                    history.push({ stepId: history.length, nodeId: id, val, memo: { ...memo }, line: 2, algoLine: 3, status: 'BASE', result: val, desc: `Base case: ${val}`, speech: FIBONACCI_SCRIPT.BASE(val) });
                     return { node, result: val };
                 }
 
-                history.push({ stepId: history.length, nodeId: id, val, memo: { ...memo }, status: 'THINKING', desc: `Solving subproblems...` });
+                history.push({ stepId: history.length, nodeId: id, val, memo: { ...memo }, status: 'THINKING', algoLine: 4, desc: `Solving subproblems...` });
                 const { node: left, result: r1 } = solve(val - 1, depth + 1, id);
                 node.children.push(left);
                 
@@ -86,13 +87,13 @@
 
                 const final = r1 + r2;
                 memo[val] = final;
-                history.push({ stepId: history.length, nodeId: id, val, memo: { ...memo }, line: 3, status: 'STORE', result: final, desc: `Storing fib(${val}) = ${final}`, speech: FIBONACCI_SCRIPT.MEMO_STORE(val, final) });
+                history.push({ stepId: history.length, nodeId: id, val, memo: { ...memo }, line: 3, algoLine: 5, status: 'STORE', result: final, desc: `Storing fib(${val}) = ${final}`, speech: FIBONACCI_SCRIPT.MEMO_STORE(val, final) });
                 
                 return { node, result: final };
             }
 
             const { node: treeRoot, result: finalRes } = solve(n, 0);
-            history.push({ stepId: history.length, status: 'SUCCESS', val: n, result: finalRes, memo: { ...memo }, desc: "DP Complete!", speech: FIBONACCI_SCRIPT.DP_SUCCESS(finalRes) });
+            history.push({ stepId: history.length, status: 'SUCCESS', val: n, result: finalRes, memo: { ...memo }, algoLine: 6, desc: "DP Complete!", speech: FIBONACCI_SCRIPT.DP_SUCCESS(finalRes) });
             return { treeRoot, history };
         }
 
@@ -239,7 +240,7 @@
 
                     
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-                    <AlgorithmPanel algoKey="FIBONACCI_DP" currentLine={state.algoLine} />
+                    <AlgorithmPanel algoKey="FIBONACCI_DP" currentLine={currentState?.algoLine} />
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.2, z-e.deltaY*0.001), 1.5))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper') && !e.target.closest('.top-nav-area')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
                         <div className={`node-container absolute origin-top-left ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${camTarget.x + manualOffset.x}px, ${camTarget.y + manualOffset.y}px) scale(${zoom})` }}>
                             <svg className="absolute top-0 left-0 overflow-visible" style={{ width: 1, height: 1 }}>

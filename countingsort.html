@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -22,6 +22,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -56,6 +57,7 @@
                 count: [...count], 
                 output: [...output], 
                 status: 'START', 
+                algoLine: 1,
                 desc: "Starting Counting Sort", 
                 speech: SORTING_SCRIPT.COUNTING.START() 
             });
@@ -71,6 +73,7 @@
                     activeIndex: i,
                     activeCount: data[i],
                     status: 'COUNTING', 
+                    algoLine: 3,
                     desc: `Counting ${data[i]}`, 
                     speech: SORTING_SCRIPT.COUNTING.COUNTING(data[i])
                 });
@@ -86,6 +89,7 @@
                     output: [...output], 
                     activeCount: i,
                     status: 'CUMULATIVE', 
+                    algoLine: 4,
                     desc: `Calculating cumulative count for ${i}`, 
                     speech: SORTING_SCRIPT.COUNTING.CUMULATIVE(i, count[i])
                 });
@@ -106,6 +110,7 @@
                     activeIndex: i,
                     activeOutput: pos,
                     status: 'PLACING', 
+                    algoLine: 5,
                     desc: `Placing ${val} at index ${pos}`, 
                     speech: SORTING_SCRIPT.COUNTING.PLACING(val, pos)
                 });
@@ -117,6 +122,7 @@
                 count: [...finalCount], 
                 output: [...output], 
                 status: 'SUCCESS', 
+                algoLine: 6,
                 desc: "Sort Complete!", 
                 speech: SORTING_SCRIPT.COUNTING.SUCCESS() 
             });

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -23,6 +23,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -71,6 +72,7 @@
                 w2: w2.map(r => [...r]),
                 b1: [...b1],
                 b2: [...b2],
+                algoLine: 1,
                 status: 'START',
                 desc: 'Initializing Neural Network weights...',
                 speech: ML_SCRIPT.NEURAL.START()
@@ -95,6 +97,7 @@
                             target: [...data.output],
                             w1: w1.map(r => [...r]),
                             w2: w2.map(r => [...r]),
+                            algoLine: 4,
                             status: 'FORWARD',
                             desc: `Forward pass: Input [${data.input}] -> Output ${output[0].toFixed(3)}`,
                             speech: epoch === 0 ? ML_SCRIPT.NEURAL.FORWARD() : null
@@ -125,6 +128,7 @@
                             w1: w1.map(r => [...r]),
                             w2: w2.map(r => [...r]),
                             loss: loss,
+                            algoLine: 6,
                             status: 'BACKWARD',
                             desc: `Backpropagation: Error signal flowing back. Loss: ${loss.toFixed(4)}`,
                             speech: epoch === 0 ? ML_SCRIPT.NEURAL.BACKWARD() : null
@@ -137,6 +141,7 @@
                 stepId: history.length,
                 w1: w1.map(r => [...r]),
                 w2: w2.map(r => [...r]),
+                algoLine: 8,
                 status: 'SUCCESS',
                 desc: 'Training complete! XOR logic mastered.',
                 speech: ML_SCRIPT.NEURAL.SUCCESS(0.01)
@@ -250,7 +255,7 @@
 
                     
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-                    <AlgorithmPanel algoKey="NEURAL_NETWORK" currentLine={state.algoLine} />
+                    <AlgorithmPanel algoKey="NEURAL_NETWORK" currentLine={state?.algoLine} />
                     <div className="flex-1 relative infinite-bg overflow-hidden flex items-center justify-center">
                         <svg width="1000" height="1000" style={{ transform: `scale(${zoom})` }} className="camera-layer overflow-visible">
                             {/* Weights Input -> Hidden */}

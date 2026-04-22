@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -19,6 +19,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -48,7 +49,7 @@
             let shrink = 1.3;
             let sorted = false;
 
-            history.push({ stepId: 0, arr: [...data], gap, status: 'START', desc: "Starting Comb Sort", speech: SORTING_SCRIPT.COMB.START() });
+            history.push({ stepId: 0, arr: [...data], gap, status: 'START', algoLine: 1, desc: "Starting Comb Sort", speech: SORTING_SCRIPT.COMB.START() });
 
             while (!sorted) {
                 gap = Math.floor(gap / shrink);
@@ -57,19 +58,19 @@
                     sorted = true;
                 }
 
-                history.push({ stepId: history.length, arr: [...data], gap, status: 'GAP', desc: `Gap set to ${gap}`, speech: SORTING_SCRIPT.COMB.GAP(gap) });
+                history.push({ stepId: history.length, arr: [...data], gap, status: 'GAP', algoLine: 3, desc: `Gap set to ${gap}`, speech: SORTING_SCRIPT.COMB.GAP(gap) });
 
                 for (let i = 0; i + gap < n; i++) {
-                    history.push({ stepId: history.length, arr: [...data], gap, compare: [i, i + gap], status: 'COMPARING', desc: `Comparing indices ${i} and ${i + gap}`, speech: SORTING_SCRIPT.COMB.COMPARING(data[i], data[i+gap]) });
+                    history.push({ stepId: history.length, arr: [...data], gap, compare: [i, i + gap], status: 'COMPARING', algoLine: 5, desc: `Comparing indices ${i} and ${i + gap}`, speech: SORTING_SCRIPT.COMB.COMPARING(data[i], data[i+gap]) });
                     if (data[i] > data[i + gap]) {
                         [data[i], data[i + gap]] = [data[i + gap], data[i]];
                         sorted = false;
-                        history.push({ stepId: history.length, arr: [...data], gap, swap: [i, i + gap], status: 'SWAPPING', desc: `Swapped ${data[i+gap]} and ${data[i]}` });
+                        history.push({ stepId: history.length, arr: [...data], gap, swap: [i, i + gap], status: 'SWAPPING', algoLine: 6, desc: `Swapped ${data[i+gap]} and ${data[i]}` });
                     }
                 }
             }
 
-            history.push({ stepId: history.length, arr: [...data], gap: 1, status: 'SUCCESS', desc: "Sort Complete!", speech: SORTING_SCRIPT.COMB.SUCCESS() });
+            history.push({ stepId: history.length, arr: [...data], gap: 1, status: 'SUCCESS', algoLine: 6, desc: "Sort Complete!", speech: SORTING_SCRIPT.COMB.SUCCESS() });
             return history;
         }
 

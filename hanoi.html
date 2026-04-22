@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -27,6 +27,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -64,25 +65,25 @@
             const history = []; 
             function solve(node, pegs) {
                 const { n, src, aux, dest, id } = node;
-                history.push({ stepId: history.length, nodeId: id, line: 0, pegs: clonePegs(pegs), status: 'START', desc: `Called hanoi(${n}, ${src}, ${dest}, ${aux})`, speech: HANOI_SCRIPT.START(n, src, dest) });
+                history.push({ stepId: history.length, nodeId: id, line: 0, algoLine: 1, pegs: clonePegs(pegs), status: 'START', desc: `Called hanoi(${n}, ${src}, ${dest}, ${aux})`, speech: HANOI_SCRIPT.START(n, src, dest) });
                 if (n === 1) {
-                    history.push({ stepId: history.length, nodeId: id, line: 2, pegs: clonePegs(pegs), status: 'MOVING', moveDetails: { disk: 1, from: src, to: dest }, desc: `Move disk 1 from ${src} to ${dest}`, speech: HANOI_SCRIPT.MOVING(1, src, dest) });
+                    history.push({ stepId: history.length, nodeId: id, line: 2, algoLine: 2, pegs: clonePegs(pegs), status: 'MOVING', moveDetails: { disk: 1, from: src, to: dest }, desc: `Move disk 1 from ${src} to ${dest}`, speech: HANOI_SCRIPT.MOVING(1, src, dest) });
                     const disk = pegs[src].pop(); pegs[dest].push(disk);
-                    history.push({ stepId: history.length, nodeId: id, line: 2, pegs: clonePegs(pegs), status: 'MOVED', desc: `Disk 1 moved.` });
+                    history.push({ stepId: history.length, nodeId: id, line: 2, algoLine: 2, pegs: clonePegs(pegs), status: 'MOVED', desc: `Disk 1 moved.` });
                 } else {
                     const leftNode = { id: ++nodeIdCounter, parentId: id, n: n - 1, src: src, aux: dest, dest: aux, children: [], depth: node.depth + 1 };
                     node.children.push(leftNode);
-                    history.push({ stepId: history.length, nodeId: id, line: 1, pegs: clonePegs(pegs), status: 'THINKING', desc: `Recursive call for n-1`, speech: HANOI_SCRIPT.THINKING(n-1) });
+                    history.push({ stepId: history.length, nodeId: id, line: 1, algoLine: 4, pegs: clonePegs(pegs), status: 'THINKING', desc: `Recursive call for n-1`, speech: HANOI_SCRIPT.THINKING(n-1) });
                     solve(leftNode, pegs);
-                    history.push({ stepId: history.length, nodeId: id, line: 2, pegs: clonePegs(pegs), status: 'MOVING', moveDetails: { disk: n, from: src, to: dest }, desc: `Move disk ${n} from ${src} to ${dest}`, speech: HANOI_SCRIPT.MOVING(n, src, dest) });
+                    history.push({ stepId: history.length, nodeId: id, line: 2, algoLine: 5, pegs: clonePegs(pegs), status: 'MOVING', moveDetails: { disk: n, from: src, to: dest }, desc: `Move disk ${n} from ${src} to ${dest}`, speech: HANOI_SCRIPT.MOVING(n, src, dest) });
                     const disk = pegs[src].pop(); pegs[dest].push(disk);
-                    history.push({ stepId: history.length, nodeId: id, line: 2, pegs: clonePegs(pegs), status: 'MOVED', desc: `Disk ${n} moved.` });
+                    history.push({ stepId: history.length, nodeId: id, line: 2, algoLine: 5, pegs: clonePegs(pegs), status: 'MOVED', desc: `Disk ${n} moved.` });
                     const rightNode = { id: ++nodeIdCounter, parentId: id, n: n - 1, src: aux, aux: src, dest: dest, children: [], depth: node.depth + 1 };
                     node.children.push(rightNode);
-                    history.push({ stepId: history.length, nodeId: id, line: 3, pegs: clonePegs(pegs), status: 'THINKING', desc: `Recursive call for n-1`, speech: HANOI_SCRIPT.THINKING(n-1) });
+                    history.push({ stepId: history.length, nodeId: id, line: 3, algoLine: 6, pegs: clonePegs(pegs), status: 'THINKING', desc: `Recursive call for n-1`, speech: HANOI_SCRIPT.THINKING(n-1) });
                     solve(rightNode, pegs);
                 }
-                history.push({ stepId: history.length, nodeId: id, line: 4, pegs: clonePegs(pegs), status: 'RETURNING', desc: `Return from hanoi(${n})`, speech: HANOI_SCRIPT.RETURNING(n-1 > 0 ? n-1 : 0) });
+                history.push({ stepId: history.length, nodeId: id, line: 4, algoLine: null, pegs: clonePegs(pegs), status: 'RETURNING', desc: `Return from hanoi(${n})`, speech: HANOI_SCRIPT.RETURNING(n-1 > 0 ? n-1 : 0) });
             }
             solve(treeRoot, initialPegs);
             return { treeRoot, history };
@@ -257,7 +258,7 @@
                     </div>
                     
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-                    <AlgorithmPanel algoKey="HANOI" currentLine={state.algoLine} />
+                    <AlgorithmPanel algoKey="HANOI" currentLine={currentState?.algoLine} />
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.2, z-e.deltaY*0.001), 1.5))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper') && !e.target.closest('.top-nav-area')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
                         <div className={`node-container absolute origin-top-left ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${camTarget.x + manualOffset.x}px, ${camTarget.y + manualOffset.y}px) scale(${zoom})` }}>
                             <svg className="absolute top-0 left-0 overflow-visible" style={{ width: 1, height: 1 }}>{flatNodes.map(node => node.children.map(child => (<path key={`${node.id}-${child.id}`} d={`M ${node.x+NODE_WIDTH/2} ${node.y+NODE_HEIGHT} C ${node.x+NODE_WIDTH/2} ${(node.y+child.y)/2}, ${child.x+NODE_WIDTH/2} ${(node.y+child.y)/2}, ${child.x+NODE_WIDTH/2} ${child.y}`} fill="none" stroke={activePathIds.has(child.id) ? "#818cf8" : (latestNodeStates[child.id] ? "#475569" : "#1e293b")} strokeWidth={activePathIds.has(child.id) ? 3 : 2} className={`edge-path ${activePathIds.has(child.id) ? 'edge-waiting' : ''}`} style={{ opacity: activePathIds.has(child.id) ? 1 : (latestNodeStates[child.id] ? 0.8 : 0.2) }} />)))}</svg>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -19,6 +19,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -45,27 +46,27 @@
             let data = [...arr];
             let n = data.length;
 
-            history.push({ stepId: 0, arr: [...data], status: 'START', desc: "Starting Shell Sort", speech: SORTING_SCRIPT.SHELL.START() });
+            history.push({ stepId: 0, arr: [...data], status: 'START', algoLine: 1, desc: "Starting Shell Sort", speech: SORTING_SCRIPT.SHELL.START() });
 
             for (let gap = Math.floor(n / 2); gap > 0; gap = Math.floor(gap / 2)) {
-                history.push({ stepId: history.length, arr: [...data], gap, status: 'GAP', desc: `Gap set to ${gap}`, speech: SORTING_SCRIPT.SHELL.GAP(gap) });
+                history.push({ stepId: history.length, arr: [...data], gap, status: 'GAP', algoLine: 2, desc: `Gap set to ${gap}`, speech: SORTING_SCRIPT.SHELL.GAP(gap) });
 
                 for (let i = gap; i < n; i++) {
                     let temp = data[i];
                     let j;
                     
-                    history.push({ stepId: history.length, arr: [...data], gap, active: i, status: 'INSERT', desc: `Gap-inserting ${temp}`, speech: SORTING_SCRIPT.SHELL.INSERTION(temp, gap) });
+                    history.push({ stepId: history.length, arr: [...data], gap, active: i, status: 'INSERT', algoLine: 3, desc: `Gap-inserting ${temp}`, speech: SORTING_SCRIPT.SHELL.INSERTION(temp, gap) });
 
                     for (j = i; j >= gap && data[j - gap] > temp; j -= gap) {
                         data[j] = data[j - gap];
-                        history.push({ stepId: history.length, arr: [...data], gap, compare: [j, j - gap], status: 'SLIDE', desc: `Sliding ${data[j]} forward` });
+                        history.push({ stepId: history.length, arr: [...data], gap, compare: [j, j - gap], status: 'SLIDE', algoLine: 5, desc: `Sliding ${data[j]} forward` });
                     }
                     data[j] = temp;
-                    history.push({ stepId: history.length, arr: [...data], gap, placed: j, status: 'PLACE', desc: `Placed ${temp} at index ${j}` });
+                    history.push({ stepId: history.length, arr: [...data], gap, placed: j, status: 'PLACE', algoLine: 6, desc: `Placed ${temp} at index ${j}` });
                 }
             }
 
-            history.push({ stepId: history.length, arr: [...data], status: 'SUCCESS', desc: "Sort Complete!", speech: SORTING_SCRIPT.SHELL.SUCCESS() });
+            history.push({ stepId: history.length, arr: [...data], status: 'SUCCESS', algoLine: 7, desc: "Sort Complete!", speech: SORTING_SCRIPT.SHELL.SUCCESS() });
             return history;
         }
 

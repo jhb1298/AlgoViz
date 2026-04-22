@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -24,6 +24,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -86,7 +87,7 @@ E F 5`;
             const source = nodes[0];
             distances[source] = 0;
 
-            history.push({ stepId: 0, activeNode: source, distances: { ...distances }, parents: { ...parents }, visited: new Set(), status: 'START', desc: `Starting at Source ${source}`, speech: DIJKSTRA_SCRIPT.START(source) });
+            history.push({ stepId: 0, activeNode: source, distances: { ...distances }, parents: { ...parents }, visited: new Set(), status: 'START', algoLine: 1, desc: `Starting at Source ${source}`, speech: DIJKSTRA_SCRIPT.START(source) });
 
             const pq = [source];
             while (pq.length > 0) {
@@ -95,7 +96,7 @@ E F 5`;
                 if (visited.has(u)) continue;
                 
                 visited.add(u);
-                history.push({ stepId: history.length, activeNode: u, distances: { ...distances }, parents: { ...parents }, visited: new Set(visited), status: 'VISITING', desc: `Visiting ${u}`, speech: DIJKSTRA_SCRIPT.VISITING(u) });
+                history.push({ stepId: history.length, activeNode: u, distances: { ...distances }, parents: { ...parents }, visited: new Set(visited), status: 'VISITING', algoLine: 4, desc: `Visiting ${u}`, speech: DIJKSTRA_SCRIPT.VISITING(u) });
 
                 const neighbors = graph.edges.filter(e => e.from === u || e.to === u);
                 for (const edge of neighbors) {
@@ -107,14 +108,14 @@ E F 5`;
                         distances[v] = newDist;
                         parents[v] = u;
                         pq.push(v);
-                        history.push({ stepId: history.length, activeNode: u, targetNode: v, activeEdge: edge, distances: { ...distances }, parents: { ...parents }, visited: new Set(visited), status: 'RELAXING', desc: `Shortcut to ${v} via ${u}`, speech: DIJKSTRA_SCRIPT.RELAXING(u, v, newDist) });
+                        history.push({ stepId: history.length, activeNode: u, targetNode: v, activeEdge: edge, distances: { ...distances }, parents: { ...parents }, visited: new Set(visited), status: 'RELAXING', algoLine: 9, desc: `Shortcut to ${v} via ${u}`, speech: DIJKSTRA_SCRIPT.RELAXING(u, v, newDist) });
                     } else {
-                        history.push({ stepId: history.length, activeNode: u, targetNode: v, activeEdge: edge, distances: { ...distances }, parents: { ...parents }, visited: new Set(visited), status: 'CHECKING', desc: `No shortcut to ${v}` });
+                        history.push({ stepId: history.length, activeNode: u, targetNode: v, activeEdge: edge, distances: { ...distances }, parents: { ...parents }, visited: new Set(visited), status: 'CHECKING', algoLine: 8, desc: `No shortcut to ${v}` });
                     }
                 }
             }
 
-            history.push({ stepId: history.length, status: 'SUCCESS', distances: { ...distances }, parents: { ...parents }, visited: new Set(visited), desc: "Search Complete", speech: DIJKSTRA_SCRIPT.SUCCESS() });
+            history.push({ stepId: history.length, status: 'SUCCESS', algoLine: 3, distances: { ...distances }, parents: { ...parents }, visited: new Set(visited), desc: "Search Complete", speech: DIJKSTRA_SCRIPT.SUCCESS() });
             return history;
         }
 

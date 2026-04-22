@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -21,6 +21,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -48,7 +49,7 @@
             const maxVal = Math.max(...data);
             const maxDigits = maxVal.toString().length;
 
-            history.push({ stepId: 0, arr: [...data], buckets: Array.from({length: 10}, () => []), status: 'START', desc: "Starting Radix Sort", speech: SORTING_SCRIPT.RADIX.START() });
+            history.push({ stepId: 0, arr: [...data], buckets: Array.from({length: 10}, () => []), status: 'START', algoLine: 1, desc: "Starting Radix Sort", speech: SORTING_SCRIPT.RADIX.START() });
 
             for (let exp = 1; Math.floor(maxVal / exp) > 0; exp *= 10) {
                 const buckets = Array.from({length: 10}, () => []);
@@ -64,6 +65,7 @@
                         activeNum: data[i], 
                         activeBucket: digit,
                         status: 'BUCKETING', 
+                        algoLine: 3,
                         desc: `Placing ${data[i]} in bucket ${digit}`, 
                         speech: SORTING_SCRIPT.RADIX.BUCKETING(data[i], digit, place)
                     });
@@ -75,10 +77,10 @@
                         data[k++] = buckets[i][j];
                     }
                 }
-                history.push({ stepId: history.length, arr: [...data], buckets: buckets.map(b => [...b]), status: 'COLLECTING', desc: `Collected from buckets for ${place}s place`, speech: SORTING_SCRIPT.RADIX.COLLECTING(place) });
+                history.push({ stepId: history.length, arr: [...data], buckets: buckets.map(b => [...b]), status: 'COLLECTING', algoLine: 6, desc: `Collected from buckets for ${place}s place`, speech: SORTING_SCRIPT.RADIX.COLLECTING(place) });
             }
 
-            history.push({ stepId: history.length, arr: [...data], buckets: Array.from({length: 10}, () => []), status: 'SUCCESS', desc: "Sort Complete!", speech: SORTING_SCRIPT.RADIX.SUCCESS() });
+            history.push({ stepId: history.length, arr: [...data], buckets: Array.from({length: 10}, () => []), status: 'SUCCESS', algoLine: 6, desc: "Sort Complete!", speech: SORTING_SCRIPT.RADIX.SUCCESS() });
             return history;
         }
 

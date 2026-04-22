@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -22,6 +22,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -70,12 +71,14 @@
 
             history.push({
                 stepId: 0, points, hull: [], current: null, candidate: null, target: null,
+                algoLine: 1,
                 status: 'START', desc: "Finding starting point...",
                 speech: GEOMETRY_SCRIPT.JARVIS.START()
             });
 
             history.push({
                 stepId: history.length, points, hull: [], current: points[l], candidate: null, target: null,
+                algoLine: 1,
                 status: 'START_POINT', desc: `Starting at leftmost point ${points[l].id}`,
                 speech: GEOMETRY_SCRIPT.JARVIS.PICK_START(points[l])
             });
@@ -90,6 +93,7 @@
                     
                     history.push({
                         stepId: history.length, points, hull: [...hull], current: points[p], candidate: points[q], target: points[i],
+                        algoLine: 4,
                         status: 'SCANNING', desc: `Comparing ${points[q].id} and ${points[i].id}`,
                         speech: GEOMETRY_SCRIPT.JARVIS.SCANNING(points[p], points[q], points[i])
                     });
@@ -103,6 +107,7 @@
                 if (p !== l) {
                     history.push({
                         stepId: history.length, points, hull: [...hull], current: points[p], candidate: null, target: null,
+                        algoLine: 6,
                         status: 'NEXT', desc: `Added ${points[p].id} to hull`,
                         speech: GEOMETRY_SCRIPT.JARVIS.NEXT_POINT(points[p])
                     });
@@ -112,6 +117,7 @@
 
             history.push({
                 stepId: history.length, points, hull: [...hull, points[l]], current: null, candidate: null, target: null,
+                algoLine: 8,
                 status: 'SUCCESS', desc: "Hull Complete!",
                 speech: GEOMETRY_SCRIPT.JARVIS.SUCCESS()
             });
@@ -193,7 +199,7 @@
 
                     
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-                    <AlgorithmPanel algoKey="JARVIS_MARCH" currentLine={state.algoLine} />
+                    <AlgorithmPanel algoKey="JARVIS_MARCH" currentLine={state?.algoLine} />
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-crosshair" onClick={handleCanvasClick} onWheel={(e) => setZoom(z => Math.min(Math.max(0.2, z-e.deltaY*0.001), 2))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
                         <div className={`absolute left-0 top-0 w-full h-full ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${manualOffset.x}px, ${manualOffset.y}px) scale(${zoom})` }}>
                             <svg className="absolute top-0 left-0 overflow-visible w-full h-full">

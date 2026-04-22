@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -19,6 +19,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -45,28 +46,28 @@
             let data = [...arr];
             const n = data.length;
             
-            history.push({ stepId: 0, arr: [...data], sortedCount: 0, currentIdx: -1, minIdx: -1, status: 'START', desc: "Starting Selection Sort", speech: SORTING_SCRIPT.SELECTION.START() });
+            history.push({ stepId: 0, arr: [...data], sortedCount: 0, currentIdx: -1, minIdx: -1, status: 'START', algoLine: 1, desc: "Starting Selection Sort", speech: SORTING_SCRIPT.SELECTION.START() });
 
             for (let i = 0; i < n - 1; i++) {
                 let minIdx = i;
-                history.push({ stepId: history.length, arr: [...data], sortedCount: i, currentIdx: i, minIdx: i, status: 'NEW_MIN', desc: `Assume ${data[i]} is the minimum`, speech: SORTING_SCRIPT.SELECTION.NEW_MIN(data[i]) });
+                history.push({ stepId: history.length, arr: [...data], sortedCount: i, currentIdx: i, minIdx: i, status: 'NEW_MIN', algoLine: 2, desc: `Assume ${data[i]} is the minimum`, speech: SORTING_SCRIPT.SELECTION.NEW_MIN(data[i]) });
 
                 for (let j = i + 1; j < n; j++) {
-                    history.push({ stepId: history.length, arr: [...data], sortedCount: i, currentIdx: j, minIdx: minIdx, status: 'SCANNING', desc: `Scanning ${data[j]}`, speech: SORTING_SCRIPT.SELECTION.SCANNING(data[j]) });
+                    history.push({ stepId: history.length, arr: [...data], sortedCount: i, currentIdx: j, minIdx: minIdx, status: 'SCANNING', algoLine: 3, desc: `Scanning ${data[j]}`, speech: SORTING_SCRIPT.SELECTION.SCANNING(data[j]) });
                     
                     if (data[j] < data[minIdx]) {
                         minIdx = j;
-                        history.push({ stepId: history.length, arr: [...data], sortedCount: i, currentIdx: j, minIdx: minIdx, status: 'NEW_MIN', desc: `New minimum found: ${data[j]}`, speech: SORTING_SCRIPT.SELECTION.NEW_MIN(data[j]) });
+                        history.push({ stepId: history.length, arr: [...data], sortedCount: i, currentIdx: j, minIdx: minIdx, status: 'NEW_MIN', algoLine: 5, desc: `New minimum found: ${data[j]}`, speech: SORTING_SCRIPT.SELECTION.NEW_MIN(data[j]) });
                     }
                 }
 
                 if (minIdx !== i) {
-                    history.push({ stepId: history.length, arr: [...data], sortedCount: i, currentIdx: -1, minIdx: minIdx, swapWith: i, status: 'SWAPPING', desc: `Swapping ${data[minIdx]} with ${data[i]}`, speech: SORTING_SCRIPT.SELECTION.SWAPPING(data[minIdx], data[i]) });
+                    history.push({ stepId: history.length, arr: [...data], sortedCount: i, currentIdx: -1, minIdx: minIdx, swapWith: i, status: 'SWAPPING', algoLine: 6, desc: `Swapping ${data[minIdx]} with ${data[i]}`, speech: SORTING_SCRIPT.SELECTION.SWAPPING(data[minIdx], data[i]) });
                     [data[i], data[minIdx]] = [data[minIdx], data[i]];
                 }
             }
 
-            history.push({ stepId: history.length, arr: [...data], sortedCount: n, currentIdx: -1, minIdx: -1, status: 'SUCCESS', desc: "Sort Complete!", speech: SORTING_SCRIPT.SELECTION.SUCCESS() });
+            history.push({ stepId: history.length, arr: [...data], sortedCount: n, currentIdx: -1, minIdx: -1, status: 'SUCCESS', algoLine: 6, desc: "Sort Complete!", speech: SORTING_SCRIPT.SELECTION.SUCCESS() });
             return history;
         }
 

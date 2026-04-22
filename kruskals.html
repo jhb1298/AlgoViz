@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -22,6 +22,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -146,6 +147,7 @@ D F 4`;
                 rejectedEdges: [], 
                 sortedEdges,
                 status: 'START', 
+                algoLine: 1,
                 desc: "Sorted all edges by weight", 
                 speech: KRUSKALS_SCRIPT.START() 
             });
@@ -159,6 +161,7 @@ D F 4`;
                     rejectedEdges: [...rejectedEdges], 
                     sortedEdges,
                     status: 'CHECKING', 
+                    algoLine: 3,
                     desc: `Checking ${edge.from}-${edge.to} (${edge.weight})`, 
                     speech: KRUSKALS_SCRIPT.CHECKING(edge.from, edge.to, edge.weight) 
                 });
@@ -177,6 +180,7 @@ D F 4`;
                         rejectedEdges: [...rejectedEdges], 
                         sortedEdges,
                         status: 'ADDING', 
+                        algoLine: 5,
                         desc: `Connected ${edge.from} and ${edge.to}`, 
                         speech: KRUSKALS_SCRIPT.ADDING(edge.from, edge.to) 
                     });
@@ -190,6 +194,7 @@ D F 4`;
                         rejectedEdges: [...rejectedEdges], 
                         sortedEdges,
                         status: 'REJECTING', 
+                        algoLine: 6,
                         desc: `Cycle detected! Skipping...`, 
                         speech: KRUSKALS_SCRIPT.SKIPPING(edge.from, edge.to) 
                     });
@@ -201,6 +206,7 @@ D F 4`;
                 stepId: history.length, 
                 sortedEdges, 
                 status: 'SUCCESS', 
+                algoLine: 7,
                 groups: uf.getGroups(nodeIds), 
                 mstEdges: [...mstEdges], 
                 rejectedEdges: [...rejectedEdges], 

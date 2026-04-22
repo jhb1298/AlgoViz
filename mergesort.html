@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -26,6 +26,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -60,21 +61,21 @@
             function solve(data, depth, parentId = null) {
                 const id = nodeIdCounter++;
                 const node = { id, parentId, data, children: [], depth };
-                history.push({ stepId: history.length, nodeId: id, data, line: 0, status: 'START', desc: `Split [${data.join(',')}]`, speech: MERGESORT_SCRIPT.START(data) });
+                history.push({ stepId: history.length, nodeId: id, data, line: 0, algoLine: 2, status: 'START', desc: `Split [${data.join(',')}]`, speech: MERGESORT_SCRIPT.START(data) });
                 if (data.length <= 1) {
-                    history.push({ stepId: history.length, nodeId: id, data, line: 1, status: 'BASE', desc: `Base case: [${data.join(',')}]`, result: data, speech: MERGESORT_SCRIPT.BASE(data[0]) });
+                    history.push({ stepId: history.length, nodeId: id, data, line: 1, algoLine: 1, status: 'BASE', desc: `Base case: [${data.join(',')}]`, result: data, speech: MERGESORT_SCRIPT.BASE(data[0]) });
                     return { node, result: data };
                 }
                 const mid = Math.floor(data.length / 2);
                 const left = data.slice(0, mid); const right = data.slice(mid);
-                history.push({ stepId: history.length, nodeId: id, data, line: 2, status: 'THINKING', desc: `Sorting left half`, speech: MERGESORT_SCRIPT.THINKING('left') });
+                history.push({ stepId: history.length, nodeId: id, data, line: 2, algoLine: 3, status: 'THINKING', desc: `Sorting left half`, speech: MERGESORT_SCRIPT.THINKING('left') });
                 const { node: lNode, result: lRes } = solve(left, depth + 1, id);
                 node.children.push(lNode);
-                history.push({ stepId: history.length, nodeId: id, data, line: 2, status: 'THINKING', desc: `Sorting right half`, speech: MERGESORT_SCRIPT.THINKING('right') });
+                history.push({ stepId: history.length, nodeId: id, data, line: 2, algoLine: 4, status: 'THINKING', desc: `Sorting right half`, speech: MERGESORT_SCRIPT.THINKING('right') });
                 const { node: rNode, result: rRes } = solve(right, depth + 1, id);
                 node.children.push(rNode);
                 const merged = [...lRes, ...rRes].sort((a,b) => a-b);
-                history.push({ stepId: history.length, nodeId: id, data, line: 3, status: 'MERGE', desc: `Merged result`, result: merged, speech: MERGESORT_SCRIPT.MERGE(lRes, rRes, merged) });
+                history.push({ stepId: history.length, nodeId: id, data, line: 3, algoLine: 5, status: 'MERGE', desc: `Merged result`, result: merged, speech: MERGESORT_SCRIPT.MERGE(lRes, rRes, merged) });
                 return { node, result: merged };
             }
             const { node: treeRoot } = solve(arr, 0);
@@ -218,7 +219,7 @@
                     </div>
                     
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-                    <AlgorithmPanel algoKey="MERGESORT" currentLine={state.algoLine} />
+                    <AlgorithmPanel algoKey="MERGESORT" currentLine={currentState?.algoLine} />
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.1, z-e.deltaY*0.001), 1.5))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper') && !e.target.closest('.top-nav-area')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
                         <div className={`node-container absolute origin-top-left ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${camTarget.x + manualOffset.x}px, ${camTarget.y + manualOffset.y}px) scale(${zoom})` }}>
                             <svg className="absolute top-0 left-0 overflow-visible" style={{ width: 1, height: 1 }}>{flatNodes.map(node => node.children.map(child => (<path key={`${node.id}-${child.id}`} d={`M ${node.x+NODE_WIDTH/2} ${node.y+NODE_HEIGHT} C ${node.x+NODE_WIDTH/2} ${(node.y+child.y)/2}, ${child.x+NODE_WIDTH/2} ${(node.y+child.y)/2}, ${child.x+NODE_WIDTH/2} ${child.y}`} fill="none" stroke={activePathIds.has(child.id) ? "#818cf8" : (latestNodeStates[child.id] ? "#475569" : "#1e293b")} strokeWidth={activePathIds.has(child.id) ? 3 : 2} className={`edge-path ${activePathIds.has(child.id) ? 'edge-waiting' : ''}`} style={{ opacity: activePathIds.has(child.id) ? 1 : (latestNodeStates[child.id] ? 0.8 : 0.2) }} />)))}</svg>

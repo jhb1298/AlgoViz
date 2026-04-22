@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,6 +11,7 @@
     <script src="graph_script.js"></script>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -122,7 +123,7 @@ E F`;
             const queue = [source];
             queued.add(source);
             
-            history.push({ stepId: 0, activeNode: source, visited: new Set(), queued: new Set(queued), queue: [...queue], status: 'START', desc: `Starting BFS at ${source}`, speech: SEARCH_SCRIPT.BFS.START(source), algoLine: 0 });
+            history.push({ stepId: 0, activeNode: source, visited: new Set(), queued: new Set(queued), queue: [...queue], status: 'START', desc: `Starting BFS at ${source}`, speech: SEARCH_SCRIPT.BFS.START(source), algoLine: 1 });
 
             while (queue.length > 0) {
                 const u = queue.shift();
@@ -130,7 +131,7 @@ E F`;
                 history.push({ 
                     stepId: history.length, activeNode: u, visited: new Set(visited), 
                     queued: new Set(queued), queue: [...queue], status: 'VISITING', desc: `Visiting ${u}`, 
-                    speech: SEARCH_SCRIPT.BFS.VISITING(u), algoLine: 3
+                    speech: SEARCH_SCRIPT.BFS.VISITING(u), algoLine: 4
                 });
 
                 for (const v of adj[u]) {
@@ -141,13 +142,13 @@ E F`;
                             stepId: history.length, activeNode: u, targetNode: v,
                             activeEdge: {from: u, to: v}, visited: new Set(visited), 
                             queued: new Set(queued), queue: [...queue], status: 'ENQUEUE', desc: `Enqueuing ${v}`, 
-                            speech: SEARCH_SCRIPT.BFS.ENQUEUE(v), algoLine: 7
+                            speech: SEARCH_SCRIPT.BFS.ENQUEUE(v), algoLine: 8
                         });
                     }
                 }
             }
 
-            history.push({ stepId: history.length, status: 'SUCCESS', visited: new Set(visited), queued: new Set(queued), queue: [], desc: "BFS Complete", speech: SEARCH_SCRIPT.BFS.SUCCESS() });
+            history.push({ stepId: history.length, status: 'SUCCESS', visited: new Set(visited), queued: new Set(queued), queue: [], desc: "BFS Complete", speech: SEARCH_SCRIPT.BFS.SUCCESS(), algoLine: 3 });
             return history;
         }
 

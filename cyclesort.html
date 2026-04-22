@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -20,6 +20,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -46,20 +47,20 @@
             let data = [...arr];
             let n = data.length;
 
-            history.push({ stepId: 0, arr: [...data], status: 'START', desc: "Starting Cycle Sort", speech: SORTING_SCRIPT.CYCLE.START() });
+            history.push({ stepId: 0, arr: [...data], status: 'START', algoLine: 1, desc: "Starting Cycle Sort", speech: SORTING_SCRIPT.CYCLE.START() });
 
             for (let cycleStart = 0; cycleStart <= n - 2; cycleStart++) {
                 let item = data[cycleStart];
                 let pos = cycleStart;
 
-                history.push({ stepId: history.length, arr: [...data], held: { val: item, from: cycleStart }, status: 'PICK', desc: `Picking up ${item} from index ${cycleStart}`, speech: SORTING_SCRIPT.CYCLE.PICK_ITEM(item) });
+                history.push({ stepId: history.length, arr: [...data], held: { val: item, from: cycleStart }, status: 'PICK', algoLine: 2, desc: `Picking up ${item} from index ${cycleStart}`, speech: SORTING_SCRIPT.CYCLE.PICK_ITEM(item) });
 
                 for (let i = cycleStart + 1; i < n; i++) {
                     if (data[i] < item) pos++;
                 }
 
                 if (pos === cycleStart) {
-                    history.push({ stepId: history.length, arr: [...data], status: 'SKIP', desc: `${item} is already in the right spot.` });
+                    history.push({ stepId: history.length, arr: [...data], status: 'SKIP', algoLine: 3, desc: `${item} is already in the right spot.` });
                     continue;
                 }
 
@@ -69,7 +70,7 @@
                     let temp = data[pos];
                     data[pos] = item;
                     item = temp;
-                    history.push({ stepId: history.length, arr: [...data], held: { val: item, from: pos }, status: 'SWAP', desc: `Placed item at index ${pos}, picked up ${item}`, speech: SORTING_SCRIPT.CYCLE.SWAPPING(data[pos], item) });
+                    history.push({ stepId: history.length, arr: [...data], held: { val: item, from: pos }, status: 'SWAP', algoLine: 4, desc: `Placed item at index ${pos}, picked up ${item}`, speech: SORTING_SCRIPT.CYCLE.SWAPPING(data[pos], item) });
                 }
 
                 while (pos !== cycleStart) {
@@ -84,12 +85,12 @@
                         let temp = data[pos];
                         data[pos] = item;
                         item = temp;
-                        history.push({ stepId: history.length, arr: [...data], held: { val: item, from: pos }, status: 'SWAP', desc: `Cycle continues: placed item at index ${pos}, picked up ${item}`, speech: SORTING_SCRIPT.CYCLE.SWAPPING(data[pos], item) });
+                        history.push({ stepId: history.length, arr: [...data], held: { val: item, from: pos }, status: 'SWAP', algoLine: 4, desc: `Cycle continues: placed item at index ${pos}, picked up ${item}`, speech: SORTING_SCRIPT.CYCLE.SWAPPING(data[pos], item) });
                     }
                 }
             }
 
-            history.push({ stepId: history.length, arr: [...data], status: 'SUCCESS', desc: "Sort Complete!", speech: SORTING_SCRIPT.CYCLE.SUCCESS() });
+            history.push({ stepId: history.length, arr: [...data], status: 'SUCCESS', algoLine: 5, desc: "Sort Complete!", speech: SORTING_SCRIPT.CYCLE.SUCCESS() });
             return history;
         }
 

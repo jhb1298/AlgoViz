@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -21,6 +21,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -47,13 +48,13 @@
             const stack = [];
             const tokens = expression.trim().split(/\s+/);
             
-            history.push({ stepId: 0, stack: [], currentTokenIdx: -1, status: 'START', desc: "Let's begin!", speech: EXPRESSION_SCRIPT.POSTFIX.START(expression) });
+            history.push({ stepId: 0, stack: [], currentTokenIdx: -1, algoLine: null, status: 'START', desc: "Let's begin!", speech: EXPRESSION_SCRIPT.POSTFIX.START(expression) });
 
             for (let i = 0; i < tokens.length; i++) {
                 const token = tokens[i];
                 if (!isNaN(token)) {
                     stack.push(Number(token));
-                    history.push({ stepId: history.length, stack: [...stack], currentTokenIdx: i, status: 'PUSH', desc: `Push ${token}`, speech: EXPRESSION_SCRIPT.POSTFIX.NUMBER(token) });
+                    history.push({ stepId: history.length, stack: [...stack], currentTokenIdx: i, algoLine: 3, status: 'PUSH', desc: `Push ${token}`, speech: EXPRESSION_SCRIPT.POSTFIX.NUMBER(token) });
                 } else {
                     const b = stack.pop();
                     const a = stack.pop();
@@ -63,14 +64,14 @@
                     else if (token === '*') res = a * b;
                     else if (token === '/') res = a / b;
                     
-                    history.push({ stepId: history.length, stack: [...stack, a, b], currentTokenIdx: i, status: 'OPERATOR', desc: `Operator ${token}`, speech: EXPRESSION_SCRIPT.POSTFIX.OPERATOR(token) });
-                    history.push({ stepId: history.length, stack: [...stack], currentTokenIdx: i, status: 'POP', desc: `Popped ${a} and ${b}`, speech: EXPRESSION_SCRIPT.POSTFIX.CALC(a, b, token, res) });
+                    history.push({ stepId: history.length, stack: [...stack, a, b], currentTokenIdx: i, algoLine: 5, status: 'OPERATOR', desc: `Operator ${token}`, speech: EXPRESSION_SCRIPT.POSTFIX.OPERATOR(token) });
+                    history.push({ stepId: history.length, stack: [...stack], currentTokenIdx: i, algoLine: 6, status: 'POP', desc: `Popped ${a} and ${b}`, speech: EXPRESSION_SCRIPT.POSTFIX.CALC(a, b, token, res) });
                     stack.push(res);
-                    history.push({ stepId: history.length, stack: [...stack], currentTokenIdx: i, status: 'PUSH_RES', desc: `Push result ${res}` });
+                    history.push({ stepId: history.length, stack: [...stack], currentTokenIdx: i, algoLine: 7, status: 'PUSH_RES', desc: `Push result ${res}` });
                 }
             }
 
-            history.push({ stepId: history.length, stack: [...stack], currentTokenIdx: tokens.length, status: 'SUCCESS', desc: "Final Result!", speech: EXPRESSION_SCRIPT.POSTFIX.SUCCESS(stack[0]) });
+            history.push({ stepId: history.length, stack: [...stack], currentTokenIdx: tokens.length, algoLine: 8, status: 'SUCCESS', desc: "Final Result!", speech: EXPRESSION_SCRIPT.POSTFIX.SUCCESS(stack[0]) });
             return history;
         }
 
@@ -138,7 +139,7 @@
 
                     
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-                    <AlgorithmPanel algoKey="POSTFIX" currentLine={state.algoLine} />
+                    <AlgorithmPanel algoKey="POSTFIX" currentLine={state?.algoLine} />
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.5, z-e.deltaY*0.001), 2))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
                         <div className={`absolute inset-0 flex flex-col items-center justify-center gap-12 ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${manualOffset.x}px, ${manualOffset.y}px) scale(${zoom})` }}>
                             {/* Expression Display */}

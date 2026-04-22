@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -22,6 +22,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -93,15 +94,15 @@ D E`;
             const coloring = {};
             nodes.forEach(id => coloring[id] = null);
 
-            function record(status, desc, speech, activeNode = null, conflictNode = null, activeColor = null) {
+            function record(status, desc, speech, activeNode = null, conflictNode = null, activeColor = null, algoLine = null) {
                 history.push({ 
                     stepId: history.length, 
                     coloring: { ...coloring }, 
-                    status, desc, speech, activeNode, conflictNode, activeColor 
+                    status, desc, speech, activeNode, conflictNode, activeColor, algoLine 
                 });
             }
 
-            record('START', `Coloring graph with max ${k} colors`, SEARCH_SCRIPT.GRAPH_COLORING.START(k));
+            record('START', `Coloring graph with max ${k} colors`, SEARCH_SCRIPT.GRAPH_COLORING.START(k), null, null, null, 1);
 
             function solve(nodeIdx) {
                 if (nodeIdx === nodes.length) return true;
@@ -111,7 +112,7 @@ D E`;
                     const colorHex = COLOR_PALETTE[c].hex;
                     const colorName = COLOR_PALETTE[c].name;
                     
-                    record('TRYING', `Trying ${colorName} for node ${u}`, SEARCH_SCRIPT.GRAPH_COLORING.TRY_COLOR(u, colorName), u, null, colorHex);
+                    record('TRYING', `Trying ${colorName} for node ${u}`, SEARCH_SCRIPT.GRAPH_COLORING.TRY_COLOR(u, colorName), u, null, colorHex, 2);
 
                     // Check conflict
                     let conflict = null;
@@ -123,25 +124,25 @@ D E`;
                     }
 
                     if (conflict) {
-                        record('CONFLICT', `Conflict with ${conflict}`, SEARCH_SCRIPT.GRAPH_COLORING.CONFLICT(u, conflict, colorName), u, conflict, colorHex);
+                        record('CONFLICT', `Conflict with ${conflict}`, SEARCH_SCRIPT.GRAPH_COLORING.CONFLICT(u, conflict, colorName), u, conflict, colorHex, 3);
                         continue;
                     }
 
                     coloring[u] = colorHex;
-                    record('ASSIGNED', `Assigned ${colorName} to ${u}`, null, u);
+                    record('ASSIGNED', `Assigned ${colorName} to ${u}`, null, u, null, null, 4);
 
                     if (solve(nodeIdx + 1)) return true;
 
                     coloring[u] = null;
-                    record('BACKTRACK', `Backtracking from ${u}`, SEARCH_SCRIPT.GRAPH_COLORING.BACKTRACK(u), u);
+                    record('BACKTRACK', `Backtracking from ${u}`, SEARCH_SCRIPT.GRAPH_COLORING.BACKTRACK(u), u, null, null, 6);
                 }
                 return false;
             }
 
             if (solve(0)) {
-                record('SUCCESS', "Graph fully colored!", SEARCH_SCRIPT.GRAPH_COLORING.SUCCESS());
+                record('SUCCESS', "Graph fully colored!", SEARCH_SCRIPT.GRAPH_COLORING.SUCCESS(), null, null, null, 7);
             } else {
-                record('FAIL', `Impossible to color with ${k} colors`, "No solution exists for this number of colors.");
+                record('FAIL', `Impossible to color with ${k} colors`, "No solution exists for this number of colors.", null, null, null, 7);
             }
 
             return history;

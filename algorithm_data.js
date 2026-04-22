@@ -353,6 +353,176 @@ const ALGORITHM_PSEUDOCODE = {
         "5. Apply filter in frequency domain",
         "6. Inverse DFT to recover time domain signal"
     ],
+    "FACTORIAL": [
+        "1. if (n <= 1) return 1",
+        "2. res = fact(n - 1)",
+        "3. return n * res"
+    ],
+    "HANOI": [
+        "1. Function hanoi(n, src, dest, aux):",
+        "2.   If n == 1: move disk from src to dest",
+        "3.   Else:",
+        "4.     hanoi(n-1, src, aux, dest)",
+        "5.     move disk n from src to dest",
+        "6.     hanoi(n-1, aux, dest, src)"
+    ],
+    "NQUEENS": [
+        "1. for col from 0 to N-1:",
+        "2.   if isSafe(row, col):",
+        "3.     placeQueen(row, col)",
+        "4.     solve(row + 1)",
+        "5. backtrack()"
+    ],
+    "SUDOKU": [
+        "1. For each cell in grid:",
+        "2.   If cell is empty:",
+        "3.     For digit 1 to 9:",
+        "4.       If isSafe(grid, row, col, digit):",
+        "5.         grid[row][col] = digit",
+        "6.         If solve(grid) is true: return true",
+        "7.         grid[row][col] = 0 (Backtrack)",
+        "8.     Return false (No digit works)",
+        "9. Return true (All cells filled)"
+    ],
+    "KNAPSACK": [
+        "1. For i from 1 to n:",
+        "2.   For w from 1 to W:",
+        "3.     If weight[i-1] <= w:",
+        "4.       dp[i][w] = max(value[i-1] + dp[i-1][w-weight[i-1]], dp[i-1][w])",
+        "5.     Else:",
+        "6.       dp[i][w] = dp[i-1][w]"
+    ],
+    "PERMUTATIONS": [
+        "1. Function permute(curr, rem):",
+        "2.   If rem is empty:",
+        "3.     add curr to results",
+        "4.     return",
+        "5.   For each char in rem:",
+        "6.     permute(curr + char, rem - char)"
+    ],
+    "INFIX": [
+        "1. For each token in expression:",
+        "2.   If token is a number: push to values stack",
+        "3.   If token is '(': push to operator stack",
+        "4.   If token is ')': evaluate until '(' is found",
+        "5.   If token is operator: evaluate while precedence matches, then push",
+        "6. Evaluate remaining operators in stack",
+        "7. Return top of values stack"
+    ],
+    "PREFIX": [
+        "1. For each token from right to left:",
+        "2.   If token is a number:",
+        "3.     push to stack",
+        "4.   If token is an operator:",
+        "5.     pop top two values",
+        "6.     evaluate with operator",
+        "7.     push result to stack",
+        "8. Return top of stack"
+    ],
+    "POSTFIX": [
+        "1. For each token from left to right:",
+        "2.   If token is a number:",
+        "3.     push to stack",
+        "4.   If token is an operator:",
+        "5.     pop top two values (b then a)",
+        "6.     evaluate a op b",
+        "7.     push result to stack",
+        "8. Return top of stack"
+    ],
+    "MINIMAX": [
+        "1. function minimax(node, depth, isMaximizing):",
+        "2.   if depth == 0 or node is leaf:",
+        "3.     return evaluate(node)",
+        "4.   if isMaximizing:",
+        "5.     maxVal = -∞",
+        "6.     For each child: maxVal = max(maxVal, minimax(child, depth-1, false))",
+        "7.     return maxVal",
+        "8.   else:",
+        "9.     minVal = +∞",
+        "10.    For each child: minVal = min(minVal, minimax(child, depth-1, true))",
+        "11.    return minVal"
+    ],
+    "GRAHAM_SCAN": [
+        "1. Find the lowest (then leftmost) point P0",
+        "2. Sort all other points by polar angle with P0",
+        "3. Push first 3 sorted points onto stack",
+        "4. For each remaining point P:",
+        "5.   While turn(stack[-2], stack[-1], P) is not left:",
+        "6.     pop stack[-1]",
+        "7.   Push P onto stack",
+        "8. Stack contains convex hull"
+    ],
+    "JARVIS_MARCH": [
+        "1. Find leftmost point as start",
+        "2. Repeat:",
+        "3.   Set q = (current + 1) % n",
+        "4.   For each point i:",
+        "5.     If crossProduct(current, i, q) < 0: q = i",
+        "6.   Add q to hull",
+        "7.   current = q",
+        "8. Until current == start (hull complete)"
+    ],
+    "TURING_MACHINE": [
+        "1. Initialize tape with input string",
+        "2. Set head to position 0, state = q0",
+        "3. While state != HALT:",
+        "4.   Read symbol at head position",
+        "5.   Look up (state, symbol) in transitions",
+        "6.   Write new symbol to tape",
+        "7.   Transition to next state",
+        "8.   Move head Left or Right",
+        "9. Accept if in HALT state"
+    ],
+    "SIGNAL_1D": [
+        "1. Initialize signal x[n] and kernel h[n]",
+        "2. For convolution: flip kernel h[-n]",
+        "3. Pad signal with zeros on both sides",
+        "4. For each output position n:",
+        "5.   Slide kernel over padded signal",
+        "6.   Multiply aligned elements",
+        "7.   Sum products to get y[n]",
+        "8. Output complete result signal y[n]"
+    ],
+    "NEURAL_NETWORK": [
+        "1. Initialize random weights and biases",
+        "2. For each epoch:",
+        "3.   For each training sample:",
+        "4.     Forward pass: compute activations",
+        "5.     Compute output & loss",
+        "6.     Backward pass: compute gradients",
+        "7.     Update weights via gradient descent",
+        "8. Repeat until convergence"
+    ],
+    "KMEANS": [
+        "1. Place K centroids at random positions",
+        "2. Repeat:",
+        "3.   Assignment: assign each point to nearest centroid",
+        "4.   Update: move centroid to cluster mean",
+        "5.   Check if centroids moved",
+        "6. Until convergence (no movement)",
+        "7. Return cluster assignments"
+    ],
+    "GENETIC": [
+        "1. Create initial population randomly",
+        "2. Evaluate fitness of each individual",
+        "3. Repeat each generation:",
+        "4.   Select parents by fitness",
+        "5.   Crossover parents to create offspring",
+        "6.   Mutate offspring randomly",
+        "7.   Replace population with offspring",
+        "8. Until target fitness is reached"
+    ],
+    "SIMULATED_ANNEALING": [
+        "1. Start with a random initial solution",
+        "2. Set initial temperature T",
+        "3. While T > threshold:",
+        "4.   Swap two random cities (neighbor)",
+        "5.   Compute delta distance",
+        "6.   If better: accept new path",
+        "7.   Else: accept with probability e^(-delta/T)",
+        "8.   Cool temperature: T = T * cooling_rate",
+        "9. Return best path found"
+    ],
     "FLOYD_WARSHALL": [
         "1. Initialize dist[i][j] with edge weights",
         "2. For k from 1 to n:",

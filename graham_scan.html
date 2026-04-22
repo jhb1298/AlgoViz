@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -23,6 +23,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -83,12 +84,14 @@
 
             history.push({
                 stepId: 0, points: pts, stack: [], current: p0, 
+                algoLine: 1,
                 status: 'START', desc: "Finding starting point...",
                 speech: GEOMETRY_SCRIPT.GRAHAM.START()
             });
 
             history.push({
                 stepId: history.length, points: pts, stack: [], current: p0,
+                algoLine: 1,
                 status: 'PICK_START', desc: `Lowest point is ${p0.id}`,
                 speech: GEOMETRY_SCRIPT.GRAHAM.PICK_START(p0)
             });
@@ -103,6 +106,7 @@
 
             history.push({
                 stepId: history.length, points: pts, stack: [], current: null,
+                algoLine: 2,
                 status: 'SORTED', desc: "Sorted points by angle",
                 speech: GEOMETRY_SCRIPT.GRAHAM.SORTING()
             });
@@ -112,6 +116,7 @@
             
             history.push({
                 stepId: history.length, points: pts, stack: [pts[0], pts[1], pts[2]], current: pts[2],
+                algoLine: 3,
                 status: 'PUSH', desc: `Added initial points ${pts[0].id}, ${pts[1].id}, ${pts[2].id}`,
                 speech: `Starting with first three points.`
             });
@@ -119,6 +124,7 @@
             for (let i = 3; i < pts.length; i++) {
                 history.push({
                     stepId: history.length, points: pts, stack: [...stack], current: pts[i],
+                    algoLine: 4,
                     status: 'CHECK', desc: `Checking point ${pts[i].id}`,
                     speech: GEOMETRY_SCRIPT.GRAHAM.CHECKING(pts[i])
                 });
@@ -127,6 +133,7 @@
                     const popped = stack.pop();
                     history.push({
                         stepId: history.length, points: pts, stack: [...stack], current: pts[i], popped,
+                        algoLine: 6,
                         status: 'POP', desc: `Removing ${popped.id} (inward turn)`,
                         speech: GEOMETRY_SCRIPT.GRAHAM.BACKTRACKING(popped)
                     });
@@ -134,6 +141,7 @@
                 stack.push(pts[i]);
                 history.push({
                     stepId: history.length, points: pts, stack: [...stack], current: pts[i],
+                    algoLine: 7,
                     status: 'PUSH', desc: `Added ${pts[i].id} to hull`,
                     speech: GEOMETRY_SCRIPT.GRAHAM.PUSHING(pts[i])
                 });
@@ -141,6 +149,7 @@
 
             history.push({
                 stepId: history.length, points: pts, stack: [...stack, pts[0]], current: null,
+                algoLine: 8,
                 status: 'SUCCESS', desc: "Hull Complete!",
                 speech: GEOMETRY_SCRIPT.GRAHAM.SUCCESS()
             });
@@ -221,7 +230,7 @@
 
                     
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-                    <AlgorithmPanel algoKey="GRAHAM_SCAN" currentLine={state.algoLine} />
+                    <AlgorithmPanel algoKey="GRAHAM_SCAN" currentLine={state?.algoLine} />
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-crosshair" onClick={handleCanvasClick} onWheel={(e) => setZoom(z => Math.min(Math.max(0.2, z-e.deltaY*0.001), 2))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
                         <div className={`absolute left-0 top-0 w-full h-full ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${manualOffset.x}px, ${manualOffset.y}px) scale(${zoom})` }}>
                             <svg className="absolute top-0 left-0 overflow-visible w-full h-full">

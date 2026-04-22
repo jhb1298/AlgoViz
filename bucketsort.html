@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -22,6 +22,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -57,6 +58,7 @@
                 arr: [...data], 
                 buckets: buckets.map(b => [...b]), 
                 status: 'START', 
+                algoLine: 1,
                 desc: "Starting Bucket Sort", 
                 speech: SORTING_SCRIPT.BUCKET.START() 
             });
@@ -74,6 +76,7 @@
                     activeIndex: i,
                     activeBucket: bucketIdx,
                     status: 'BUCKETING', 
+                    algoLine: 2,
                     desc: `Placing ${data[i]} into bucket ${bucketIdx}`, 
                     speech: SORTING_SCRIPT.BUCKET.BUCKETING(data[i], bucketIdx)
                 });
@@ -89,6 +92,7 @@
                         buckets: buckets.map(b => [...b]), 
                         activeBucket: i,
                         status: 'SORTING_BUCKET', 
+                        algoLine: 3,
                         desc: `Sorting contents of bucket ${i}`, 
                         speech: SORTING_SCRIPT.BUCKET.SORTING_BUCKET(i)
                     });
@@ -108,6 +112,7 @@
                         activeBucket: i,
                         activeIndex: k - 1,
                         status: 'COLLECTING', 
+                        algoLine: 4,
                         desc: `Collecting from bucket ${i}`, 
                         speech: SORTING_SCRIPT.BUCKET.COLLECTING(i)
                     });
@@ -119,6 +124,7 @@
                 arr: [...output], 
                 buckets: buckets.map(b => [...b]), 
                 status: 'SUCCESS', 
+                algoLine: 5,
                 desc: "Sort Complete!", 
                 speech: SORTING_SCRIPT.BUCKET.SUCCESS() 
             });

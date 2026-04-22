@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -30,6 +30,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -80,19 +81,19 @@
                 const id = nodeIdCounter++;
                 const node = { id, parentId, row, queens: [...queens], children: [] };
                 
-                history.push({ stepId: history.length, nodeId: id, line: 0, queens: [...queens], status: 'START', desc: `Row ${row + 1}: Finding a spot`, speech: row === 0 ? NQUEENS_SCRIPT.START(n) : null });
+                history.push({ stepId: history.length, nodeId: id, line: 0, algoLine: 1, queens: [...queens], status: 'START', desc: `Row ${row + 1}: Finding a spot`, speech: row === 0 ? NQUEENS_SCRIPT.START(n) : null });
 
                 if (row === n) {
-                    history.push({ stepId: history.length, nodeId: id, line: 4, queens: [...queens], status: 'SUCCESS', desc: `Found a solution!`, speech: NQUEENS_SCRIPT.SUCCESS() });
+                    history.push({ stepId: history.length, nodeId: id, line: 4, algoLine: null, queens: [...queens], status: 'SUCCESS', desc: `Found a solution!`, speech: NQUEENS_SCRIPT.SUCCESS() });
                     return { node, success: true };
                 }
 
                 for (let col = 0; col < n; col++) {
-                    history.push({ stepId: history.length, nodeId: id, line: 1, queens: [...queens], trialCol: col, status: 'TRYING', desc: `Trying column ${col + 1}`, speech: NQUEENS_SCRIPT.TRYING(row, col) });
+                    history.push({ stepId: history.length, nodeId: id, line: 1, algoLine: 2, queens: [...queens], trialCol: col, status: 'TRYING', desc: `Trying column ${col + 1}`, speech: NQUEENS_SCRIPT.TRYING(row, col) });
                     
                     if (isSafe(queens, row, col)) {
                         queens[row] = col;
-                        history.push({ stepId: history.length, nodeId: id, line: 2, queens: [...queens], trialCol: col, status: 'SAFE', desc: `Column ${col + 1} is safe!`, speech: NQUEENS_SCRIPT.SAFE(row, col) });
+                        history.push({ stepId: history.length, nodeId: id, line: 2, algoLine: 3, queens: [...queens], trialCol: col, status: 'SAFE', desc: `Column ${col + 1} is safe!`, speech: NQUEENS_SCRIPT.SAFE(row, col) });
                         
                         const { node: child, success } = solve(row + 1, queens, id);
                         node.children.push(child);
@@ -101,11 +102,11 @@
                         
                         queens[row] = -1; // Backtrack
                     } else {
-                        history.push({ stepId: history.length, nodeId: id, line: 1, queens: [...queens], trialCol: col, status: 'CONFLICT', desc: `Conflict at column ${col + 1}`, speech: NQUEENS_SCRIPT.CONFLICT(row, col) });
+                        history.push({ stepId: history.length, nodeId: id, line: 1, algoLine: 2, queens: [...queens], trialCol: col, status: 'CONFLICT', desc: `Conflict at column ${col + 1}`, speech: NQUEENS_SCRIPT.CONFLICT(row, col) });
                     }
                 }
 
-                history.push({ stepId: history.length, nodeId: id, line: 3, queens: [...queens], status: 'BACKTRACK', desc: `Backtracking from row ${row + 1}`, speech: NQUEENS_SCRIPT.BACKTRACK(row) });
+                history.push({ stepId: history.length, nodeId: id, line: 3, algoLine: 5, queens: [...queens], status: 'BACKTRACK', desc: `Backtracking from row ${row + 1}`, speech: NQUEENS_SCRIPT.BACKTRACK(row) });
                 return { node, success: false };
             }
 
@@ -289,7 +290,7 @@
                     </div>
                     
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-                    <AlgorithmPanel algoKey="NQUEENS" currentLine={state.algoLine} />
+                    <AlgorithmPanel algoKey="NQUEENS" currentLine={currentState?.algoLine} />
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.1, z-e.deltaY*0.001), 1.5))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper') && !e.target.closest('.top-nav-area')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
                         <div className={`node-container absolute origin-top-left ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${camTarget.x + manualOffset.x}px, ${camTarget.y + manualOffset.y}px) scale(${zoom})` }}>
                             <svg className="absolute top-0 left-0 overflow-visible" style={{ width: 1, height: 1 }}>{flatNodes.map(node => node.children.map(child => (<path key={`${node.id}-${child.id}`} d={`M ${node.x+NODE_WIDTH/2} ${node.y+NODE_HEIGHT} C ${node.x+NODE_WIDTH/2} ${(node.y+child.y)/2}, ${child.x+NODE_WIDTH/2} ${(node.y+child.y)/2}, ${child.x+NODE_WIDTH/2} ${child.y}`} fill="none" stroke={activePathIds.has(child.id) ? "#818cf8" : (latestNodeStates[child.id] ? "#475569" : "#1e293b")} strokeWidth={activePathIds.has(child.id) ? 3 : 2} className={`edge-path ${activePathIds.has(child.id) ? 'edge-waiting' : ''}`} style={{ opacity: activePathIds.has(child.id) ? 1 : (latestNodeStates[child.id] ? 0.8 : 0.2) }} />)))}</svg>

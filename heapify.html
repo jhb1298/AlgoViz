@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -21,6 +21,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -47,7 +48,7 @@
             let data = [...arr];
             const n = data.length;
 
-            history.push({ stepId: 0, arr: [...data], status: 'START', desc: "Starting Max-Heap construction", speech: TREE_SCRIPT.HEAPIFY.START() });
+            history.push({ stepId: 0, arr: [...data], status: 'START', algoLine: 1, desc: "Starting Max-Heap construction", speech: TREE_SCRIPT.HEAPIFY.START() });
 
             async function heapify(size, i) {
                 let largest = i;
@@ -55,21 +56,21 @@
                 let r = 2 * i + 2;
 
                 if (l < size) {
-                    history.push({ stepId: history.length, arr: [...data], activeNodes: [i, l], status: 'COMPARING', desc: `Comparing parent ${data[i]} with child ${data[l]}`, speech: TREE_SCRIPT.HEAPIFY.COMPARING(data[i], data[l]) });
+                    history.push({ stepId: history.length, arr: [...data], activeNodes: [i, l], status: 'COMPARING', algoLine: 3, desc: `Comparing parent ${data[i]} with child ${data[l]}`, speech: TREE_SCRIPT.HEAPIFY.COMPARING(data[i], data[l]) });
                     if (data[l] > data[largest]) largest = l;
                 }
 
                 if (r < size) {
-                    history.push({ stepId: history.length, arr: [...data], activeNodes: [i, r], status: 'COMPARING', desc: `Comparing parent ${data[i]} with child ${data[r]}`, speech: TREE_SCRIPT.HEAPIFY.COMPARING(data[i], data[r]) });
+                    history.push({ stepId: history.length, arr: [...data], activeNodes: [i, r], status: 'COMPARING', algoLine: 3, desc: `Comparing parent ${data[i]} with child ${data[r]}`, speech: TREE_SCRIPT.HEAPIFY.COMPARING(data[i], data[r]) });
                     if (data[r] > data[largest]) largest = r;
                 }
 
                 if (largest !== i) {
-                    history.push({ stepId: history.length, arr: [...data], activeNodes: [i, largest], status: 'SWAPPING', desc: `Swapping ${data[i]} and ${data[largest]}`, speech: TREE_SCRIPT.HEAPIFY.SWAPPING(data[i], data[largest]) });
+                    history.push({ stepId: history.length, arr: [...data], activeNodes: [i, largest], status: 'SWAPPING', algoLine: 4, desc: `Swapping ${data[i]} and ${data[largest]}`, speech: TREE_SCRIPT.HEAPIFY.SWAPPING(data[i], data[largest]) });
                     [data[i], data[largest]] = [data[largest], data[i]];
                     await heapify(size, largest);
                 } else {
-                    history.push({ stepId: history.length, arr: [...data], activeNodes: [i], status: 'DONE', desc: `Node ${data[i]} satisfies heap property`, speech: TREE_SCRIPT.HEAPIFY.DONE() });
+                    history.push({ stepId: history.length, arr: [...data], activeNodes: [i], status: 'DONE', algoLine: 5, desc: `Node ${data[i]} satisfies heap property`, speech: TREE_SCRIPT.HEAPIFY.DONE() });
                 }
             }
 
@@ -77,7 +78,7 @@
                 heapify(n, i);
             }
 
-            history.push({ stepId: history.length, arr: [...data], status: 'SUCCESS', desc: "Max-Heap Built!", speech: "The Max-Heap is now fully constructed!" });
+            history.push({ stepId: history.length, arr: [...data], status: 'SUCCESS', algoLine: 5, desc: "Max-Heap Built!", speech: "The Max-Heap is now fully constructed!" });
             return history;
         }
 

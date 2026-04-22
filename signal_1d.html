@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -24,6 +24,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -50,11 +51,11 @@
             const sig = [...signal];
             let ker = [...kernel];
             
-            history.push({ stepId: 0, sig, ker, res: [], status: 'START', desc: `Initializing ${mode}...`, speech: SIGNAL_SCRIPT[mode].START() });
+            history.push({ stepId: 0, sig, ker, res: [], algoLine: 1, status: 'START', desc: `Initializing ${mode}...`, speech: SIGNAL_SCRIPT[mode].START() });
 
             if (mode === 'CONVOLUTION') {
                 ker = ker.reverse();
-                history.push({ stepId: 1, sig, ker, res: [], status: 'FLIP', desc: "Flipping kernel for convolution", speech: SIGNAL_SCRIPT.CONVOLUTION.FLIP() });
+                history.push({ stepId: 1, sig, ker, res: [], algoLine: 2, status: 'FLIP', desc: "Flipping kernel for convolution", speech: SIGNAL_SCRIPT.CONVOLUTION.FLIP() });
             }
 
             const result = [];
@@ -63,19 +64,19 @@
 
             for (let i = 0; i < paddedSig.length - pad; i++) {
                 let sum = 0;
-                history.push({ stepId: history.length, sig, ker, res: [...result], slidePos: i, status: 'SLIDE', desc: `Calculating overlap at index ${i}`, speech: mode === 'CONVOLUTION' ? SIGNAL_SCRIPT.CONVOLUTION.SLIDE(i) : SIGNAL_SCRIPT.CORRELATION.SLIDE(i) });
+                history.push({ stepId: history.length, sig, ker, res: [...result], slidePos: i, algoLine: 5, status: 'SLIDE', desc: `Calculating overlap at index ${i}`, speech: mode === 'CONVOLUTION' ? SIGNAL_SCRIPT.CONVOLUTION.SLIDE(i) : SIGNAL_SCRIPT.CORRELATION.SLIDE(i) });
 
                 for (let j = 0; j < ker.length; j++) {
                     const prod = paddedSig[i + j] * ker[j];
                     sum += prod;
-                    history.push({ stepId: history.length, sig, ker, res: [...result], slidePos: i, activeKerIdx: j, status: 'MULTIPLY', desc: `Multiplied ${paddedSig[i+j]} * ${ker[j]} = ${prod}`, speech: mode === 'CONVOLUTION' ? SIGNAL_SCRIPT.CONVOLUTION.MULTIPLY(paddedSig[i+j], ker[j], prod) : null });
+                    history.push({ stepId: history.length, sig, ker, res: [...result], slidePos: i, activeKerIdx: j, algoLine: 6, status: 'MULTIPLY', desc: `Multiplied ${paddedSig[i+j]} * ${ker[j]} = ${prod}`, speech: mode === 'CONVOLUTION' ? SIGNAL_SCRIPT.CONVOLUTION.MULTIPLY(paddedSig[i+j], ker[j], prod) : null });
                 }
 
                 result.push(sum);
-                history.push({ stepId: history.length, sig, ker, res: [...result], slidePos: i, status: 'RESULT', desc: `Sum result: ${sum}`, speech: mode === 'CONVOLUTION' ? SIGNAL_SCRIPT.CONVOLUTION.RESULT(sum, i) : null });
+                history.push({ stepId: history.length, sig, ker, res: [...result], slidePos: i, algoLine: 7, status: 'RESULT', desc: `Sum result: ${sum}`, speech: mode === 'CONVOLUTION' ? SIGNAL_SCRIPT.CONVOLUTION.RESULT(sum, i) : null });
             }
 
-            history.push({ stepId: history.length, sig, ker, res: [...result], status: 'SUCCESS', desc: "Processing complete!", speech: SIGNAL_SCRIPT[mode].SUCCESS() });
+            history.push({ stepId: history.length, sig, ker, res: [...result], algoLine: 8, status: 'SUCCESS', desc: "Processing complete!", speech: SIGNAL_SCRIPT[mode].SUCCESS() });
             return history;
         }
 
@@ -154,7 +155,7 @@
                     {/* Simulation Engine */}
                     
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-                    <AlgorithmPanel algoKey="SIGNAL_1D" currentLine={state.algoLine} />
+                    <AlgorithmPanel algoKey="SIGNAL_1D" currentLine={state?.algoLine} />
                     <div className="flex-1 flex flex-col items-center justify-center gap-16 relative">
                         
                         {/* Signal Lane */}

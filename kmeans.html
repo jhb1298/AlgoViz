@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -22,6 +22,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -81,6 +82,7 @@
                 stepId: 0,
                 points: points.map(p => ({ ...p })),
                 centroids: centroids.map(c => ({ ...c })),
+                algoLine: 1,
                 status: 'START',
                 desc: 'Scattering data points...',
                 speech: ML_SCRIPT.KMEANS.START()
@@ -90,6 +92,7 @@
                 stepId: history.length,
                 points: points.map(p => ({ ...p })),
                 centroids: centroids.map(c => ({ ...c })),
+                algoLine: 1,
                 status: 'INIT',
                 desc: `Placing ${K} random centroids.`,
                 speech: ML_SCRIPT.KMEANS.INIT_CENTROIDS(K)
@@ -125,6 +128,7 @@
                     points: points.map(p => ({ ...p })),
                     centroids: centroids.map(c => ({ ...c })),
                     showLines: true,
+                    algoLine: 3,
                     status: 'ASSIGN',
                     desc: `Iteration ${iteration}: Assigning points to nearest centroids.`,
                     speech: iteration === 1 ? ML_SCRIPT.KMEANS.ASSIGN() : null
@@ -147,6 +151,7 @@
                     stepId: history.length,
                     points: points.map(p => ({ ...p })),
                     centroids: centroids.map(c => ({ ...c })),
+                    algoLine: 4,
                     status: 'UPDATE',
                     desc: `Iteration ${iteration}: Centroids moving to centers.`,
                     speech: iteration === 1 ? ML_SCRIPT.KMEANS.UPDATE() : null
@@ -157,6 +162,7 @@
                 stepId: history.length,
                 points: points.map(p => ({ ...p })),
                 centroids: centroids.map(c => ({ ...c })),
+                algoLine: 6,
                 status: 'SUCCESS',
                 desc: 'Clustering converged!',
                 speech: ML_SCRIPT.KMEANS.CONVERGED()
@@ -228,7 +234,7 @@
 
                     
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-                    <AlgorithmPanel algoKey="KMEANS" currentLine={state.algoLine} />
+                    <AlgorithmPanel algoKey="KMEANS" currentLine={state?.algoLine} />
                     <div className="flex-1 relative infinite-bg overflow-hidden flex items-center justify-center">
                         <svg width="1000" height="1000" style={{ transform: `scale(${zoom})` }} className="camera-layer overflow-visible">
                             {/* Lines */}

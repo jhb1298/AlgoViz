@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,6 +11,7 @@
     <script src="graph_script.js"></script>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -98,14 +99,14 @@ E D 6`;
 
             history.push({
                 stepId: 0, dist: clone(dist), k: null, i: null, j: null,
-                status: 'START', algoLine: 0,
+                status: 'START', algoLine: 1,
                 speech: SEARCH_SCRIPT.FLOYD_WARSHALL.START()
             });
 
             nodes.forEach(k => {
                 history.push({
                     stepId: history.length, dist: clone(dist), k, i: null, j: null,
-                    status: 'PHASE', algoLine: 1,
+                    status: 'PHASE', algoLine: 2,
                     speech: SEARCH_SCRIPT.FLOYD_WARSHALL.PHASE(k)
                 });
 
@@ -116,14 +117,14 @@ E D 6`;
                         
                         const step = {
                             stepId: history.length, dist: clone(dist), k, i, j,
-                            status: 'CHECKING', algoLine: 4
+                            status: 'CHECKING', algoLine: 5
                         };
 
                         if (viaK < oldVal) {
                             dist[i][j] = viaK;
                             step.status = 'UPDATING';
                             step.speech = SEARCH_SCRIPT.FLOYD_WARSHALL.UPDATING(i, j, k, oldVal, viaK);
-                            step.algoLine = 5;
+                            step.algoLine = 6;
                         }
                         history.push(step);
                     });
@@ -132,7 +133,7 @@ E D 6`;
 
             history.push({
                 stepId: history.length, dist: clone(dist), k: null, i: null, j: null,
-                status: 'SUCCESS', algoLine: 6,
+                status: 'SUCCESS', algoLine: 2,
                 speech: SEARCH_SCRIPT.FLOYD_WARSHALL.SUCCESS()
             });
 

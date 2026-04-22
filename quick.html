@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -22,6 +22,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -55,19 +56,19 @@
             
             function partition(low, high, nodeId) {
                 let pivot = data[high];
-                history.push({ stepId: history.length, nodeId, arr: [...data], pivotIdx: high, low, high, status: 'PIVOT', desc: `Pivot is ${pivot}`, speech: SORTING_SCRIPT.QUICK.PIVOT(pivot) });
+                history.push({ stepId: history.length, nodeId, arr: [...data], pivotIdx: high, low, high, status: 'PIVOT', algoLine: 2, desc: `Pivot is ${pivot}`, speech: SORTING_SCRIPT.QUICK.PIVOT(pivot) });
                 
                 let i = low - 1;
                 for (let j = low; j < high; j++) {
-                    history.push({ stepId: history.length, nodeId, arr: [...data], pivotIdx: high, currentIdx: j, i, low, high, status: 'SCANNING', desc: `Comparing ${data[j]} with ${pivot}`, speech: SORTING_SCRIPT.QUICK.PARTITIONING(data[j], pivot) });
+                    history.push({ stepId: history.length, nodeId, arr: [...data], pivotIdx: high, currentIdx: j, i, low, high, status: 'SCANNING', algoLine: 3, desc: `Comparing ${data[j]} with ${pivot}`, speech: SORTING_SCRIPT.QUICK.PARTITIONING(data[j], pivot) });
                     if (data[j] < pivot) {
                         i++;
                         [data[i], data[j]] = [data[j], data[i]];
-                        history.push({ stepId: history.length, nodeId, arr: [...data], pivotIdx: high, currentIdx: j, i, low, high, status: 'SWAPPING', desc: `Swapped ${data[i]} and ${data[j]}` });
+                        history.push({ stepId: history.length, nodeId, arr: [...data], pivotIdx: high, currentIdx: j, i, low, high, status: 'SWAPPING', algoLine: 4, desc: `Swapped ${data[i]} and ${data[j]}` });
                     }
                 }
                 [data[i + 1], data[high]] = [data[high], data[i + 1]];
-                history.push({ stepId: history.length, nodeId, arr: [...data], pivotIdx: i + 1, low, high, status: 'PIVOT_PLACED', desc: `Placed pivot at final spot` });
+                history.push({ stepId: history.length, nodeId, arr: [...data], pivotIdx: i + 1, low, high, status: 'PIVOT_PLACED', algoLine: 3, desc: `Placed pivot at final spot` });
                 return i + 1;
             }
 
@@ -76,20 +77,20 @@
                 const subset = data.slice(low, high + 1);
                 const node = { id, parentId, low, high, subset, children: [], depth };
                 
-                history.push({ stepId: history.length, nodeId: id, arr: [...data], low, high, status: 'START', desc: `Quicksort on [${subset.join(',')}]`, speech: SORTING_SCRIPT.QUICK.START() });
+                history.push({ stepId: history.length, nodeId: id, arr: [...data], low, high, status: 'START', algoLine: 1, desc: `Quicksort on [${subset.join(',')}]`, speech: SORTING_SCRIPT.QUICK.START() });
 
                 if (low < high) {
                     let pi = partition(low, high, id);
                     
-                    history.push({ stepId: history.length, nodeId: id, arr: [...data], low, pi, high, status: 'RECURSE_LEFT', desc: "Recursing left", speech: SORTING_SCRIPT.QUICK.RECURSING('left') });
+                    history.push({ stepId: history.length, nodeId: id, arr: [...data], low, pi, high, status: 'RECURSE_LEFT', algoLine: 5, desc: "Recursing left", speech: SORTING_SCRIPT.QUICK.RECURSING('left') });
                     const leftChild = solve(low, pi - 1, depth + 1, id);
                     node.children.push(leftChild.node);
 
-                    history.push({ stepId: history.length, nodeId: id, arr: [...data], low, pi, high, status: 'RECURSE_RIGHT', desc: "Recursing right", speech: SORTING_SCRIPT.QUICK.RECURSING('right') });
+                    history.push({ stepId: history.length, nodeId: id, arr: [...data], low, pi, high, status: 'RECURSE_RIGHT', algoLine: 6, desc: "Recursing right", speech: SORTING_SCRIPT.QUICK.RECURSING('right') });
                     const rightChild = solve(pi + 1, high, depth + 1, id);
                     node.children.push(rightChild.node);
                 } else {
-                    history.push({ stepId: history.length, nodeId: id, arr: [...data], low, high, status: 'BASE', desc: `Base case reached` });
+                    history.push({ stepId: history.length, nodeId: id, arr: [...data], low, high, status: 'BASE', algoLine: 1, desc: `Base case reached` });
                 }
 
                 return { node };

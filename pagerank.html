@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,6 +11,7 @@
     <script src="graph_script.js"></script>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -82,13 +83,13 @@ D C`;
             graph.nodes.forEach(node => ranks[node.id] = 1 / n);
 
             history.push({
-                stepId: 0, ranks: { ...ranks }, status: 'START', algoLine: 0,
+                stepId: 0, ranks: { ...ranks }, status: 'START', algoLine: 1,
                 desc: 'Initializing PageRank scores equally.', speech: SEARCH_SCRIPT.PAGERANK.START()
             });
 
             for (let iter = 1; iter <= 5; iter++) {
                 history.push({
-                    stepId: history.length, ranks: { ...ranks }, iteration: iter, status: 'ITER_START', algoLine: 1,
+                    stepId: history.length, ranks: { ...ranks }, iteration: iter, status: 'ITER_START', algoLine: 2,
                     desc: `Iteration ${iter}: Calculating rank flow...`, speech: SEARCH_SCRIPT.PAGERANK.ITERATION_START(iter)
                 });
 
@@ -103,7 +104,7 @@ D C`;
                         for (const edge of outgoing) {
                             newRanks[edge.to] += flowPerLink;
                             history.push({
-                                stepId: history.length, ranks: { ...ranks }, iteration: iter, activeEdge: edge, status: 'FLOW', algoLine: 5,
+                                stepId: history.length, ranks: { ...ranks }, iteration: iter, activeEdge: edge, status: 'FLOW', algoLine: 6,
                                 desc: `Node ${node.id} sharing rank with ${edge.to}`, speech: iter === 1 ? SEARCH_SCRIPT.PAGERANK.FLOW(node.id, edge.to, flowPerLink) : null
                             });
                         }
@@ -116,13 +117,13 @@ D C`;
                 
                 ranks = newRanks;
                 history.push({
-                    stepId: history.length, ranks: { ...ranks }, iteration: iter, status: 'DAMPING', algoLine: 6,
+                    stepId: history.length, ranks: { ...ranks }, iteration: iter, status: 'DAMPING', algoLine: 7,
                     desc: `Iteration ${iter} complete. Finalizing ranks with damping.`, speech: iter === 1 ? SEARCH_SCRIPT.PAGERANK.DAMPING() : null
                 });
             }
 
             history.push({
-                stepId: history.length, ranks: { ...ranks }, status: 'SUCCESS', algoLine: 6,
+                stepId: history.length, ranks: { ...ranks }, status: 'SUCCESS', algoLine: 2,
                 desc: 'PageRank stable!', speech: SEARCH_SCRIPT.PAGERANK.SUCCESS()
             });
 

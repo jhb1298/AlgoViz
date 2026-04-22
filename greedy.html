@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -25,6 +25,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -110,7 +111,7 @@ G H`;
                 stepId: 0, activeNode: source, visited: new Set(), 
                 queued: new Set(queued), openList: [...openList], 
                 gScores: { ...gScores },
-                status: 'START', desc: `Starting Greedy Search for ${target.id}`, 
+                status: 'START', algoLine: 1, desc: `Starting Greedy Search for ${target.id}`, 
                 speech: SEARCH_SCRIPT.GREEDY.START(source, target.id) 
             });
 
@@ -125,7 +126,7 @@ G H`;
                     stepId: history.length, activeNode: u, visited: new Set(visited), 
                     queued: new Set(queued), openList: [...openList], 
                     gScores: { ...gScores },
-                    status: 'VISITING', desc: `Visiting ${u} (h=${current.h.toFixed(1)})`, 
+                    status: 'VISITING', algoLine: 3, desc: `Visiting ${u} (h=${current.h.toFixed(1)})`, 
                     speech: SEARCH_SCRIPT.GREEDY.VISITING(u, current.h) 
                 });
 
@@ -134,7 +135,7 @@ G H`;
                         stepId: history.length, activeNode: u, visited: new Set(visited), 
                         queued: new Set(queued), openList: [...openList], 
                         gScores: { ...gScores },
-                        status: 'SUCCESS', desc: `Target ${u} found!`, 
+                        status: 'SUCCESS', algoLine: 4, desc: `Target ${u} found!`, 
                         speech: SEARCH_SCRIPT.GREEDY.TARGET_FOUND(u) 
                     });
                     return history;
@@ -151,14 +152,14 @@ G H`;
                             activeEdge: {from: u, to: v}, visited: new Set(visited), 
                             queued: new Set(queued), openList: [...openList], 
                             gScores: { ...gScores },
-                            status: 'ENQUEUE', desc: `Enqueuing ${v} (h=${h.toFixed(1)})`, 
+                            status: 'ENQUEUE', algoLine: 8, desc: `Enqueuing ${v} (h=${h.toFixed(1)})`, 
                             speech: SEARCH_SCRIPT.GREEDY.ENQUEUE(v, h) 
                         });
                     }
                 }
             }
 
-            history.push({ stepId: history.length, status: 'FAIL', visited: new Set(visited), queued: new Set(queued), openList: [], gScores: { ...gScores }, desc: "Target not reachable", speech: "I couldn't find a path to the target node." });
+            history.push({ stepId: history.length, status: 'FAIL', algoLine: 2, visited: new Set(visited), queued: new Set(queued), openList: [], gScores: { ...gScores }, desc: "Target not reachable", speech: "I couldn't find a path to the target node." });
             return history;
         }
 

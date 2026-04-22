@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -23,6 +23,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -78,6 +79,7 @@
 
             history.push({
                 stepId: 0, tape: [...tape], head, state, 
+                algoLine: 1,
                 status: 'START', desc: "Initializing Tape...",
                 speech: TURING_SCRIPT.START(inputString)
             });
@@ -89,7 +91,7 @@
 
                 if (!action) {
                     state = 'REJECT';
-                    history.push({ stepId: history.length, tape: [...tape], head, state, status: 'REJECT', desc: `No transition for (${state}, ${currentSymbol})`, speech: TURING_SCRIPT.HALT(false) });
+                    history.push({ stepId: history.length, tape: [...tape], head, state, algoLine: null, status: 'REJECT', desc: `No transition for (${state}, ${currentSymbol})`, speech: TURING_SCRIPT.HALT(false) });
                     break;
                 }
 
@@ -98,6 +100,7 @@
                 // 1. Read Step
                 history.push({ 
                     stepId: history.length, tape: [...tape], head, state, 
+                    algoLine: 4,
                     status: 'READ', desc: `Reading ${currentSymbol}`, 
                     speech: TURING_SCRIPT.READ(currentSymbol, state)
                 });
@@ -107,6 +110,7 @@
                 state = nextState;
                 history.push({ 
                     stepId: history.length, tape: [...tape], head, state, 
+                    algoLine: 6,
                     status: 'WRITE', desc: `Writing ${writeSymbol} → ${state}`,
                     speech: TURING_SCRIPT.WRITE(writeSymbol, state)
                 });
@@ -116,6 +120,7 @@
                     head += (moveDir === 'R' ? 1 : -1);
                     history.push({ 
                         stepId: history.length, tape: [...tape], head, state, 
+                        algoLine: 8,
                         status: 'MOVE', desc: `Moving ${moveDir === 'R' ? 'Right' : 'Left'}`,
                         speech: TURING_SCRIPT.MOVE(moveDir)
                     });
@@ -125,7 +130,7 @@
             }
 
             if (state === 'HALT') {
-                history.push({ stepId: history.length, tape: [...tape], head, state, status: 'SUCCESS', desc: "HALT: Accept", speech: TURING_SCRIPT.HALT(true) });
+                history.push({ stepId: history.length, tape: [...tape], head, state, algoLine: 9, status: 'SUCCESS', desc: "HALT: Accept", speech: TURING_SCRIPT.HALT(true) });
             }
 
             return history;
@@ -198,7 +203,7 @@
                     {/* Machine View */}
                     
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-                    <AlgorithmPanel algoKey="TURING_MACHINE" currentLine={state.algoLine} />
+                    <AlgorithmPanel algoKey="TURING_MACHINE" currentLine={state?.algoLine} />
                     <div className="flex-1 flex flex-col items-center justify-center gap-12 relative">
                         {/* State Register */}
                         <div className="flex flex-col items-center gap-2 state-pulse">

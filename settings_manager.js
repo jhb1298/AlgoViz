@@ -143,7 +143,7 @@ window.initSettingsComponents = (React) => {
                     code.map((line, i) =>
                         e('div', {
                             key: i,
-                            className: `px-2 py-1 rounded transition-colors duration-200 ${currentLine === i ? 'bg-blue-500/20 text-blue-300 border-l-2 border-blue-500 font-bold' : 'text-slate-500'}`
+                            className: `px-2 py-1 rounded transition-colors duration-200 ${currentLine === i + 1 ? 'bg-blue-500/20 text-blue-300 border-l-2 border-blue-500 font-bold' : 'text-slate-500'}`
                         }, line)
                     )
                 )

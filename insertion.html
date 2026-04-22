@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,6 +11,7 @@
     <script src="sorting_script.js"></script>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -45,24 +46,24 @@
             let data = [...arr];
             const n = data.length;
             
-            history.push({ stepId: 0, arr: [...data], activeIdx: -1, sortedCount: 1, status: 'START', desc: "Starting Insertion Sort", speech: SORTING_SCRIPT.INSERTION.START() });
+            history.push({ stepId: 0, arr: [...data], activeIdx: -1, sortedCount: 1, status: 'START', algoLine: 1, desc: "Starting Insertion Sort", speech: SORTING_SCRIPT.INSERTION.START() });
 
             for (let i = 1; i < n; i++) {
                 let key = data[i];
                 let j = i - 1;
                 
-                history.push({ stepId: history.length, arr: [...data], activeIdx: i, sortedCount: i, status: 'PICKING', desc: `Picking up ${key}`, speech: SORTING_SCRIPT.INSERTION.PICKING(key) });
+                history.push({ stepId: history.length, arr: [...data], activeIdx: i, sortedCount: i, status: 'PICKING', algoLine: 2, desc: `Picking up ${key}`, speech: SORTING_SCRIPT.INSERTION.PICKING(key) });
 
                 while (j >= 0 && data[j] > key) {
-                    history.push({ stepId: history.length, arr: [...data], activeIdx: j, sortedCount: i, status: 'SLIDING', desc: `${data[j]} > ${key}, sliding right`, speech: SORTING_SCRIPT.INSERTION.SLIDING(key, data[j]) });
+                    history.push({ stepId: history.length, arr: [...data], activeIdx: j, sortedCount: i, status: 'SLIDING', algoLine: 4, desc: `${data[j]} > ${key}, sliding right`, speech: SORTING_SCRIPT.INSERTION.SLIDING(key, data[j]) });
                     data[j + 1] = data[j];
                     j = j - 1;
                 }
                 data[j + 1] = key;
-                history.push({ stepId: history.length, arr: [...data], activeIdx: j + 1, sortedCount: i + 1, status: 'INSERTING', desc: `Inserted ${key} at spot ${j + 2}`, speech: SORTING_SCRIPT.INSERTION.INSERTING(key) });
+                history.push({ stepId: history.length, arr: [...data], activeIdx: j + 1, sortedCount: i + 1, status: 'INSERTING', algoLine: 6, desc: `Inserted ${key} at spot ${j + 2}`, speech: SORTING_SCRIPT.INSERTION.INSERTING(key) });
             }
 
-            history.push({ stepId: history.length, arr: [...data], activeIdx: -1, sortedCount: n, status: 'SUCCESS', desc: "Sort Complete!", speech: SORTING_SCRIPT.INSERTION.SUCCESS() });
+            history.push({ stepId: history.length, arr: [...data], activeIdx: -1, sortedCount: n, status: 'SUCCESS', algoLine: 6, desc: "Sort Complete!", speech: SORTING_SCRIPT.INSERTION.SUCCESS() });
             return history;
         }
 
@@ -75,7 +76,7 @@
             const [isMuted, setIsMuted] = useState(false);
             const [isMinimized, setIsMinimized] = useState(false);
             const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-            const { SettingsIcon, SettingsModal } = useMemo(() => window.initSettingsComponents(React), []);
+            const { SettingsIcon, SettingsModal, AlgorithmPanel } = useMemo(() => window.initSettingsComponents(React), []);
             const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
             
             const [manualOffset, setManualOffset] = useState({ x: 0, y: 0 });
@@ -140,6 +141,7 @@
                         </div>
                     </div>
 
+                    <AlgorithmPanel algoKey="INSERTION" currentLine={state.algoLine} />
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.5, z-e.deltaY*0.001), 2))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
                         <div className={`absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-1/2 flex items-end justify-center gap-2 ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(calc(-50% + ${manualOffset.x}px), calc(-50% + ${manualOffset.y}px)) scale(${zoom})` }}>
                             {state.arr.map((val, i) => {

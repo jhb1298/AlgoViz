@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -22,6 +22,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -63,6 +64,7 @@
                 dp: dp.map(r => [...r]),
                 activeItem: -1,
                 activeCap: -1,
+                algoLine: 1,
                 status: 'START',
                 desc: 'Initialization',
                 speech: DP_SCRIPT.KNAPSACK.START()
@@ -98,6 +100,7 @@
                         activeItem: i,
                         activeCap: w,
                         compareCells: item.weight <= w ? [[i-1, w-item.weight], [i-1, w]] : [[i-1, w]],
+                        algoLine: item.weight <= w ? 4 : 6,
                         status: 'EVAL',
                         desc: decision,
                         speech: i % 2 === 0 && w === 1 ? DP_SCRIPT.KNAPSACK.CELL_EVAL(item.name, w) : null // Reduced speech frequency
@@ -113,6 +116,7 @@
                 stepId: history.length,
                 dp: dp.map(r => [...r]),
                 selectedItems: new Set(selectedItems),
+                algoLine: null,
                 status: 'BACKTRACK_START',
                 desc: 'Backtracking to find items...',
                 speech: DP_SCRIPT.KNAPSACK.BACKTRACK_START()
@@ -128,6 +132,7 @@
                         activeItem: i,
                         activeCap: w,
                         selectedItems: new Set(selectedItems),
+                        algoLine: null,
                         status: 'SELECTED',
                         desc: `Selected ${item.name}`,
                         speech: DP_SCRIPT.KNAPSACK.ITEM_SELECTED(item.name)
@@ -141,6 +146,7 @@
                 stepId: history.length,
                 dp: dp.map(r => [...r]),
                 selectedItems: new Set(selectedItems),
+                algoLine: null,
                 status: 'SUCCESS',
                 desc: `Optimal Value: ${dp[n][W]}`,
                 speech: DP_SCRIPT.KNAPSACK.SUCCESS(dp[n][W])

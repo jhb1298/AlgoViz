@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -26,6 +26,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -60,20 +61,20 @@
             const history = [];
             function solve(node) {
                 const { current, remaining, id } = node;
-                history.push({ stepId: history.length, nodeId: id, line: 0, status: 'START', desc: `permute("${current}", "${remaining}")`, current, remaining, speech: PERMUTATIONS_SCRIPT.START(remaining) });
+                history.push({ stepId: history.length, nodeId: id, line: 0, algoLine: 1, status: 'START', desc: `permute("${current}", "${remaining}")`, current, remaining, speech: PERMUTATIONS_SCRIPT.START(remaining) });
                 if (remaining.length === 0) {
-                    history.push({ stepId: history.length, nodeId: id, line: 1, status: 'SUCCESS', desc: `Found permutation: ${current}`, current, remaining, speech: PERMUTATIONS_SCRIPT.SUCCESS(current) });
+                    history.push({ stepId: history.length, nodeId: id, line: 1, algoLine: 3, status: 'SUCCESS', desc: `Found permutation: ${current}`, current, remaining, speech: PERMUTATIONS_SCRIPT.SUCCESS(current) });
                 } else {
                     for (let i = 0; i < remaining.length; i++) {
                         const char = remaining[i];
                         const nextRemaining = remaining.slice(0, i) + remaining.slice(i + 1);
                         const childNode = { id: ++nodeIdCounter, parentId: id, current: current + char, remaining: nextRemaining, children: [], depth: node.depth + 1 };
                         node.children.push(childNode);
-                        history.push({ stepId: history.length, nodeId: id, line: 2, status: 'THINKING', desc: `Loop i=${i}: Pick "${char}"`, current, remaining, loopIndex: i, speech: PERMUTATIONS_SCRIPT.THINKING(char) });
+                        history.push({ stepId: history.length, nodeId: id, line: 2, algoLine: 6, status: 'THINKING', desc: `Loop i=${i}: Pick "${char}"`, current, remaining, loopIndex: i, speech: PERMUTATIONS_SCRIPT.THINKING(char) });
                         solve(childNode);
                     }
                 }
-                history.push({ stepId: history.length, nodeId: id, line: 3, status: 'RETURNING', desc: `Return from permute("${current}")`, current, remaining, speech: PERMUTATIONS_SCRIPT.RETURNING(current) });
+                history.push({ stepId: history.length, nodeId: id, line: 3, algoLine: null, status: 'RETURNING', desc: `Return from permute("${current}")`, current, remaining, speech: PERMUTATIONS_SCRIPT.RETURNING(current) });
             }
             solve(treeRoot);
             return { treeRoot, history };
@@ -225,7 +226,7 @@
                     </div>
                     
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-                    <AlgorithmPanel algoKey="PERMUTATIONS" currentLine={state.algoLine} />
+                    <AlgorithmPanel algoKey="PERMUTATIONS" currentLine={currentState?.algoLine} />
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.1, z-e.deltaY*0.001), 1.5))} onMouseDown={handleCanvasMouseDown}>
                         <div className={`node-container absolute origin-top-left ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${camTarget.x + manualOffset.x}px, ${camTarget.y + manualOffset.y}px) scale(${zoom})` }}>
                             <svg className="absolute top-0 left-0 overflow-visible" style={{ width: 1, height: 1 }}>{flatNodes.map(node => node.children.map(child => (<path key={`${node.id}-${child.id}`} d={`M ${node.x+NODE_WIDTH/2} ${node.y+NODE_HEIGHT} C ${node.x+NODE_WIDTH/2} ${(node.y+child.y)/2}, ${child.x+NODE_WIDTH/2} ${(node.y+child.y)/2}, ${child.x+NODE_WIDTH/2} ${child.y}`} fill="none" stroke={activePathIds.has(child.id) ? "#818cf8" : (latestNodeStates[child.id] ? "#475569" : "#1e293b")} strokeWidth={activePathIds.has(child.id) ? 3 : 2} className={`edge-path ${activePathIds.has(child.id) ? 'edge-waiting' : ''}`} style={{ opacity: activePathIds.has(child.id) ? 1 : (latestNodeStates[child.id] ? 0.8 : 0.2) }} />)))}</svg>

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -23,6 +23,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -83,13 +84,13 @@ D F 4`;
             const startNode = nodes[0];
             visited.add(startNode);
             
-            history.push({ stepId: 0, activeNode: startNode, visited: new Set(visited), mstEdges: [], status: 'START', desc: `Starting at node ${startNode}`, speech: PRIMS_SCRIPT.START(startNode) });
+            history.push({ stepId: 0, activeNode: startNode, visited: new Set(visited), mstEdges: [], status: 'START', algoLine: 1, desc: `Starting at node ${startNode}`, speech: PRIMS_SCRIPT.START(startNode) });
 
             while (visited.size < nodes.length) {
                 let minEdge = null;
                 let minWeight = Infinity;
 
-                history.push({ stepId: history.length, visited: new Set(visited), mstEdges: [...mstEdges], status: 'SEARCH', desc: "Looking for cheapest edge...", speech: PRIMS_SCRIPT.EXPLORING(Array.from(visited).join(', ')) });
+                history.push({ stepId: history.length, visited: new Set(visited), mstEdges: [...mstEdges], status: 'SEARCH', algoLine: 5, desc: "Looking for cheapest edge...", speech: PRIMS_SCRIPT.EXPLORING(Array.from(visited).join(', ')) });
 
                 for (const edge of graph.edges) {
                     const uIn = visited.has(edge.from);
@@ -114,6 +115,7 @@ D F 4`;
                         visited: new Set(visited), 
                         mstEdges: [...mstEdges], 
                         status: 'PICKING', 
+                        algoLine: 6,
                         desc: `Added edge ${minEdge.from}-${minEdge.to}`, 
                         speech: PRIMS_SCRIPT.PICKING(minEdge.from, minEdge.to, minEdge.weight) 
                     });
@@ -123,7 +125,7 @@ D F 4`;
             }
 
             const total = mstEdges.reduce((sum, e) => sum + e.weight, 0);
-            history.push({ stepId: history.length, status: 'SUCCESS', visited: new Set(visited), mstEdges: [...mstEdges], desc: "MST Complete", speech: PRIMS_SCRIPT.SUCCESS(total) });
+            history.push({ stepId: history.length, status: 'SUCCESS', algoLine: 8, visited: new Set(visited), mstEdges: [...mstEdges], desc: "MST Complete", speech: PRIMS_SCRIPT.SUCCESS(total) });
             return history;
         }
 

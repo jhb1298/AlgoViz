@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -11,6 +11,7 @@
     <script src="graph_script.js"></script>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
     <style>
         body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
         ::-webkit-scrollbar { width: 4px; height: 4px; }
@@ -116,7 +117,7 @@ E F 5`;
                 status: 'START', 
                 desc: `Starting A* Search from ${source} to ${goal}`, 
                 speech: SEARCH_SCRIPT.ASTAR.START(),
-                algoLine: 0
+                algoLine: 1
             });
 
             const openSet = [source];
@@ -138,7 +139,7 @@ E F 5`;
                         status: 'TARGET_FOUND', 
                         desc: `Goal ${goal} reached!`, 
                         speech: SEARCH_SCRIPT.ASTAR.TARGET_FOUND(),
-                        algoLine: 3
+                        algoLine: 4
                     });
                     break;
                 }
@@ -155,7 +156,7 @@ E F 5`;
                     status: 'VISITING', 
                     desc: `Visiting ${u} (f=${fScore[u]})`, 
                     speech: SEARCH_SCRIPT.ASTAR.VISITING(u, fScore[u], gScore[u], fScore[u] - gScore[u]),
-                    algoLine: 2
+                    algoLine: 3
                 });
 
                 const neighbors = graph.edges.filter(e => e.from === u || e.to === u);
@@ -187,7 +188,7 @@ E F 5`;
                             status: 'RELAXING', 
                             desc: `Updating ${v}: g=${gScore[v]}, f=${fScore[v]}`, 
                             speech: SEARCH_SCRIPT.ASTAR.RELAXING(v, fScore[v]),
-                            algoLine: 7
+                            algoLine: 8
                         });
                     } else {
                         history.push({ 
@@ -202,7 +203,7 @@ E F 5`;
                             visited: new Set(visited), 
                             status: 'CHECKING', 
                             desc: `No better path to ${v}`,
-                            algoLine: 6
+                            algoLine: 7
                         });
                     }
                 }
@@ -218,7 +219,7 @@ E F 5`;
                 visited: new Set(visited), 
                 desc: "Search Complete", 
                 speech: SEARCH_SCRIPT.ASTAR.SUCCESS(),
-                algoLine: 3
+                algoLine: 2
             });
             return history;
         }

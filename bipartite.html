@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -25,6 +25,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -91,6 +92,7 @@ E F`;
                 stepId: 0, 
                 colors: { ...colors }, 
                 status: 'START', 
+                algoLine: 1,
                 desc: "Checking if Bipartite...", 
                 speech: BIPARTITE_SCRIPT.START() 
             });
@@ -110,6 +112,7 @@ E F`;
                     activeNode: startNode, 
                     colors: { ...colors }, 
                     status: 'COLORING', 
+                    algoLine: 2,
                     desc: `Starting at ${startNode}, color: Blue`, 
                     speech: BIPARTITE_SCRIPT.COLORING(startNode, 0) 
                 });
@@ -125,6 +128,7 @@ E F`;
                             activeEdge: { from: u, to: v },
                             colors: { ...colors }, 
                             status: 'CHECKING', 
+                            algoLine: 3,
                             desc: `Checking edge ${u}-${v}` 
                         });
 
@@ -139,6 +143,7 @@ E F`;
                                 activeEdge: { from: u, to: v },
                                 colors: { ...colors }, 
                                 status: 'COLORING', 
+                                algoLine: 5,
                                 desc: `Coloring ${v} with ${colors[v] === 0 ? 'Blue' : 'Pink'}`, 
                                 speech: BIPARTITE_SCRIPT.COLORING(v, colors[v]) 
                             });
@@ -151,6 +156,7 @@ E F`;
                                 activeEdge: { from: u, to: v },
                                 colors: { ...colors }, 
                                 status: 'IMBALANCE', 
+                                algoLine: 7,
                                 desc: `Conflict found between ${u} and ${v}!`, 
                                 speech: BIPARTITE_SCRIPT.IMBALANCE(u, v) 
                             });
@@ -166,6 +172,7 @@ E F`;
                     stepId: history.length, 
                     colors: { ...colors }, 
                     status: 'REARRANGING', 
+                    algoLine: 8,
                     desc: "Redrawing in Bipartite Form...", 
                     speech: BIPARTITE_SCRIPT.BIPARTITE_FORM() 
                 });
@@ -174,6 +181,7 @@ E F`;
                     stepId: history.length, 
                     colors: { ...colors }, 
                     status: 'SUCCESS', 
+                    algoLine: 8,
                     isBipartiteForm: true,
                     desc: "Bipartite Detection Complete!", 
                     speech: BIPARTITE_SCRIPT.SUCCESS() 

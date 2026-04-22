@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -20,6 +20,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -46,7 +47,7 @@
             let data = [...arr];
             const n = data.length;
 
-            history.push({ stepId: 0, arr: [...data], status: 'START', desc: "Starting Heap Sort", speech: SORTING_SCRIPT.HEAP.START() });
+            history.push({ stepId: 0, arr: [...data], status: 'START', algoLine: 1, desc: "Starting Heap Sort", speech: SORTING_SCRIPT.HEAP.START() });
 
             async function heapify(size, i) {
                 let largest = i;
@@ -54,17 +55,17 @@
                 let r = 2 * i + 2;
 
                 if (l < size) {
-                    history.push({ stepId: history.length, arr: [...data], activeNodes: [i, l], size, status: 'COMPARING', desc: `Comparing parent ${data[i]} with left child ${data[l]}`, speech: SORTING_SCRIPT.HEAP.HEAPIFY(data[i], data[l]) });
+                    history.push({ stepId: history.length, arr: [...data], activeNodes: [i, l], size, status: 'COMPARING', algoLine: 4, desc: `Comparing parent ${data[i]} with left child ${data[l]}`, speech: SORTING_SCRIPT.HEAP.HEAPIFY(data[i], data[l]) });
                     if (data[l] > data[largest]) largest = l;
                 }
 
                 if (r < size) {
-                    history.push({ stepId: history.length, arr: [...data], activeNodes: [i, r], size, status: 'COMPARING', desc: `Comparing parent ${data[i]} with right child ${data[r]}`, speech: SORTING_SCRIPT.HEAP.HEAPIFY(data[i], data[r]) });
+                    history.push({ stepId: history.length, arr: [...data], activeNodes: [i, r], size, status: 'COMPARING', algoLine: 4, desc: `Comparing parent ${data[i]} with right child ${data[r]}`, speech: SORTING_SCRIPT.HEAP.HEAPIFY(data[i], data[r]) });
                     if (data[r] > data[largest]) largest = r;
                 }
 
                 if (largest !== i) {
-                    history.push({ stepId: history.length, arr: [...data], activeNodes: [i, largest], size, status: 'SWAPPING', desc: `Swapping ${data[i]} and ${data[largest]}` });
+                    history.push({ stepId: history.length, arr: [...data], activeNodes: [i, largest], size, status: 'SWAPPING', algoLine: 3, desc: `Swapping ${data[i]} and ${data[largest]}` });
                     [data[i], data[largest]] = [data[largest], data[i]];
                     await heapify(size, largest);
                 }
@@ -77,13 +78,13 @@
 
             // Extract elements
             for (let i = n - 1; i > 0; i--) {
-                history.push({ stepId: history.length, arr: [...data], activeNodes: [0, i], size: i + 1, status: 'EXTRACTING', desc: `Extracting ${data[0]}`, speech: SORTING_SCRIPT.HEAP.EXTRACTING(data[0]) });
+                history.push({ stepId: history.length, arr: [...data], activeNodes: [0, i], size: i + 1, status: 'EXTRACTING', algoLine: 2, desc: `Extracting ${data[0]}`, speech: SORTING_SCRIPT.HEAP.EXTRACTING(data[0]) });
                 [data[0], data[i]] = [data[i], data[0]];
-                history.push({ stepId: history.length, arr: [...data], size: i, status: 'REBUILDING', desc: `Rebuilding heap`, speech: SORTING_SCRIPT.HEAP.REBUILDING() });
+                history.push({ stepId: history.length, arr: [...data], size: i, status: 'REBUILDING', algoLine: 4, desc: `Rebuilding heap`, speech: SORTING_SCRIPT.HEAP.REBUILDING() });
                 heapify(i, 0);
             }
 
-            history.push({ stepId: history.length, arr: [...data], status: 'SUCCESS', desc: "Sort Complete!", speech: SORTING_SCRIPT.HEAP.SUCCESS() });
+            history.push({ stepId: history.length, arr: [...data], status: 'SUCCESS', algoLine: 5, desc: "Sort Complete!", speech: SORTING_SCRIPT.HEAP.SUCCESS() });
             return history;
         }
 

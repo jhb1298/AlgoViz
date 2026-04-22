@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -21,6 +21,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -50,7 +51,7 @@
             
             const precedence = { '+': 1, '-': 1, '*': 2, '/': 2 };
 
-            function applyOp() {
+            function applyOp(algoLine) {
                 const op = ops.pop();
                 const b = nums.pop();
                 const a = nums.pop();
@@ -60,42 +61,42 @@
                 else if (op === '*') res = a * b;
                 else if (op === '/') res = a / b;
                 
-                history.push({ stepId: history.length, nums: [...nums, a, b], ops: [...ops, op], status: 'CALC_START', desc: `Applying ${op}`, speech: EXPRESSION_SCRIPT.INFIX.CALC(a, b, op, res) });
+                history.push({ stepId: history.length, nums: [...nums, a, b], ops: [...ops, op], algoLine, status: 'CALC_START', desc: `Applying ${op}`, speech: EXPRESSION_SCRIPT.INFIX.CALC(a, b, op, res) });
                 nums.push(res);
-                history.push({ stepId: history.length, nums: [...nums], ops: [...ops], status: 'CALC_END', desc: `Result ${res} pushed` });
+                history.push({ stepId: history.length, nums: [...nums], ops: [...ops], algoLine, status: 'CALC_END', desc: `Result ${res} pushed` });
             }
 
-            history.push({ stepId: 0, nums: [], ops: [], currentTokenIdx: -1, status: 'START', desc: "Evaluating Infix", speech: EXPRESSION_SCRIPT.INFIX.START(expression) });
+            history.push({ stepId: 0, nums: [], ops: [], currentTokenIdx: -1, algoLine: null, status: 'START', desc: "Evaluating Infix", speech: EXPRESSION_SCRIPT.INFIX.START(expression) });
 
             for (let i = 0; i < tokens.length; i++) {
                 const token = tokens[i];
                 if (!isNaN(token)) {
                     nums.push(Number(token));
-                    history.push({ stepId: history.length, nums: [...nums], ops: [...ops], currentTokenIdx: i, status: 'NUM', desc: `Push number ${token}`, speech: EXPRESSION_SCRIPT.INFIX.NUMBER(token) });
+                    history.push({ stepId: history.length, nums: [...nums], ops: [...ops], currentTokenIdx: i, algoLine: 2, status: 'NUM', desc: `Push number ${token}`, speech: EXPRESSION_SCRIPT.INFIX.NUMBER(token) });
                 } else if (token === '(') {
                     ops.push(token);
-                    history.push({ stepId: history.length, nums: [...nums], ops: [...ops], currentTokenIdx: i, status: 'OPEN', desc: "Open parenthesis", speech: EXPRESSION_SCRIPT.INFIX.OPEN_PAREN() });
+                    history.push({ stepId: history.length, nums: [...nums], ops: [...ops], currentTokenIdx: i, algoLine: 3, status: 'OPEN', desc: "Open parenthesis", speech: EXPRESSION_SCRIPT.INFIX.OPEN_PAREN() });
                 } else if (token === ')') {
-                    history.push({ stepId: history.length, nums: [...nums], ops: [...ops], currentTokenIdx: i, status: 'CLOSE', desc: "Close parenthesis", speech: EXPRESSION_SCRIPT.INFIX.CLOSE_PAREN() });
+                    history.push({ stepId: history.length, nums: [...nums], ops: [...ops], currentTokenIdx: i, algoLine: 4, status: 'CLOSE', desc: "Close parenthesis", speech: EXPRESSION_SCRIPT.INFIX.CLOSE_PAREN() });
                     while (ops[ops.length - 1] !== '(') {
-                        applyOp();
+                        applyOp(4);
                     }
                     ops.pop(); // pop '('
-                    history.push({ stepId: history.length, nums: [...nums], ops: [...ops], currentTokenIdx: i, status: 'PAREN_DONE', desc: "Parenthesis solved" });
+                    history.push({ stepId: history.length, nums: [...nums], ops: [...ops], currentTokenIdx: i, algoLine: 4, status: 'PAREN_DONE', desc: "Parenthesis solved" });
                 } else {
                     while (ops.length > 0 && precedence[ops[ops.length - 1]] >= precedence[token]) {
-                        applyOp();
+                        applyOp(5);
                     }
                     ops.push(token);
-                    history.push({ stepId: history.length, nums: [...nums], ops: [...ops], currentTokenIdx: i, status: 'OP', desc: `Push operator ${token}`, speech: EXPRESSION_SCRIPT.INFIX.OPERATOR(token) });
+                    history.push({ stepId: history.length, nums: [...nums], ops: [...ops], currentTokenIdx: i, algoLine: 5, status: 'OP', desc: `Push operator ${token}`, speech: EXPRESSION_SCRIPT.INFIX.OPERATOR(token) });
                 }
             }
 
             while (ops.length > 0) {
-                applyOp();
+                applyOp(6);
             }
 
-            history.push({ stepId: history.length, nums: [...nums], ops: [...ops], currentTokenIdx: tokens.length, status: 'SUCCESS', desc: "Evaluation Complete!", speech: EXPRESSION_SCRIPT.INFIX.SUCCESS(nums[0]) });
+            history.push({ stepId: history.length, nums: [...nums], ops: [...ops], currentTokenIdx: tokens.length, algoLine: 7, status: 'SUCCESS', desc: "Evaluation Complete!", speech: EXPRESSION_SCRIPT.INFIX.SUCCESS(nums[0]) });
             return history;
         }
 
@@ -163,7 +164,7 @@
 
                     
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-                    <AlgorithmPanel algoKey="INFIX" currentLine={state.algoLine} />
+                    <AlgorithmPanel algoKey="INFIX" currentLine={state?.algoLine} />
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.2, z-e.deltaY*0.001), 1.5))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
                         <div className={`absolute inset-0 flex flex-col items-center justify-center gap-12 ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${manualOffset.x}px, ${manualOffset.y}px) scale(${zoom})` }}>
                             

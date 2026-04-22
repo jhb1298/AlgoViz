@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -22,6 +22,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -68,15 +69,15 @@
             const coloring = {};
             regions.forEach(r => coloring[r.id] = null);
 
-            function record(status, desc, speech, activeRegion = null, conflictRegion = null, activeColor = null) {
+            function record(status, desc, speech, activeRegion = null, conflictRegion = null, activeColor = null, algoLine = null) {
                 history.push({ 
                     stepId: history.length, 
                     coloring: { ...coloring }, 
-                    status, desc, speech, activeRegion, conflictRegion, activeColor 
+                    status, desc, speech, activeRegion, conflictRegion, activeColor, algoLine 
                 });
             }
 
-            record('START', "Starting map coloring simulation...", SEARCH_SCRIPT.MAP_COLORING.START());
+            record('START', "Starting map coloring simulation...", SEARCH_SCRIPT.MAP_COLORING.START(), null, null, null, 1);
 
             function solve(idx) {
                 if (idx === regions.length) return true;
@@ -86,7 +87,7 @@
                     const colorHex = COLOR_PALETTE[c].hex;
                     const colorName = COLOR_PALETTE[c].name;
 
-                    record('TRYING', `Trying ${colorName} for region ${r.id}`, SEARCH_SCRIPT.MAP_COLORING.TRY_REGION(r.id, colorName), r.id, null, colorHex);
+                    record('TRYING', `Trying ${colorName} for region ${r.id}`, SEARCH_SCRIPT.MAP_COLORING.TRY_REGION(r.id, colorName), r.id, null, colorHex, 3);
 
                     let conflict = null;
                     for (const neighborId of r.adj) {
@@ -97,25 +98,25 @@
                     }
 
                     if (conflict) {
-                        record('CONFLICT', `Border conflict with ${conflict}`, SEARCH_SCRIPT.MAP_COLORING.CONFLICT(r.id, conflict, colorName), r.id, conflict, colorHex);
+                        record('CONFLICT', `Border conflict with ${conflict}`, SEARCH_SCRIPT.MAP_COLORING.CONFLICT(r.id, conflict, colorName), r.id, conflict, colorHex, 4);
                         continue;
                     }
 
                     coloring[r.id] = colorHex;
-                    record('ASSIGNED', `Assigned ${colorName} to ${r.id}`, null, r.id);
+                    record('ASSIGNED', `Assigned ${colorName} to ${r.id}`, null, r.id, null, null, 5);
 
                     if (solve(idx + 1)) return true;
 
                     coloring[r.id] = null;
-                    record('BACKTRACK', `Backtracking from ${r.id}`, null, r.id);
+                    record('BACKTRACK', `Backtracking from ${r.id}`, null, r.id, null, null, 7);
                 }
                 return false;
             }
 
             if (solve(0)) {
-                record('SUCCESS', "Map successfully colored!", SEARCH_SCRIPT.MAP_COLORING.SUCCESS());
+                record('SUCCESS', "Map successfully colored!", SEARCH_SCRIPT.MAP_COLORING.SUCCESS(), null, null, null, 6);
             } else {
-                record('FAIL', "Could not color map with limited colors.", "Backtracking reached start with no solution.");
+                record('FAIL', "Could not color map with limited colors.", "Backtracking reached start with no solution.", null, null, null, 7);
             }
 
             return history;

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -27,6 +27,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -62,18 +63,18 @@
                 const id = nodeIdCounter++;
                 const node = { id, parentId, depth, isMax, children: [], isPruned: false };
                 
-                history.push({ stepId: history.length, nodeId: id, line: 0, status: 'START', alpha, beta, desc: `${isMax ? 'Max' : 'Min'} evaluating...`, speech: isMax ? MINIMAX_SCRIPT.MAX_TURN(depth) : MINIMAX_SCRIPT.MIN_TURN(depth) });
+                history.push({ stepId: history.length, nodeId: id, line: 0, algoLine: isMax ? 4 : 8, status: 'START', alpha, beta, desc: `${isMax ? 'Max' : 'Min'} evaluating...`, speech: isMax ? MINIMAX_SCRIPT.MAX_TURN(depth) : MINIMAX_SCRIPT.MIN_TURN(depth) });
 
                 if (depth === maxDepth) {
                     const val = leafValues[nodeIndex % leafValues.length];
                     node.val = val;
-                    history.push({ stepId: history.length, nodeId: id, line: 1, status: 'BASE', val, alpha, beta, desc: `Leaf value: ${val}`, speech: MINIMAX_SCRIPT.LEAF(val) });
+                    history.push({ stepId: history.length, nodeId: id, line: 1, algoLine: 3, status: 'BASE', val, alpha, beta, desc: `Leaf value: ${val}`, speech: MINIMAX_SCRIPT.LEAF(val) });
                     return { node, val };
                 }
 
                 let bestVal = isMax ? -Infinity : Infinity;
                 for (let i = 0; i < 2; i++) {
-                    history.push({ stepId: history.length, nodeId: id, line: 2, status: 'THINKING', alpha, beta, desc: `Exploring child ${i + 1}` });
+                    history.push({ stepId: history.length, nodeId: id, line: 2, algoLine: isMax ? 6 : 10, status: 'THINKING', alpha, beta, desc: `Exploring child ${i + 1}` });
                     
                     const { node: child, val } = solve(depth + 1, nodeIndex * 2 + i, !isMax, alpha, beta, id);
                     node.children.push(child);
@@ -87,14 +88,14 @@
                     }
 
                     if (isPruning && beta <= alpha) {
-                        history.push({ stepId: history.length, nodeId: id, line: 3, status: 'PRUNING', alpha, beta, val: bestVal, desc: `Pruning triggered!`, speech: MINIMAX_SCRIPT.PRUNED(isMax ? 'MAX' : 'MIN', bestVal, isMax ? beta : alpha) });
+                        history.push({ stepId: history.length, nodeId: id, line: 3, algoLine: null, status: 'PRUNING', alpha, beta, val: bestVal, desc: `Pruning triggered!`, speech: MINIMAX_SCRIPT.PRUNED(isMax ? 'MAX' : 'MIN', bestVal, isMax ? beta : alpha) });
                         // Mark next children as pruned in layout (conceptual)
                         break;
                     }
                 }
 
                 node.val = bestVal;
-                history.push({ stepId: history.length, nodeId: id, line: 4, status: 'RETURN', val: bestVal, alpha, beta, desc: `Returning ${bestVal}`, speech: MINIMAX_SCRIPT.RETURN(isMax ? 'Max' : 'Min', bestVal) });
+                history.push({ stepId: history.length, nodeId: id, line: 4, algoLine: isMax ? 7 : 11, status: 'RETURN', val: bestVal, alpha, beta, desc: `Returning ${bestVal}`, speech: MINIMAX_SCRIPT.RETURN(isMax ? 'Max' : 'Min', bestVal) });
                 return { node, val: bestVal };
             }
 
@@ -256,7 +257,7 @@
                     </div>
                     
                     <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
-                    <AlgorithmPanel algoKey="MINIMAX" currentLine={state.algoLine} />
+                    <AlgorithmPanel algoKey="MINIMAX" currentLine={currentState?.algoLine} />
                     <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.1, z-e.deltaY*0.001), 1.5))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper') && !e.target.closest('.top-nav-area')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
                         <div className={`node-container absolute origin-top-left ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${camTarget.x + manualOffset.x}px, ${camTarget.y + manualOffset.y}px) scale(${zoom})` }}>
                             <svg className="absolute top-0 left-0 overflow-visible" style={{ width: 1, height: 1 }}>

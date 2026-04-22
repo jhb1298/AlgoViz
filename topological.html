@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -24,6 +24,7 @@
     </style>
     <script src="settings_manager.js"></script>
     <script src="algorithm_data.js"></script>
+    <script src="chatbot.js"></script>
 </head>
 <body>
     <div id="root"></div>
@@ -88,12 +89,12 @@ E F`;
             });
 
             history.push({ 
-                stepId: 0, inDegree: { ...inDegree }, result: [], status: 'START', 
+                stepId: 0, inDegree: { ...inDegree }, result: [], status: 'START', algoLine: 1,
                 desc: "Calculating initial in-degrees", speech: TOPO_SCRIPT.START() 
             });
 
             history.push({ 
-                stepId: history.length, inDegree: { ...inDegree }, result: [], status: 'IN_DEGREE', 
+                stepId: history.length, inDegree: { ...inDegree }, result: [], status: 'IN_DEGREE', algoLine: 2,
                 desc: "Every node counts its incoming prerequisites.", speech: TOPO_SCRIPT.IN_DEGREE() 
             });
 
@@ -108,7 +109,7 @@ E F`;
                 result.push(u);
                 history.push({ 
                     stepId: history.length, inDegree: { ...inDegree }, activeNode: u, 
-                    result: [...result], status: 'VISITING', 
+                    result: [...result], status: 'VISITING', algoLine: 4,
                     desc: `Task ${u} has no dependencies left. Heading to sorted list!`, speech: TOPO_SCRIPT.ZERO_IN_DEGREE(u) 
                 });
 
@@ -117,7 +118,7 @@ E F`;
                     inDegree[edge.to]--;
                     history.push({ 
                         stepId: history.length, inDegree: { ...inDegree }, activeNode: u, 
-                        activeEdge: edge, result: [...result], status: 'REMOVING', 
+                        activeEdge: edge, result: [...result], status: 'REMOVING', algoLine: 6,
                         desc: `Reducing dependency for ${edge.to}`, speech: TOPO_SCRIPT.REMOVING(u, edge.to) 
                     });
                     if (inDegree[edge.to] === 0) queue.push(edge.to);
@@ -125,7 +126,7 @@ E F`;
             }
 
             const total = result.length;
-            history.push({ stepId: history.length, inDegree: { ...inDegree }, result: [...result], status: 'SUCCESS', desc: `Sorted ${total} nodes successfully!`, speech: TOPO_SCRIPT.SUCCESS() });
+            history.push({ stepId: history.length, inDegree: { ...inDegree }, result: [...result], status: 'SUCCESS', algoLine: 8, desc: `Sorted ${total} nodes successfully!`, speech: TOPO_SCRIPT.SUCCESS() });
             return history;
         }
 
