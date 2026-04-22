@@ -1,4 +1,4 @@
-const ALGORITHM_PSEUDOCODE = {
+window.ALGORITHM_PSEUDOCODE = {
     "BFS": [
         "1. Initialize queue Q with source node S",
         "2. Mark S as visited",
@@ -665,3 +665,4 @@ const ALGORITHM_PSEUDOCODE = {
 window.getAlgorithmPseudocode = (algoKey) => {
     return ALGORITHM_PSEUDOCODE[algoKey] || [];
 };
+

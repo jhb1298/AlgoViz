@@ -1,4 +1,4 @@
-const FIBONACCI_SCRIPT = {
+window.FIBONACCI_SCRIPT = {
     "START": (val) => `Let's find Fibonacci of ${val}. We'll need to solve two smaller puzzles and add them together!`,
     "BASE": (val) => `Easy peasy! Fibonacci of ${val} is just ${val}. No more math needed here!`,
     "THINKING": (val, branch) => `Time to explore the ${branch} branch! Let's see what we find...`,

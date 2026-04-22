@@ -1,4 +1,4 @@
-const PRIMS_SCRIPT = {
+window.PRIMS_SCRIPT = {
     "START": (src) => `Welcome to Prim's forest! We're starting at node ${src} to grow a Minimum Spanning Tree that connects everyone for the lowest cost.`,
     "EXPLORING": (node) => `We're at node ${node}. Let's look at all the available edges leading out to unvisited nodes.`,
     "PICKING": (u, v, weight) => `Found it! The cheapest available edge connects ${u} to ${v} with a cost of ${weight}. Let's add it to our tree!`,
@@ -6,7 +6,7 @@ const PRIMS_SCRIPT = {
     "SUCCESS": (total) => `Our spanning tree is complete! We've connected every node using the cheapest paths possible. Total cost: ${total}.`
 };
 
-const KRUSKALS_SCRIPT = {
+window.KRUSKALS_SCRIPT = {
     "START": () => `Let's build a Minimum Spanning Tree using Kruskal's method! First, we'll sort every single edge from cheapest to most expensive.`,
     "CHECKING": (u, v, w) => `Checking the edge between ${u} and ${v} with weight ${w}. Is it safe to add?`,
     "ADDING": (u, v) => `Yes! Node ${u} and ${v} are currently in different groups. Connecting them won't create a cycle. Added!`,

@@ -1,4 +1,4 @@
-const OPTIMIZATION_SCRIPT = {
+window.OPTIMIZATION_SCRIPT = {
     "GENETIC": {
         "START": () => `Welcome to the Genetic Algorithm! We're going to evolve a population of random strings to match our target. It's survival of the fittest in action!`,
         "NEW_GENERATION": (gen, bestFitness) => `Generation ${gen} is here. Our champion has a fitness of ${Math.round(bestFitness * 100)}%. Let's see if we can do better!`,

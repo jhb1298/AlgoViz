@@ -1,4 +1,4 @@
-const EXPRESSION_SCRIPT = {
+window.EXPRESSION_SCRIPT = {
     "POSTFIX": {
         "START": (expr) => `Let's evaluate the postfix expression: ${expr}. We'll scan it from left to right, using a stack to keep track of our numbers!`,
         "NUMBER": (val) => `Found a number: ${val}. Into the stack it goes!`,

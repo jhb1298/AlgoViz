@@ -1,4 +1,4 @@
-const GEOMETRY_SCRIPT = {
+window.GEOMETRY_SCRIPT = {
     "JARVIS": {
         "START": () => `Welcome to the Jarvis March, also known as the Gift Wrapping algorithm! We'll find the convex hull by wrapping our points like a present.`,
         "PICK_START": (p) => `First, we find the leftmost point ${p.id}. This point is guaranteed to be on the outer boundary.`,

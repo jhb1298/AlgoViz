@@ -1,4 +1,4 @@
-const SEARCH_SCRIPT = {
+window.SEARCH_SCRIPT = {
     "BINARY": {
         "START": (target) => `Let's find the number ${target}! Since our list is already sorted, we can use Binary Search to find it much faster by cutting the work in half every time.`,
         "MID": (val) => `Checking the middle element: ${val}. How does it compare to our target?`,

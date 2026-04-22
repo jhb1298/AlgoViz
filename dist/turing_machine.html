@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Universal Turing Machine Visualizer</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #030712; color: white; font-family: 'JetBrains Mono', monospace; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+        .tape-container { perspective: 1000px; }
+        .tape-cell { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 2px solid #1e293b; background: #0f172a; }
+        .head-active { border-color: #6366f1 !important; background: rgba(99, 102, 241, 0.1); box-shadow: 0 0 30px rgba(99, 102, 241, 0.3); transform: translateY(-10px); }
+        .infinite-bg { background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 40px 40px; }
+        .scan-line { position: absolute; height: 100%; width: 2px; background: #6366f1; box-shadow: 0 0 15px #6366f1; opacity: 0.5; left: 50%; top: 0; }
+        .state-pulse { animation: pulse 2s infinite; }
+        @keyframes pulse { 0% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.05); opacity: 0.8; } 100% { transform: scale(1); opacity: 1; } }
+    </style>
+  <script type="module" crossorigin src="/assets/turing_machine-Dy2MHKGO.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/chatbot-CXQzZ2_v.js">
+  <link rel="modulepreload" crossorigin href="/assets/settings_manager-SEJbgrw-.js">
+  <link rel="stylesheet" crossorigin href="/assets/main-BV5HfjFp.css">
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>

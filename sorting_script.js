@@ -1,4 +1,4 @@
-const SORTING_SCRIPT = {
+window.SORTING_SCRIPT = {
     "BUBBLE": {
         "START": () => `Welcome to the Bubble Sort party! We're going to compare adjacent numbers and swap them if they're in the wrong order. The big numbers will bubble up to the top!`,
         "COMPARING": (a, b) => `Comparing ${a} and ${b}. Should they swap places?`,

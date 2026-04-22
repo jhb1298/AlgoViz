@@ -1,4 +1,4 @@
-const TREE_SCRIPT = {
+window.TREE_SCRIPT = {
     "HEAPIFY": {
         "START": () => `Let's build a Max-Heap! Our mission is to make sure every parent is larger than its children.`,
         "COMPARING": (p, c) => `Checking parent ${p} against child ${c}. The parent must be the boss!`,

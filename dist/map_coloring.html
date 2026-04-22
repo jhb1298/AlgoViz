@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Map Coloring Visualizer</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #030712; color: white; font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+        .camera-layer { transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); will-change: transform; }
+        .infinite-bg { background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 40px 40px; }
+        .region { transition: fill 0.5s, stroke 0.3s; stroke-width: 2; stroke: #1e293b; }
+        .region-active { stroke: #fff !important; stroke-width: 4; filter: drop-shadow(0 0 15px rgba(255,255,255,0.3)); }
+        .region-conflict { stroke: #f43f5e !important; stroke-width: 5; animation: pulse 0.5s infinite; }
+        @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+    </style>
+  <script type="module" crossorigin src="/assets/map_coloring-Cjds21rV.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/chatbot-CXQzZ2_v.js">
+  <link rel="modulepreload" crossorigin href="/assets/settings_manager-SEJbgrw-.js">
+  <link rel="stylesheet" crossorigin href="/assets/main-BV5HfjFp.css">
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>

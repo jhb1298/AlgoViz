@@ -1,4 +1,4 @@
-const SUDOKU_SCRIPT = {
+window.SUDOKU_SCRIPT = {
     "START": () => `Welcome to the Sudoku Solver! We're using backtracking to solve this puzzle. It's a systematic way of trying every possibility until we find the perfect fit.`,
     "TRYING": (val, r, c) => `Trying the number ${val} at row ${r + 1}, column ${c + 1}. Let's see if it follows the rules.`,
     "CONFLICT": (val, reason) => `Wait! Placing ${val} here causes a conflict in the ${reason}. We can't use this number.`,

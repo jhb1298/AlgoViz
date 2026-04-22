@@ -1,4 +1,4 @@
-const NQUEENS_SCRIPT = {
+window.NQUEENS_SCRIPT = {
     "START": (n) => `Let's solve the classic ${n}-Queens puzzle! Our goal is to place ${n} queens on this board so that no two queens can attack each other.`,
     "TRYING": (row, col) => `Let's see if we can place a queen at row ${row + 1}, column ${col + 1}.`,
     "CONFLICT": (row, col) => `Oops! Row ${row + 1}, column ${col + 1} is under attack. We can't stay here!`,

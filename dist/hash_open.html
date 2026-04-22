@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Open Addressing Hash Visualizer</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+        .camera-layer { transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); will-change: transform; }
+        .infinite-bg { background-image: radial-gradient(#334155 1px, transparent 1px); background-size: 30px 30px; }
+        .cell-active { border-color: #6366f1 !important; background: rgba(99, 102, 241, 0.2); box-shadow: 0 0 20px rgba(99, 102, 241, 0.4); transform: scale(1.05); }
+        .cell-filled { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        .cell-collision { border-color: #f43f5e !important; background: rgba(244, 63, 94, 0.2); animation: shake 0.4s; }
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+    </style>
+  <script type="module" crossorigin src="/assets/modulepreload-polyfill-B5Qt9EMX.js"></script>
+  <link rel="stylesheet" crossorigin href="/assets/main-BV5HfjFp.css">
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>

@@ -1,0 +1,400 @@
+import './src/globals.js';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { createRoot } from 'react-dom/client';
+import './hash_script.js';
+import './algorithm_data.js';
+import './chatbot.js';
+import './settings_manager.js';
+
+/* extracted from hashing.html */
+
+        
+        
+        // --- Icons (Shared with local context) ---
+        const IconWrapper = ({ children, size = 20, className="", ...props }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>{children}</svg>
+        );
+        const Play = (props) => <IconWrapper {...props}><polygon points="5 3 19 12 5 21 5 3"></polygon></IconWrapper>;
+        const Pause = (props) => <IconWrapper {...props}><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></IconWrapper>;
+        const SkipBack = (props) => <IconWrapper {...props}><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></IconWrapper>;
+        const SkipForward = (props) => <IconWrapper {...props}><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></IconWrapper>;
+        const Rewind = (props) => <IconWrapper {...props}><polygon points="11 19 2 12 11 5 11 19"></polygon><polygon points="22 19 13 12 22 5 22 19"></polygon></IconWrapper>;
+        const FastForward = (props) => <IconWrapper {...props}><polygon points="13 19 22 12 13 5 13 19"></polygon><polygon points="2 19 11 12 2 5 2 19"></polygon></IconWrapper>;
+        const GripHorizontal = (props) => <IconWrapper {...props}><circle cx="12" cy="9" r="1"></circle><circle cx="19" cy="9" r="1"></circle><circle cx="5" cy="9" r="1"></circle><circle cx="12" cy="15" r="1"></circle><circle cx="19" cy="15" r="1"></circle><circle cx="5" cy="15" r="1"></circle></IconWrapper>;
+        const Home = (props) => <IconWrapper {...props}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></IconWrapper>;
+        const Volume2 = (props) => <IconWrapper {...props}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></IconWrapper>;
+        const VolumeX = (props) => <IconWrapper {...props}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></IconWrapper>;
+        const ChevronUp = (props) => <IconWrapper {...props}><polyline points="18 15 12 9 6 15"></polyline></IconWrapper>;
+        const ChevronDown = (props) => <IconWrapper {...props}><polyline points="6 9 12 15 18 9"></polyline></IconWrapper>;
+
+        const TABLE_SIZE = 7;
+
+        function generateSimulation(initialData, strategy, method, opVals) {
+            const history = [];
+            
+            // Initial snapshot
+            let table;
+            if (strategy === 'CHAINING') {
+                table = Array.from({ length: TABLE_SIZE }, () => []);
+            } else {
+                table = Array(TABLE_SIZE).fill(null);
+            }
+
+            function record(status, desc, speech, activeIdx = -1, activeSubIdx = -1, line = 0) {
+                history.push({ 
+                    stepId: history.length, 
+                    table: strategy === 'CHAINING' ? table.map(b => [...b]) : [...table], 
+                    status, desc, speech, activeIdx, activeSubIdx, line 
+                });
+            }
+
+            // Populate initial data without recording steps
+            initialData.forEach(val => {
+                const h = val % TABLE_SIZE;
+                if (strategy === 'CHAINING') {
+                    table[h].push(val);
+                } else {
+                    let i = 0;
+                    while (i < TABLE_SIZE) {
+                        let idx;
+                        if (method === 'LINEAR') idx = (h + i) % TABLE_SIZE;
+                        else if (method === 'QUADRATIC') idx = (h + i * i) % TABLE_SIZE;
+                        else { // DOUBLE
+                            const stepSize = 7 - (val % 7);
+                            idx = (h + i * stepSize) % TABLE_SIZE;
+                        }
+                        if (table[idx] === null) {
+                            table[idx] = val;
+                            break;
+                        }
+                        i++;
+                    }
+                }
+            });
+
+            // Start Operation for each value in opVals
+            opVals.forEach((opVal, valIdx) => {
+                const h = opVal % TABLE_SIZE;
+                
+                if (strategy === 'CHAINING') {
+                    record('START', `Processing ${opVal} (${valIdx + 1}/${opVals.length})`, HASH_SCRIPT.START(TABLE_SIZE), h, -1, 0);
+                    record('HASHING', `Index = ${opVal} % ${TABLE_SIZE} = ${h}`, HASH_SCRIPT.HASHING(opVal, h), h, -1, 1);
+                    
+                    if (table[h].length > 0) {
+                        record('COLLISION', `Collision! Bucket ${h} occupied.`, HASH_SCRIPT.COLLISION(opVal, h), h, -1, 2);
+                    }
+                    
+                    table[h].push(opVal);
+                    record('SUCCESS', `Inserted ${opVal} into chain ${h}`, HASH_SCRIPT.INSERTING(opVal, h), h, table[h].length - 1, 3);
+                } else {
+                    // Open Addressing
+                    const introMsg = HASH_SCRIPT.OPEN_ADDRESSING[method].START();
+                    record('START', `Processing ${opVal} (${valIdx + 1}/${opVals.length})`, introMsg, -1, -1, 0);
+                    
+                    let i = 0;
+                    let stepSize = 1;
+                    if (method === 'DOUBLE') {
+                        stepSize = 7 - (opVal % 7);
+                        record('CALC', `Hash: ${h}, Step: ${stepSize}`, HASH_SCRIPT.OPEN_ADDRESSING.DOUBLE.CALC_STEP(stepSize), -1, -1, 1);
+                    } else {
+                        record('HASHING', `Search starts at ${h}`, `Calculating initial index: ${h}`, h, -1, 1);
+                    }
+
+                    let foundSlot = false;
+                    while (i < TABLE_SIZE) {
+                        let idx;
+                        if (method === 'LINEAR') idx = (h + i) % TABLE_SIZE;
+                        else if (method === 'QUADRATIC') idx = (h + i * i) % TABLE_SIZE;
+                        else idx = (h + i * stepSize) % TABLE_SIZE;
+
+                        if (table[idx] === null) {
+                            table[idx] = opVal;
+                            record('SUCCESS', `Placed ${opVal} at ${idx}`, HASH_SCRIPT.OPEN_ADDRESSING[method].INSERT(opVal, idx), idx, -1, 4);
+                            foundSlot = true;
+                            break;
+                        } else {
+                            let probeMsg = '';
+                            if (method === 'LINEAR') probeMsg = HASH_SCRIPT.OPEN_ADDRESSING.LINEAR.PROBE(idx, i + 1);
+                            else if (method === 'QUADRATIC') probeMsg = HASH_SCRIPT.OPEN_ADDRESSING.QUADRATIC.PROBE(idx, i);
+                            else probeMsg = HASH_SCRIPT.OPEN_ADDRESSING.DOUBLE.PROBE(idx, stepSize);
+                            
+                            record('COLLISION', `Collision at ${idx}!`, probeMsg, idx, -1, 3);
+                        }
+                        i++;
+                    }
+                    if (!foundSlot) {
+                        record('FULL', `Table Full for ${opVal}!`, "No available slots found.", -1, -1, 3);
+                    }
+                }
+            });
+
+            return history;
+        }
+
+        const App = () => {
+            const { SettingsIcon, SettingsModal, AlgorithmPanel } = useMemo(() => window.initSettingsComponents(React), []);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [strategy, setStrategy] = useState('CHAINING'); // CHAINING or OPEN
+            const [method, setMethod] = useState('LINEAR'); // LINEAR, QUADRATIC, DOUBLE
+            
+            const [initialData, setInitialData] = useState([12, 25, 31]);
+            const [inputString, setInputString] = useState("44, 52");
+            const [currentStep, setCurrentStep] = useState(0);
+            const [isPlaying, setIsPlaying] = useState(false);
+            const [speedMultiplier, setSpeedMultiplier] = useState(1);
+            const [zoom, setZoom] = useState(0.8);
+            const [isMuted, setIsMuted] = useState(false);
+            const [isMinimized, setIsMinimized] = useState(false);
+            
+            const [manualOffset, setManualOffset] = useState({ x: 0, y: 0 });
+            const [panelOffset, setPanelOffset] = useState({ x: 0, y: 0 });
+            const [isDraggingCanvas, setIsDraggingCanvas] = useState(false);
+            const [isDraggingPanel, setIsDraggingPanel] = useState(false);
+            const canvasDragStart = useRef({ x: 0, y: 0 });
+            const panelDragStart = useRef({ x: 0, y: 0 });
+            const isPlayingRef = useRef(false);
+            isPlayingRef.current = isPlaying;
+
+            const opVals = useMemo(() => {
+                return inputString.split(',').map(s => parseInt(s.trim())).filter(n => !isNaN(n));
+            }, [inputString]);
+
+            const history = useMemo(() => generateSimulation(initialData, strategy, method, opVals), [initialData, strategy, method, opVals]);
+
+            const nextStep = () => { setCurrentStep(prev => (prev < history.length - 1 ? prev + 1 : (setIsPlaying(false), prev))); };
+            const prevStep = () => { setCurrentStep(prev => Math.max(0, prev - 1)); setIsPlaying(false); };
+
+            const speak = (text) => {
+                const delay = (1500 / speedMultiplier);
+                if (isMuted || !text) { setTimeout(() => { if(isPlayingRef.current) nextStep(); }, delay); return; }
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.pitch = 1.0; utterance.rate = 1.0 * speedMultiplier;
+                utterance.onend = () => { if(isPlayingRef.current) nextStep(); };
+                window.speechSynthesis.speak(utterance);
+            };
+
+            useEffect(() => {
+                if (isPlaying) speak(history[currentStep]?.speech);
+                else window.speechSynthesis.cancel();
+            }, [isPlaying, currentStep]);
+
+            const state = history[currentStep] || { table: (strategy === 'CHAINING' ? [] : []) };
+
+            const algoKey = strategy === 'CHAINING' ? 'HASH_CHAINING' : `HASH_${method}`;
+
+            return (
+                <div className="h-screen w-screen flex flex-col relative overflow-hidden bg-[#0f172a] text-white select-none" 
+                    onMouseMove={(e) => { 
+                        if(isDraggingPanel) setPanelOffset({x: e.clientX-panelDragStart.current.x, y: e.clientY-panelDragStart.current.y}); 
+                        else if(isDraggingCanvas) setManualOffset({x: e.clientX-canvasDragStart.current.x, y: e.clientY-canvasDragStart.current.y}); 
+                    }} 
+                    onMouseUp={() => {setIsDraggingCanvas(false); setIsDraggingPanel(false);}}>
+                    
+                    {/* Top Navigation Bar */}
+                    <div className="absolute top-0 left-0 right-0 z-[60] group/nav">
+                        <div className="absolute top-0 left-0 w-full h-4 z-[70] peer"></div>
+                        <div className="relative h-20 glass border-b border-white/5 flex items-center justify-between px-8 shadow-2xl transition-all duration-500 -translate-y-[85%] peer-hover:translate-y-0 group-hover/nav:translate-y-0 hover:translate-y-0 z-[60]">
+                            <div className="flex items-center gap-6">
+                                <a href="index.html" className="bg-white/5 p-3 rounded-2xl hover:bg-white/10 transition-all text-slate-400 hover:text-white border border-white/5 shadow-inner">
+                                    <Home size={22} />
+                                </a>
+                                <div className="flex flex-col">
+                                    <h1 className="font-extrabold text-xl leading-tight tracking-tight bg-gradient-to-r from-blue-400 to-emerald-400 bg-clip-text text-transparent">Hashing Visualizer</h1>
+                                    <div className="flex gap-2 items-center">
+                                        <span className="text-[10px] text-slate-500 font-mono uppercase tracking-[0.2em]">{strategy} COLLISION RESOLUTION</span>
+                                        <div className="w-1 h-1 bg-slate-700 rounded-full"></div>
+                                        <button onClick={() => setIsSettingsOpen(true)} className="text-[10px] text-blue-400 hover:underline">SETTINGS</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                {/* Strategy Selector */}
+                                <div className="flex bg-slate-950/50 p-1 rounded-xl border border-white/5">
+                                    {['CHAINING', 'OPEN'].map(s => (
+                                        <button key={s} onClick={() => { setStrategy(s); setCurrentStep(0); setIsPlaying(false); }} 
+                                            className={`px-4 py-1.5 rounded-lg text-xs font-bold transition-all ${strategy === s ? 'bg-blue-600 text-white shadow-lg shadow-blue-500/20' : 'text-slate-500 hover:text-white'}`}>
+                                            {s}
+                                        </button>
+                                    ))}
+                                </div>
+
+                                {strategy === 'OPEN' && (
+                                    <div className="flex bg-slate-950/50 p-1 rounded-xl border border-white/5">
+                                        {['LINEAR', 'QUADRATIC', 'DOUBLE'].map(m => (
+                                            <button key={m} onClick={() => { setMethod(m); setCurrentStep(0); setIsPlaying(false); }} 
+                                                className={`px-3 py-1.5 rounded-lg text-[10px] font-bold transition-all ${method === m ? 'bg-emerald-600 text-white shadow-lg shadow-emerald-500/20' : 'text-slate-500 hover:text-white'}`}>
+                                                {m}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+
+                                <div className="h-10 w-[1px] bg-white/5 mx-2"></div>
+
+                                <div className="flex items-center gap-3">
+                                    <div className="flex flex-col items-end">
+                                        <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest leading-none mb-1">Incoming List</span>
+                                        <input type="text" value={inputString} onChange={e => { setInputString(e.target.value); setCurrentStep(0); setIsPlaying(false); }} 
+                                            placeholder="e.g. 44, 52"
+                                            className="w-32 bg-white/5 border border-white/10 rounded-lg px-2 py-1 font-bold text-sm outline-none text-blue-400 text-right focus:border-blue-500/50 transition-all placeholder:text-slate-700" />
+                                    </div>
+                                    <button onClick={() => { setCurrentStep(0); setIsPlaying(true); }} 
+                                        className="bg-blue-600 hover:bg-blue-500 w-12 h-12 rounded-2xl transition-all shadow-xl shadow-blue-900/40 flex items-center justify-center group active:scale-95">
+                                        <Play fill="white" size={24} className="group-hover:scale-110 transition-transform"/>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <AlgorithmPanel algoKey={algoKey} currentLine={state.line} />
+                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+
+                    {/* Simulation Canvas */}
+                    <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab active:cursor-grabbing" 
+                        onWheel={(e) => setZoom(z => Math.min(Math.max(0.2, z-e.deltaY*0.001), 2.5))} 
+                        onMouseDown={(e) => {
+                            if(!e.target.closest('.control-panel-wrapper') && !e.target.closest('.fixed')) {
+                                setIsDraggingCanvas(true); 
+                                canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};
+                            }
+                        }}>
+                        
+                        <div className={`absolute left-1/2 top-1/2 ${isDraggingCanvas ? '' : 'camera-layer'}`} 
+                            style={{ transform: `translate(calc(-50% + ${manualOffset.x}px), calc(-50% + ${manualOffset.y}px)) scale(${zoom})` }}>
+                            
+                            {strategy === 'CHAINING' ? (
+                                <div className="flex flex-col gap-6 items-start">
+                                    {state.table.map((bucket, i) => (
+                                        <div key={i} className="flex items-center gap-12 group/bucket">
+                                            {/* Bucket Header */}
+                                            <div className={`w-28 h-20 rounded-3xl glass border-2 flex flex-col items-center justify-center transition-all duration-500 ${state.activeIdx === i ? 'cell-active' : 'border-white/5'}`}>
+                                                <span className="text-[10px] text-slate-500 font-bold tracking-widest mb-1">INDEX</span>
+                                                <span className="text-3xl font-black text-white/90">{i}</span>
+                                            </div>
+
+                                            <div className="flex items-center gap-4">
+                                                <div className="w-10 h-1 bg-gradient-to-r from-blue-500/50 to-transparent rounded-full"></div>
+                                                
+                                                {/* The Chain */}
+                                                <div className="flex gap-4">
+                                                    {bucket.map((val, idx) => (
+                                                        <div key={idx} className="flex items-center gap-4">
+                                                            <div className={`w-20 h-16 rounded-2xl glass border-2 flex items-center justify-center font-bold text-xl transition-all duration-500 node-enter ${state.activeIdx === i && state.activeSubIdx === idx ? 'cell-success' : 'border-white/10'}`}>
+                                                                {val}
+                                                            </div>
+                                                            {idx < bucket.length - 1 && <div className="text-slate-600 font-black text-2xl">?</div>}
+                                                        </div>
+                                                    ))}
+                                                    {bucket.length === 0 && (
+                                                        <div className="w-20 h-16 rounded-2xl border-2 border-dashed border-white/5 flex items-center justify-center text-slate-800 font-mono text-[10px] tracking-tighter uppercase">empty_chain</div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                // Open Addressing Flex/Grid
+                                <div className="flex flex-wrap justify-center gap-6 w-[1100px] mx-auto p-12 relative z-0">
+                                    {state.table.map((val, i) => (
+                                        <div key={i} 
+                                            className={`w-36 h-36 rounded-[2.5rem] glass border-2 flex flex-col items-center justify-center relative transition-all duration-500 flex-shrink-0
+                                            ${state.activeIdx === i ? (state.status === 'COLLISION' ? 'cell-collision' : (state.status === 'SUCCESS' ? 'cell-success' : 'cell-active')) : (val !== null ? 'border-emerald-500/30 bg-emerald-500/5' : 'border-white/5')}`}>
+                                            <span className="text-[10px] text-slate-600 absolute top-4 left-6 font-black">{i}</span>
+                                            {val !== null ? (
+                                                <span className="text-4xl font-black text-white drop-shadow-lg">{val}</span>
+                                            ) : (
+                                                <span className="text-slate-800 text-[10px] font-mono tracking-tighter uppercase">null</span>
+                                            )}
+                                            {state.activeIdx === i && state.status === 'COLLISION' && (
+                                                <div className="absolute -bottom-4 bg-rose-600 text-[9px] font-black px-3 py-1 rounded-full shadow-lg z-10 animate-bounce">OCCUPIED</div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Playback Controls Panel */}
+                    <div className="absolute bottom-10 left-1/2 w-full max-w-4xl px-4 z-50 control-panel-wrapper" 
+                        style={{ transform: `translate(calc(-50% + ${panelOffset.x}px), ${panelOffset.y}px)` }}>
+                        
+                        <div className={`glass rounded-[2rem] shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] flex flex-col relative overflow-hidden transition-all duration-300 ${isMinimized ? 'w-fit mx-auto px-6 py-4' : 'px-8 pb-6 pt-2'}`}>
+                            {/* Drag Handle */}
+                            <div className="w-full h-8 cursor-grab active:cursor-grabbing flex justify-center items-center mb-1 group" 
+                                onMouseDown={(e) => {e.preventDefault(); setIsDraggingPanel(true); panelDragStart.current={x:e.clientX-panelOffset.x, y:e.clientY-panelOffset.y}; e.stopPropagation();}}>
+                                <div className="w-16 h-1.5 bg-white/10 rounded-full group-hover:bg-white/20 transition-colors"></div>
+                            </div>
+
+                            <button onClick={() => setIsMinimized(!isMinimized)} 
+                                className="absolute top-4 right-6 p-2 hover:bg-white/5 rounded-xl text-slate-500 hover:text-white transition-all">
+                                {isMinimized ? <ChevronUp size={20}/> : <ChevronDown size={20}/>}
+                            </button>
+
+                            {isMinimized ? (
+                                <div className="flex items-center justify-center gap-6">
+                                    <button onClick={prevStep} className="p-2 hover:bg-white/5 rounded-xl text-slate-300 transition-all"><Rewind size={22}/></button>
+                                    <button onClick={() => setIsPlaying(!isPlaying)} 
+                                        className={`w-14 h-14 flex items-center justify-center rounded-2xl shadow-xl transform transition-all active:scale-90 border border-white/10 ${isPlaying ? 'bg-amber-500 shadow-amber-900/40' : 'bg-blue-600 shadow-blue-900/40'}`}>
+                                        {isPlaying ? <Pause fill="white" size={24} /> : <Play fill="white" size={24} className="ml-1"/>}
+                                    </button>
+                                    <button onClick={nextStep} className="p-2 hover:bg-white/5 rounded-xl text-slate-300 transition-all"><FastForward size={22}/></button>
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-6">
+                                    {/* Progress Bar */}
+                                    <div className="relative w-full h-2 bg-slate-950/50 rounded-full overflow-hidden">
+                                        <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-blue-600 to-emerald-500 transition-all duration-300" 
+                                            style={{ width: `${(currentStep / (history.length-1 || 1)) * 100}%` }}></div>
+                                        <input type="range" min="0" max={history.length - 1} value={currentStep} 
+                                            onChange={(e) => { setIsPlaying(false); setCurrentStep(Number(e.target.value)); }} 
+                                            className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10" />
+                                    </div>
+
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex flex-col w-[35%]">
+                                            <div className="flex items-center gap-2 mb-1">
+                                                <span className="text-[10px] font-black text-blue-500 tracking-[0.2em] uppercase">Step {currentStep + 1}</span>
+                                                <span className="text-[10px] text-slate-600 font-bold tracking-widest">/ {history.length}</span>
+                                            </div>
+                                            <span className="text-base font-bold text-white leading-tight line-clamp-2 min-h-[3rem]">{state?.desc}</span>
+                                        </div>
+
+                                        <div className="flex items-center justify-center gap-4 w-[30%]">
+                                            <button onClick={prevStep} className="p-2 hover:bg-white/5 rounded-xl text-slate-400 transition-all active:scale-95"><Rewind size={24}/></button>
+                                            <button onClick={() => setIsPlaying(!isPlaying)} 
+                                                className={`w-16 h-16 flex items-center justify-center rounded-3xl shadow-2xl transform transition-all active:scale-90 border border-white/10 ${isPlaying ? 'bg-amber-500 shadow-amber-900/40' : 'bg-blue-600 shadow-blue-900/40'}`}>
+                                                {isPlaying ? <Pause fill="white" size={28} /> : <Play fill="white" size={28} className="ml-1.5"/>}
+                                            </button>
+                                            <button onClick={nextStep} className="p-2 hover:bg-white/5 rounded-xl text-slate-400 transition-all active:scale-95"><FastForward size={24}/></button>
+                                        </div>
+
+                                        <div className="flex items-center justify-end gap-6 w-[35%]">
+                                            <div className="flex flex-col gap-2 items-end w-32">
+                                                <div className="flex justify-between w-full">
+                                                    <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest">Playback Velocity</span>
+                                                    <span className="text-[10px] font-bold text-blue-400 font-mono">{speedMultiplier.toFixed(1)}x</span>
+                                                </div>
+                                                <input type="range" min="0.5" max="3" step="0.1" value={speedMultiplier} 
+                                                    onChange={(e) => setSpeedMultiplier(Number(e.target.value))} 
+                                                    className="w-full h-1 bg-slate-800 rounded-full appearance-none cursor-pointer accent-blue-500" />
+                                            </div>
+                                            <button onClick={() => setIsMuted(!isMuted)} 
+                                                className={`p-3 rounded-2xl transition-all shadow-lg ${isMuted ? 'text-rose-400 bg-rose-400/5' : 'text-blue-400 bg-blue-400/5 hover:bg-blue-400/10'}`}>
+                                                {isMuted ? <VolumeX size={22}/> : <Volume2 size={22}/>}
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        createRoot(document.getElementById('root')).render(<App />);
+    

@@ -1,4 +1,4 @@
-const DIJKSTRA_SCRIPT = {
+window.DIJKSTRA_SCRIPT = {
     "START": (src) => `Welcome to Dijkstra's journey! We're starting at node ${src} to find the quickest route to every other destination.`,
     "VISITING": (node) => `Visiting node ${node}. Let's look at all its neighbors to see if we can find any shortcuts.`,
     "RELAXING": (u, v, dist) => `Checking the path to ${v}. By going through ${u}, we found a shortcut! The total distance is now ${dist}.`,
@@ -7,7 +7,7 @@ const DIJKSTRA_SCRIPT = {
     "SUCCESS": () => `We've explored every possible shortcut. Every node now has its guaranteed shortest path recorded!`
 };
 
-const BELLMANFORD_SCRIPT = {
+window.BELLMANFORD_SCRIPT = {
     "START": (passes) => `Time for Bellman-Ford! We'll perform ${passes} passes over every edge to ensure we find the absolute shortest paths, even with negative values.`,
     "PASS_START": (p) => `Starting relaxation pass number ${p}. Here we go, checking every single edge on the map.`,
     "RELAXING": (u, v, dist) => `Looking at the edge from ${u} to ${v}. Aha! We can relax this path down to a distance of ${dist}.`,
@@ -16,7 +16,7 @@ const BELLMANFORD_SCRIPT = {
     "SUCCESS": () => `All passes complete. We've conquered the graph, negative edges and all!`
 };
 
-const SEARCH_SCRIPT = {
+window.SEARCH_SCRIPT = {
     "DFS": {
         "START": (src) => `Let's dive deep into the graph using Depth First Search! We're starting at node ${src}.`,
         "VISITING": (node) => `Exploring node ${node}. We'll follow one path as deep as possible before we ever turn back!`,

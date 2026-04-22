@@ -1,4 +1,4 @@
-const COMPRESSION_SCRIPT = {
+window.COMPRESSION_SCRIPT = {
     "HUFFMAN": {
         "START": (text) => `Welcome to Huffman Coding! We're going to compress the string: "${text}". First, let's count how many times each character appears.`,
         "FREQUENCIES": () => `Frequencies counted! Now, each character becomes a leaf node in our priority queue.`,

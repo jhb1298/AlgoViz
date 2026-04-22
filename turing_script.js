@@ -1,4 +1,4 @@
-const TURING_SCRIPT = {
+window.TURING_SCRIPT = {
     "START": (input) => `System initialized. Loading input string "${input}" onto the infinite tape. The Turing Machine is ready to compute.`,
     "READ": (symbol, state) => `Reading symbol "${symbol}" while in state ${state}. Searching the transition table for the next command.`,
     "WRITE": (symbol, nextState) => `Writing "${symbol}" to the current cell and transitioning to state ${nextState}.`,

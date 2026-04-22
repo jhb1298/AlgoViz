@@ -1,4 +1,4 @@
-const HASH_SCRIPT = {
+window.HASH_SCRIPT = {
     "START": (size) => `Welcome to the Hash Table! We have ${size} buckets to organize our data. Let's see where everything goes!`,
     "HASHING": (val, index) => `Hashing ${val}... Applying the formula gives us bucket index ${index}.`,
     "INSERTING": (val, index) => `Placing ${val} into bucket ${index}. If someone is already there, we'll just start a chain!`,

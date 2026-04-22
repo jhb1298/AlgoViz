@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>1D Signal Processing Visualizer</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #030712; color: white; font-family: 'JetBrains Mono', monospace; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+        .camera-layer { transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); will-change: transform; }
+        .infinite-bg { background-image: radial-gradient(#1e293b 1px, transparent 1px); background-size: 40px 40px; }
+        .cell { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); border: 2px solid #1e293b; background: #0f172a; }
+        .cell-active { border-color: #6366f1 !important; background: rgba(99, 102, 241, 0.1); transform: scale(1.05); }
+        .kernel-cell { border-color: #f59e0b; background: rgba(245, 158, 11, 0.1); }
+        .result-cell { border-color: #10b981; background: rgba(16, 185, 129, 0.1); }
+        .multiply-line { stroke: #6366f1; stroke-dasharray: 5 5; animation: dash 1s linear infinite; opacity: 0.5; }
+        @keyframes dash { to { stroke-dashoffset: -10; } }
+    </style>
+  <script type="module" crossorigin src="/assets/signal_1d-DFUnlkO_.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/chatbot-CXQzZ2_v.js">
+  <link rel="modulepreload" crossorigin href="/assets/settings_manager-SEJbgrw-.js">
+  <link rel="stylesheet" crossorigin href="/assets/main-BV5HfjFp.css">
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>

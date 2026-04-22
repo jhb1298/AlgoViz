@@ -1,0 +1,533 @@
+import './src/globals.js';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { createRoot } from 'react-dom/client';
+import './compression_script.js';
+import './settings_manager.js';
+import './algorithm_data.js';
+import './chatbot.js';
+
+/* extracted from huffman.html */
+
+        
+        const IconWrapper = ({ children, size = 20, className = "", ...props }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>{children}</svg>
+        );
+        const Play = (props) => <IconWrapper {...props}><polygon points="5 3 19 12 5 21 5 3"></polygon></IconWrapper>;
+        const Pause = (props) => <IconWrapper {...props}><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></IconWrapper>;
+        const SkipBack = (props) => <IconWrapper {...props}><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></IconWrapper>;
+        const SkipForward = (props) => <IconWrapper {...props}><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></IconWrapper>;
+        const Rewind = (props) => <IconWrapper {...props}><polygon points="11 19 2 12 11 5 11 19"></polygon><polygon points="22 19 13 12 22 5 22 19"></polygon></IconWrapper>;
+        const FastForward = (props) => <IconWrapper {...props}><polygon points="13 19 22 12 13 5 13 19"></polygon><polygon points="2 19 11 12 2 5 2 19"></polygon></IconWrapper>;
+        const GripHorizontal = (props) => <IconWrapper {...props}><circle cx="12" cy="9" r="1"></circle><circle cx="19" cy="9" r="1"></circle><circle cx="5" cy="9" r="1"></circle><circle cx="12" cy="15" r="1"></circle><circle cx="19" cy="15" r="1"></circle><circle cx="5" cy="15" r="1"></circle></IconWrapper>;
+        const Home = (props) => <IconWrapper {...props}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></IconWrapper>;
+        const Volume2 = (props) => <IconWrapper {...props}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></IconWrapper>;
+        const VolumeX = (props) => <IconWrapper {...props}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></IconWrapper>;
+        const ChevronUp = (props) => <IconWrapper {...props}><polyline points="18 15 12 9 6 15"></polyline></IconWrapper>;
+        const ChevronDown = (props) => <IconWrapper {...props}><polyline points="6 9 12 15 18 9"></polyline></IconWrapper>;
+        const Edit = (props) => <IconWrapper {...props}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></IconWrapper>;
+
+        const DEFAULT_TEXT = "HUFFMAN CODING";
+
+        function generateSimulation(text) {
+            const history = [];
+            const freqs = {};
+            for (const char of text) freqs[char] = (freqs[char] || 0) + 1;
+
+            // WE MUST PRESERVE REFERENCES for animation! 
+            // JSON.parse(JSON.stringify) breaks object identity.
+            // We use a shallow clone for the array/history, but KEEP node references.
+            const clone = (forest) => [...forest];
+
+            history.push({
+                stepId: 0, freqs: { ...freqs }, pq: [], tree: null, status: 'START', algoLine: 0,
+                desc: `Counting character frequencies in "${text}".`,
+                speech: COMPRESSION_SCRIPT.HUFFMAN.START(text)
+            });
+
+            let pq = Object.entries(freqs).map(([char, freq]) => ({
+                id: Math.random().toString(36).substr(2, 9),
+                char, freq, left: null, right: null
+            }));
+            pq.sort((a, b) => a.freq - b.freq);
+
+            history.push({
+                stepId: history.length,
+                freqs: { ...freqs },
+                pq: [...pq],
+                forest: [],
+                tree: null,
+                status: 'PQ_INIT',
+                algoLine: 1,
+                desc: 'Created leaf nodes and added to the Priority Queue. (Wait for merge)',
+                speech: COMPRESSION_SCRIPT.HUFFMAN.FREQUENCIES()
+            });
+
+            let renderedIds = new Set();
+            let visibleForest = []; // Persistent registry of root nodes on canvas
+
+            while (pq.length > 1) {
+                const left = pq.shift();
+                const right = pq.shift();
+
+                // 1. Ensure these nodes are considered "visible" so they can fly from their current spots
+                // If they are leaf nodes just being dequed, they start at their individual spots.
+                const alreadyInForest = new Set(visibleForest.map(n => n.id));
+                if (!alreadyInForest.has(left.id)) visibleForest.push(left);
+                if (!alreadyInForest.has(right.id)) visibleForest.push(right);
+
+                // PHASE A: SELECT (Highlight nodes in their current forest positions)
+                history.push({
+                    stepId: history.length,
+                    freqs: { ...freqs },
+                    pq: [left, right, ...pq],
+                    forest: clone(visibleForest),
+                    activeIds: [left.id, right.id],
+                    status: 'PICK_TWO',
+                    algoLine: 3,
+                    desc: `Selected nodes (${left.freq}) and (${right.freq}) for merging.`,
+                    speech: COMPRESSION_SCRIPT.HUFFMAN.PICK_TWO(left.char || 'node', right.char || 'node', left.freq, right.freq)
+                });
+
+                // PHASE B: GLIDE (Subtrees move toward the target parent coordinates)
+                const parent = {
+                    id: Math.random().toString(36).substr(2, 9),
+                    char: null,
+                    freq: left.freq + right.freq,
+                    left,
+                    right,
+                    isGhost: true
+                };
+
+                // Replace children with ghost parent in forest to trigger the glide
+                visibleForest = visibleForest.filter(n => n.id !== left.id && n.id !== right.id);
+                visibleForest.push(parent);
+
+                history.push({
+                    stepId: history.length,
+                    freqs: { ...freqs },
+                    pq: [parent, ...pq],
+                    forest: clone(visibleForest),
+                    activeIds: [left.id, right.id],
+                    status: 'GLIDE',
+                    algoLine: 4,
+                    desc: `Gliding subtrees into merge position...`,
+                    speech: null
+                });
+
+                // PHASE C: MERGE (Manifest parent node and connections)
+                parent.isGhost = false;
+                pq.push(parent);
+                pq.sort((a, b) => a.freq - b.freq);
+
+                history.push({
+                    stepId: history.length,
+                    freqs: { ...freqs },
+                    pq: [...pq],
+                    forest: clone(visibleForest),
+                    activeIds: [parent.id],
+                    status: 'MERGE',
+                    algoLine: 5,
+                    desc: `Merged into parent node (${parent.freq}).`,
+                    speech: COMPRESSION_SCRIPT.HUFFMAN.MERGE(parent.freq)
+                });
+            }
+
+            const root = pq[0];
+            const finalForest = root ? [root] : [];
+            const codes = {};
+            function assignCodes(node, code) {
+                if (!node) return;
+                if (node.char) { codes[node.char] = code; return; }
+                assignCodes(node.left, code + "0");
+                assignCodes(node.right, code + "1");
+            }
+            if (root) assignCodes(root, "");
+
+            history.push({
+                stepId: history.length, freqs: { ...freqs }, pq: [], forest: clone(finalForest), tree: root, codes: { ...codes },
+                status: 'TREE_DONE', algoLine: 6,
+                desc: 'Huffman tree construction complete!',
+                speech: COMPRESSION_SCRIPT.HUFFMAN.TREE_COMPLETE()
+            });
+
+            const originalBits = text.length * 8;
+            const compressedBits = text.split('').reduce((sum, char) => sum + (codes[char] ? codes[char].length : 0), 0);
+
+            history.push({
+                stepId: history.length, freqs: { ...freqs }, pq: [], forest: clone(finalForest), tree: root, codes: { ...codes },
+                status: 'SUCCESS', algoLine: 7,
+                desc: `Compression Success! ${originalBits} bits saved down to ${compressedBits} bits.`,
+                speech: COMPRESSION_SCRIPT.HUFFMAN.SUCCESS(originalBits, compressedBits)
+            });
+            return clone(history);
+        }
+
+        // To show "merging up", we'll offset the whole SVG.
+        // Helper to count leaf nodes in a subtree (used for spatial allocation)
+        function countLeaves(node) {
+            if (!node) return 0;
+            if (!node.left && !node.right) return 1;
+            return countLeaves(node.left) + countLeaves(node.right);
+        }
+
+        // Tree Layout logic - LEAF-BASED SPATIAL ALLOCATION
+        // This ensures no overlap by giving each leaf a fixed width segment
+        function layoutTree(node, x, y, leafStartX) {
+            if (!node) return null;
+
+            const leafWidth = 80;
+            const totalLeaves = countLeaves(node);
+            const totalWidth = totalLeaves * leafWidth;
+
+            const myX = leafStartX + (totalWidth / 2);
+
+            // INJECT coordinates into the EXISTING node object to preserve reference stability
+            node.x = myX;
+            node.y = y;
+
+            const verticalGap = 120;
+
+            if (node.left) {
+                const leftLeaves = countLeaves(node.left);
+                layoutTree(node.left, null, y + verticalGap, leafStartX);
+            }
+
+            if (node.right) {
+                const leftLeaves = countLeaves(node.left);
+                layoutTree(node.right, null, y + verticalGap, leafStartX + (leftLeaves * leafWidth));
+            }
+
+            return node;
+        }
+
+        function getTreeDepth(node) {
+            if (!node) return 0;
+            return 1 + Math.max(getTreeDepth(node.left), getTreeDepth(node.right));
+        }
+
+        const Edge = ({ x1, y1, x2, y2, isActive, isGhost }) => {
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+            return (
+                <g className={`edge-line-container ${isActive ? 'edge-active' : ''}`} style={{ transform: `translate(${x1}px, ${y1}px) rotate(${angle}deg)`, opacity: isGhost ? 0 : 1, transition: 'all 0.7s cubic-bezier(0.4, 0, 0.2, 1)' }}>
+                    <rect width={length} height="1.5" className="edge-line" />
+                </g>
+            );
+        };
+
+        // Collect all node positions from a laid-out tree recursively
+        function collectPositions(node, map) {
+            if (!node) return;
+            map.set(node.id, { x: node.x, y: node.y });
+            collectPositions(node.left, map);
+            collectPositions(node.right, map);
+        }
+
+        const TreeRenderer = ({ node, activeIds, settings, animPos }) => {
+            if (!node) return null;
+            const isActive = activeIds?.includes(node.id);
+            // Read position from the animated positions map — NOT from the node object directly
+            const pos = animPos?.get(node.id) || { x: node.x || 0, y: node.y || 0 };
+            const { x, y } = pos;
+
+            return (
+                <g key={node.id}>
+                    {node.left && (
+                        <g key={`${node.id}-left`}>
+                            <Edge
+                                x1={x} y1={y}
+                                x2={(animPos?.get(node.left.id) || { x: node.left.x, y: node.left.y }).x}
+                                y2={(animPos?.get(node.left.id) || { x: node.left.x, y: node.left.y }).y}
+                                isActive={activeIds?.includes(node.left.id) || activeIds?.includes(node.id)}
+                                isGhost={node.isGhost}
+                            />
+                            <g className="node-text" style={{ transform: `translate(${(x + (animPos?.get(node.left.id)?.x ?? node.left.x)) / 2}px, ${(y + (animPos?.get(node.left.id)?.y ?? node.left.y)) / 2}px)`, opacity: node.isGhost ? 0 : 1 }}>
+                                <foreignObject x="-10" y="-10" width="20" height="20" className="overflow-visible">
+                                    <div className="bit-tag text-blue-400">0</div>
+                                </foreignObject>
+                            </g>
+                            <TreeRenderer node={node.left} activeIds={activeIds} settings={settings} animPos={animPos} />
+                        </g>
+                    )}
+                    {node.right && (
+                        <g key={`${node.id}-right`}>
+                            <Edge
+                                x1={x} y1={y}
+                                x2={(animPos?.get(node.right.id) || { x: node.right.x, y: node.right.y }).x}
+                                y2={(animPos?.get(node.right.id) || { x: node.right.x, y: node.right.y }).y}
+                                isActive={activeIds?.includes(node.right.id) || activeIds?.includes(node.id)}
+                                isGhost={node.isGhost}
+                            />
+                            <g className="node-text" style={{ transform: `translate(${(x + (animPos?.get(node.right.id)?.x ?? node.right.x)) / 2}px, ${(y + (animPos?.get(node.right.id)?.y ?? node.right.y)) / 2}px)`, opacity: node.isGhost ? 0 : 1 }}>
+                                <foreignObject x="-10" y="-10" width="20" height="20" className="overflow-visible">
+                                    <div className="bit-tag text-amber-400">1</div>
+                                </foreignObject>
+                            </g>
+                            <TreeRenderer node={node.right} activeIds={activeIds} settings={settings} animPos={animPos} />
+                        </g>
+                    )}
+
+                    <circle
+                        cx={x} cy={y} r="25"
+                        className={`node-circle ${node.char ? 'node-leaf' : 'node-internal'} ${isActive ? 'node-active' : ''} ${node.isGhost ? 'node-ghost' : ''}`}
+                        style={{ opacity: node.isGhost ? 0 : 1 }}
+                    />
+
+                    <g className="node-text" style={{ transform: `translate(${x}px, ${y}px)`, opacity: node.isGhost ? 0 : 1 }}>
+                        <text y={node.char ? -2 : 5} textAnchor="middle" fill="white" fontSize="14" fontWeight="900" style={{ pointerEvents: 'none' }}>
+                            {node.char ? (node.char === " " ? "SPC" : node.char) : node.freq}
+                        </text>
+                        {node.char && <text y="14" textAnchor="middle" fill="#94a3b8" fontSize="11" fontWeight="bold" style={{ pointerEvents: 'none' }}>[{node.freq}]</text>}
+                    </g>
+                </g>
+            );
+        };
+
+        const App = () => {
+            const { SettingsIcon, SettingsModal, AlgorithmPanel } = useMemo(() => window.initSettingsComponents(React), []);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
+
+            const [inputText, setInputText] = useState(DEFAULT_TEXT);
+            const [isEditing, setIsEditing] = useState(false);
+            const [currentStep, setCurrentStep] = useState(0);
+            const [isPlaying, setIsPlaying] = useState(false);
+            const [speedMultiplier, setSpeedMultiplier] = useState(1);
+            const [zoom, setZoom] = useState(0.8);
+            const [isMuted, setIsMuted] = useState(false);
+            const [isMinimized, setIsMinimized] = useState(false);
+            const [manualOffset, setManualOffset] = useState({ x: window.innerWidth / 2 - 400, y: window.innerHeight / 2 - 300 });
+            const [panelOffset, setPanelOffset] = useState({ x: 0, y: 0 });
+            const [isDraggingCanvas, setIsDraggingCanvas] = useState(false);
+            const [isDraggingPanel, setIsDraggingPanel] = useState(false);
+            const canvasDragStart = useRef({ x: 0, y: 0 });
+            const panelDragStart = useRef({ x: 0, y: 0 });
+            const isPlayingRef = useRef(false);
+            isPlayingRef.current = isPlaying;
+
+            const [animPositions, setAnimPositions] = useState(() => new Map());
+            const rafRef = useRef(null);
+
+            const history = useMemo(() => generateSimulation(inputText), [inputText]);
+            const state = history[currentStep] || history[0];
+
+            const forestLayout = useMemo(() => {
+                const forest = state.forest || [];
+                if (forest.length === 0) return [];
+
+                const leafWidth = 80;
+                const forestPadding = 120;
+                let totalForestWidth = 0;
+                forest.forEach(tree => {
+                    totalForestWidth += (countLeaves(tree) * leafWidth) + forestPadding;
+                });
+                totalForestWidth -= forestPadding;
+
+                let currentStartX = -totalForestWidth / 2;
+
+                return forest.map((tree) => {
+                    const depth = getTreeDepth(tree);
+                    const treeWidth = countLeaves(tree) * leafWidth;
+                    const rootY = 400 - ((depth - 1) * 120);
+                    layoutTree(tree, null, rootY, currentStartX);
+                    currentStartX += treeWidth + forestPadding;
+                    return tree;
+                });
+            }, [state.forest]);
+
+            // DOUBLE RAF — key to smooth animation:
+            // When the step changes, forestLayout runs and mutates node coordinates.
+            // We capture these NEW target coordinates, but we DON'T update animPositions yet.
+            // Frame 1 (RAF 1): browser paints the OLD animPositions (nodes at their old spots)
+            // Frame 2 (RAF 2): we set the NEW positions ? CSS transition fires ? nodes glide
+            useEffect(() => {
+                if (rafRef.current) cancelAnimationFrame(rafRef.current);
+
+                // Collect new target positions from the laid-out forest
+                const newPositions = new Map();
+                forestLayout.forEach(tree => collectPositions(tree, newPositions));
+
+                // Double RAF: let the browser paint old positions first, then update
+                rafRef.current = requestAnimationFrame(() => {
+                    rafRef.current = requestAnimationFrame(() => {
+                        setAnimPositions(newPositions);
+                    });
+                });
+
+                return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+            }, [forestLayout]);
+
+            const nextStep = () => { setCurrentStep(prev => (prev < history.length - 1 ? prev + 1 : (setIsPlaying(false), prev))); };
+            const prevStep = () => { setCurrentStep(prev => Math.max(0, prev - 1)); setIsPlaying(false); };
+
+            const speak = (text) => {
+                const delay = (1000 / speedMultiplier);
+                if (isMuted || !text) { setTimeout(() => { if (isPlayingRef.current) nextStep(); }, delay); return; }
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.pitch = 1.1; utterance.rate = 1.1 * speedMultiplier;
+                utterance.onend = () => { if (isPlayingRef.current) nextStep(); };
+                window.speechSynthesis.speak(utterance);
+            };
+
+            useEffect(() => {
+                if (isPlaying) speak(state.speech);
+                else window.speechSynthesis.cancel();
+            }, [isPlaying, currentStep]);
+
+            return (
+                <div className="h-screen w-screen flex flex-col relative overflow-hidden bg-slate-900 text-white select-none" onMouseMove={(e) => { if (isDraggingPanel) setPanelOffset({ x: e.clientX - panelDragStart.current.x, y: e.clientY - panelDragStart.current.y }); else if (isDraggingCanvas) setManualOffset({ x: e.clientX - canvasDragStart.current.x, y: e.clientY - canvasDragStart.current.y }); }} onMouseUp={() => { setIsDraggingCanvas(false); setIsDraggingPanel(false); }}>
+
+                    {/* Top Nav Area - Auto-hiding logic from Prim's */}
+                    <div className="absolute top-0 left-0 right-0 z-[60] top-nav-area">
+                        <div className="absolute top-0 left-0 w-full h-4 z-[70] peer"></div>
+                        <div className="relative h-16 bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50 flex items-center justify-between px-6 shadow-2xl transition-transform duration-300 -translate-y-full peer-hover:translate-y-0 hover:translate-y-0">
+                            <div className="flex items-center gap-4">
+                                <a href="index.html" className="bg-slate-800 p-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-400 hover:text-white group">
+                                    <Home size={20} className="group-hover:scale-110 transition-transform" />
+                                </a>
+                                <div>
+                                    <h1 className="font-bold text-lg leading-none tracking-tight uppercase">Huffman Coding</h1>
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse" />
+                                        <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">Greedy Compression</span>
+                                    </div>
+                                    <button onClick={() => setIsSettingsOpen(true)} className="ml-4 p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white shadow-lg"><SettingsIcon size={20} /></button>
+                                </div>
+                            </div>
+
+                            <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 bg-blue-600 hover:bg-blue-500 px-4 py-2 rounded-lg font-black text-[11px] uppercase tracking-widest transition-all shadow-lg active:scale-95">
+                                <Edit size={16} /> New Text
+                            </button>
+                        </div>
+                    </div>
+
+                    {isEditing && (
+                        <div className="absolute inset-0 z-[100] bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-6">
+                            <div className="bg-slate-900 border border-slate-700 rounded-3xl p-8 max-w-lg w-full shadow-2xl">
+                                <h2 className="text-2xl font-bold mb-2 uppercase tracking-wide">Huffman Input</h2>
+                                <p className="text-slate-400 text-sm mb-4">Enter text to visualize frequency counting & tree construction.</p>
+                                <textarea value={inputText} onChange={(e) => setInputText(e.target.value)} className="w-full h-32 bg-slate-950 border border-slate-700 rounded-xl p-4 font-mono text-blue-400 outline-none focus:border-blue-500 mb-6" maxLength="50" />
+                                <div className="flex justify-end gap-4">
+                                    <button onClick={() => setIsEditing(false)} className="px-6 py-2 rounded-xl font-bold text-slate-400 hover:bg-slate-800 transition-all">Cancel</button>
+                                    <button onClick={() => { setIsEditing(false); setCurrentStep(0); setIsPlaying(false); }} className="px-8 py-2 rounded-xl font-bold bg-blue-600 hover:bg-blue-500 shadow-lg text-white">Apply</button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+                    <AlgorithmPanel algoKey="HUFFMAN" currentLine={state.algoLine} />
+
+                    {/* Stats & HUD - All Right Aligned */}
+                    <div className="absolute right-6 top-6 bottom-32 w-72 flex flex-col gap-4 z-40 pointer-events-none pt-4">
+                        <div className="pointer-events-auto bg-slate-900/60 backdrop-blur-2xl p-5 rounded-3xl border border-white/10 shadow-2xl flex-[0.35] flex flex-col min-h-0">
+                            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <div className="w-1 h-1 rounded-full bg-blue-500 animate-pulse" /> Frequencies
+                            </h3>
+                            <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
+                                {Object.entries(state.freqs).sort((a, b) => b[1] - a[1]).map(([char, freq]) => (
+                                    <div key={char} className="flex justify-between items-center text-xs group">
+                                        <span className="font-mono bg-white/5 px-2 py-1 rounded text-blue-400 border border-white/5">'{char === " " ? "SPC" : char}'</span>
+                                        <span className="font-bold text-slate-300">{freq}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Priority Queue Sidebar */}
+                        <div className="pointer-events-auto bg-slate-900/60 backdrop-blur-2xl p-5 rounded-3xl border border-white/10 shadow-2xl flex-[0.25] flex flex-col min-h-0">
+                            <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                <div className="w-1 h-1 rounded-full bg-amber-500 animate-pulse" /> Priority Queue
+                            </h3>
+                            <div className="flex flex-wrap gap-2 overflow-y-auto custom-scrollbar">
+                                {state.pq.map((item) => (
+                                    <div key={item.id} className={`pq-item shrink-0 flex flex-col items-center justify-center w-12 h-12 rounded-xl bg-slate-800/80 border ${state.activeIds?.includes(item.id) ? 'pq-active ring-2 ring-blue-500/50' : 'border-white/5 shadow-lg relative'}`}>
+                                        <span className={`text-[10px] font-black ${item.char ? 'text-white' : 'text-slate-500 italic text-[8px]'}`}>{item.char ? (item.char === " " ? "?" : item.char) : "S"}</span>
+                                        <span className="text-[9px] font-black text-blue-400 leading-none mt-0.5">{item.freq}</span>
+                                    </div>
+                                ))}
+                                {state.pq.length === 0 && <span className="text-[9px] font-bold text-slate-600 uppercase tracking-tighter italic">Queue Empty</span>}
+                            </div>
+                        </div>
+
+                        {state.codes && (
+                            <div className="pointer-events-auto bg-slate-900/60 backdrop-blur-2xl p-5 rounded-3xl border border-white/10 shadow-2xl flex-[0.4] flex flex-col min-h-0">
+                                <h3 className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-4 flex items-center gap-2">
+                                    <div className="w-1 h-1 rounded-full bg-emerald-500 animate-pulse" /> Dictionary
+                                </h3>
+                                <div className="flex-1 overflow-y-auto custom-scrollbar pr-2 space-y-2">
+                                    {Object.entries(state.codes).sort().map(([char, code]) => (
+                                        <div key={char} className="flex flex-col gap-1 group">
+                                            <div className="flex justify-between items-center text-[10px]">
+                                                <span className="font-mono text-slate-500 uppercase">'{char === " " ? "SPC" : char}'</span>
+                                                <span className="font-bold text-emerald-400 tracking-widest">{code}</span>
+                                            </div>
+                                            <div className="h-[1px] w-full bg-white/5 rounded-full" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Draggable Main Canvas - Centered Logic from Prim's */}
+                    <div className="flex-1 relative infinite-bg overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.2, z - e.deltaY * 0.001), 2.0))} onMouseDown={(e) => { if (!e.target.closest('.control-panel-wrapper') && !e.target.closest('.top-nav-area')) { setIsDraggingCanvas(true); canvasDragStart.current = { x: e.clientX - manualOffset.x, y: e.clientY - manualOffset.y }; } }}>
+                        <div className={`node-container absolute origin-top-left ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(${manualOffset.x}px, ${manualOffset.y}px) scale(${zoom})` }}>
+                            <svg width="4000" height="2000" className="overflow-visible pointer-events-none" style={{ marginLeft: -1000 }}>
+                                {forestLayout.map(tree => (
+                                    <TreeRenderer key={tree.id} node={tree} activeIds={state.activeIds} settings={settings} animPos={animPositions} />
+                                ))}
+                            </svg>
+                        </div>
+                    </div>
+
+                    {/* Control Dock - Premium Prim's Style */}
+                    <div className="absolute bottom-6 left-1/2 w-full max-w-4xl px-4 z-50 control-panel-wrapper" style={{ transform: `translate(calc(-50% + ${panelOffset.x}px), ${panelOffset.y}px)` }}>
+                        <div className={`bg-slate-900/40 hover:bg-slate-900/85 backdrop-blur-md border border-slate-600/30 rounded-2xl shadow-2xl flex flex-col relative box-border transition-all duration-300 ${isMinimized ? 'w-fit min-w-[180px] mx-auto px-4 pb-3 pt-1' : 'px-5 pb-4 pt-2'}`}>
+                            <div className="w-full h-6 cursor-grab active:cursor-grabbing flex justify-center items-center mb-1" onMouseDown={(e) => { e.preventDefault(); setIsDraggingPanel(true); panelDragStart.current = { x: e.clientX - panelOffset.x, y: e.clientY - panelOffset.y }; e.stopPropagation(); }}>
+                                <div className="bg-white/10 rounded-full px-6 py-0.5"><GripHorizontal size={12} className="text-white/50" /></div>
+                            </div>
+                            <button onClick={() => setIsMinimized(!isMinimized)} className="absolute top-2 right-2 p-1 hover:bg-slate-700/50 rounded-md text-slate-400 hover:text-white transition-colors z-50">{isMinimized ? <ChevronUp size={16} /> : <ChevronDown size={18} />}</button>
+                            {isMinimized ? (
+                                <div className="flex items-center justify-center gap-4">
+                                    <button onClick={prevStep} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-200"><Rewind size={18} /></button>
+                                    <button onClick={() => setIsPlaying(!isPlaying)} className={`w-10 h-10 flex items-center justify-center rounded-full shadow-lg transform transition-all active:scale-95 border border-white/20 ${isPlaying ? 'bg-amber-500' : 'bg-blue-600'}`}>{isPlaying ? <Pause fill="white" size={18} /> : <Play fill="white" size={18} className="ml-1" />}</button>
+                                    <button onClick={nextStep} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-200"><FastForward size={18} /></button>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="relative w-full h-1.5 bg-slate-800/80 rounded-full mb-3 mt-1"><div className="absolute top-0 left-0 h-full bg-blue-500 rounded-full transition-all duration-100" style={{ width: `${(currentStep / (history.length - 1)) * 100}%` }}></div><input type="range" min="0" max={history.length - 1} value={currentStep} onChange={(e) => { setIsPlaying(false); setCurrentStep(Number(e.target.value)); }} className="absolute -top-2 left-0 w-full h-6 opacity-0 cursor-pointer z-10" /></div>
+                                    <div className="flex items-center justify-between w-full">
+                                        <div className="flex flex-col w-[30%] overflow-hidden pr-2"><span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Step {String(currentStep + 1).padStart(3, '0')}</span><span className="text-sm font-bold text-emerald-300 leading-tight truncate">{state?.desc}</span></div>
+                                        <div className="flex items-center justify-center gap-3 w-[40%]"><button onClick={() => setCurrentStep(0)} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-300 transition-colors"><SkipBack size={16} /></button><button onClick={prevStep} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-200 transition-colors"><Rewind size={18} /></button><button onClick={() => setIsPlaying(!isPlaying)} className={`w-12 h-12 flex items-center justify-center rounded-full shadow-lg transform transition-all active:scale-95 border border-white/20 ${isPlaying ? 'bg-amber-500' : 'bg-blue-600'}`}>{isPlaying ? <Pause fill="white" size={20} /> : <Play fill="white" size={20} className="ml-1" />}</button><button onClick={nextStep} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-200 transition-colors"><FastForward size={18} /></button><button onClick={() => setCurrentStep(history.length - 1)} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-300 transition-colors"><SkipForward size={16} /></button></div>
+                                        <div className="flex items-center justify-end gap-4 w-[30%]">
+                                            <div className="flex items-center gap-2 bg-slate-950/40 p-1.5 rounded-lg border border-white/5">
+                                                <button onClick={() => setZoom(z => Math.max(0.2, z - 0.1))} className="w-6 h-6 hover:bg-slate-800 rounded text-slate-400 font-bold">-</button>
+                                                <span className="text-[9px] font-black text-slate-500 w-8 text-center">{Math.round(zoom * 100)}%</span>
+                                                <button onClick={() => setZoom(z => Math.min(2, z + 0.1))} className="w-6 h-6 hover:bg-slate-800 rounded text-slate-400 font-bold">+</button>
+                                            </div>
+                                            <button onClick={() => setIsMuted(!isMuted)} className={`p-2 rounded-lg transition-colors ${isMuted ? 'text-rose-400 bg-rose-400/10' : 'text-blue-400 bg-blue-400/10'}`}>{isMuted ? <VolumeX size={18} /> : <Volume2 size={18} />}</button>
+                                            <div className="flex flex-col gap-1 items-end w-24">
+                                                <span className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">Speed {speedMultiplier}x</span>
+                                                <input type="range" min="0.5" max="2.0" step="0.1" value={speedMultiplier} onChange={(e) => setSpeedMultiplier(Number(e.target.value))} className="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-400" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        createRoot(document.getElementById('root')).render(<App />);
+    

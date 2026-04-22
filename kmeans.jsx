@@ -1,0 +1,280 @@
+import './src/globals.js';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { createRoot } from 'react-dom/client';
+import './ml_script.js';
+import './settings_manager.js';
+import './algorithm_data.js';
+import './chatbot.js';
+
+/* extracted from kmeans.html */
+
+        
+        const IconWrapper = ({ children, size = 20, className="", ...props }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>{children}</svg>
+        );
+        const Play = (props) => <IconWrapper {...props}><polygon points="5 3 19 12 5 21 5 3"></polygon></IconWrapper>;
+        const Pause = (props) => <IconWrapper {...props}><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></IconWrapper>;
+        const SkipBack = (props) => <IconWrapper {...props}><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></IconWrapper>;
+        const SkipForward = (props) => <IconWrapper {...props}><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></IconWrapper>;
+        const Rewind = (props) => <IconWrapper {...props}><polygon points="11 19 2 12 11 5 11 19"></polygon><polygon points="22 19 13 12 22 5 22 19"></polygon></IconWrapper>;
+        const FastForward = (props) => <IconWrapper {...props}><polygon points="13 19 22 12 13 5 13 19"></polygon><polygon points="2 19 11 12 2 5 2 19"></polygon></IconWrapper>;
+        const GripHorizontal = (props) => <IconWrapper {...props}><circle cx="12" cy="9" r="1"></circle><circle cx="19" cy="9" r="1"></circle><circle cx="5" cy="9" r="1"></circle><circle cx="12" cy="15" r="1"></circle><circle cx="19" cy="15" r="1"></circle><circle cx="5" cy="15" r="1"></circle></IconWrapper>;
+        const Home = (props) => <IconWrapper {...props}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></IconWrapper>;
+        const Volume2 = (props) => <IconWrapper {...props}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></IconWrapper>;
+        const VolumeX = (props) => <IconWrapper {...props}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></IconWrapper>;
+        const ChevronUp = (props) => <IconWrapper {...props}><polyline points="18 15 12 9 6 15"></polyline></IconWrapper>;
+        const ChevronDown = (props) => <IconWrapper {...props}><polyline points="6 9 12 15 18 9"></polyline></IconWrapper>;
+
+        const POINT_COUNT = 60;
+        const K = 3;
+        const COLORS = ["#f87171", "#34d399", "#60a5fa", "#fbbf24", "#a78bfa"];
+
+        function generateData() {
+            const points = [];
+            for (let i = 0; i < POINT_COUNT; i++) {
+                points.push({
+                    id: i,
+                    x: 200 + Math.random() * 600,
+                    y: 200 + Math.random() * 600,
+                    cluster: -1
+                });
+            }
+            return points;
+        }
+
+        function getDistance(p1, p2) {
+            return Math.sqrt(Math.pow(p1.x - p2.x, 2) + Math.pow(p1.y - p2.y, 2));
+        }
+
+        function generateSimulation(initialPoints) {
+            const history = [];
+            let points = initialPoints.map(p => ({ ...p }));
+            let centroids = [];
+            for (let i = 0; i < K; i++) {
+                centroids.push({
+                    id: i,
+                    x: 200 + Math.random() * 600,
+                    y: 200 + Math.random() * 600,
+                    color: COLORS[i % COLORS.length]
+                });
+            }
+
+            history.push({
+                stepId: 0,
+                points: points.map(p => ({ ...p })),
+                centroids: centroids.map(c => ({ ...c })),
+                algoLine: 1,
+                status: 'START',
+                desc: 'Scattering data points...',
+                speech: ML_SCRIPT.KMEANS.START()
+            });
+
+            history.push({
+                stepId: history.length,
+                points: points.map(p => ({ ...p })),
+                centroids: centroids.map(c => ({ ...c })),
+                algoLine: 1,
+                status: 'INIT',
+                desc: `Placing ${K} random centroids.`,
+                speech: ML_SCRIPT.KMEANS.INIT_CENTROIDS(K)
+            });
+
+            let changed = true;
+            let iteration = 0;
+            const MAX_ITER = 20;
+
+            while (changed && iteration < MAX_ITER) {
+                iteration++;
+                changed = false;
+
+                // Assignment Phase
+                points.forEach(p => {
+                    let minDist = Infinity;
+                    let bestCluster = -1;
+                    centroids.forEach((c, idx) => {
+                        const d = getDistance(p, c);
+                        if (d < minDist) {
+                            minDist = d;
+                            bestCluster = idx;
+                        }
+                    });
+                    if (p.cluster !== bestCluster) {
+                        p.cluster = bestCluster;
+                        changed = true;
+                    }
+                });
+
+                history.push({
+                    stepId: history.length,
+                    points: points.map(p => ({ ...p })),
+                    centroids: centroids.map(c => ({ ...c })),
+                    showLines: true,
+                    algoLine: 3,
+                    status: 'ASSIGN',
+                    desc: `Iteration ${iteration}: Assigning points to nearest centroids.`,
+                    speech: iteration === 1 ? ML_SCRIPT.KMEANS.ASSIGN() : null
+                });
+
+                if (!changed && iteration > 1) break;
+
+                // Update Phase
+                centroids.forEach((c, idx) => {
+                    const clusterPoints = points.filter(p => p.cluster === idx);
+                    if (clusterPoints.length > 0) {
+                        const avgX = clusterPoints.reduce((sum, p) => sum + p.x, 0) / clusterPoints.length;
+                        const avgY = clusterPoints.reduce((sum, p) => sum + p.y, 0) / clusterPoints.length;
+                        c.x = avgX;
+                        c.y = avgY;
+                    }
+                });
+
+                history.push({
+                    stepId: history.length,
+                    points: points.map(p => ({ ...p })),
+                    centroids: centroids.map(c => ({ ...c })),
+                    algoLine: 4,
+                    status: 'UPDATE',
+                    desc: `Iteration ${iteration}: Centroids moving to centers.`,
+                    speech: iteration === 1 ? ML_SCRIPT.KMEANS.UPDATE() : null
+                });
+            }
+
+            history.push({
+                stepId: history.length,
+                points: points.map(p => ({ ...p })),
+                centroids: centroids.map(c => ({ ...c })),
+                algoLine: 6,
+                status: 'SUCCESS',
+                desc: 'Clustering converged!',
+                speech: ML_SCRIPT.KMEANS.CONVERGED()
+            });
+
+            return history;
+        }
+
+        const App = () => {
+            const { SettingsIcon, SettingsModal, AlgorithmPanel } = useMemo(() => window.initSettingsComponents(React), []);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
+            const [currentStep, setCurrentStep] = useState(0);
+            const [isPlaying, setIsPlaying] = useState(false);
+            const [speedMultiplier, setSpeedMultiplier] = useState(1);
+            const [zoom, setZoom] = useState(0.8);
+            const [isMuted, setIsMuted] = useState(false);
+            const [isMinimized, setIsMinimized] = useState(false);
+            
+            const initialPoints = useMemo(() => generateData(), []);
+            const history = useMemo(() => generateSimulation(initialPoints), [initialPoints]);
+            const state = history[currentStep] || history[0];
+
+            const nextStep = () => { setCurrentStep(prev => (prev < history.length - 1 ? prev + 1 : (setIsPlaying(false), prev))); };
+            const prevStep = () => { setCurrentStep(prev => Math.max(0, prev - 1)); setIsPlaying(false); };
+
+            const speak = (text) => {
+                const delay = (1500 / speedMultiplier);
+                if (isMuted || !text) { 
+                    if(isPlaying) setTimeout(nextStep, delay); 
+                    return; 
+                }
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.pitch = 1.1; utterance.rate = 1.1 * speedMultiplier;
+                utterance.onend = () => { if(isPlaying) nextStep(); };
+                window.speechSynthesis.speak(utterance);
+            };
+
+            useEffect(() => {
+                if (isPlaying) speak(state.speech);
+                else window.speechSynthesis.cancel();
+            }, [isPlaying, currentStep]);
+
+            return (
+                <div className="h-screen w-screen flex flex-col relative overflow-hidden bg-slate-900 text-white select-none">
+                    <div className="absolute top-0 left-0 right-0 z-[60]">
+                        <div className="relative h-16 bg-slate-900/80 backdrop-blur-md border-b border-slate-700/50 flex items-center justify-between px-6 shadow-2xl">
+                            <div className="flex items-center gap-4">
+                                <a href="index.html" className="bg-slate-800 p-2 rounded-lg hover:bg-slate-700 transition-colors text-slate-400 hover:text-white"><Home size={20} /></a>
+                                <div>
+                                    <h1 className="font-bold text-lg leading-none tracking-tight">K-Means Clustering</h1>
+                                    <span className="text-xs text-slate-400 font-mono">Unsupervised Learning</span>
+                                <button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white shadow-lg"><SettingsIcon size={20}/></button></div>
+                            </div>
+                            <div className="flex items-center gap-6">
+                                <div className="text-right">
+                                    <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Clusters (K)</div>
+                                    <div className="font-mono text-blue-400 font-bold">{K}</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    
+                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+                    <AlgorithmPanel algoKey="KMEANS" currentLine={state?.algoLine} />
+                    <div className="flex-1 relative infinite-bg overflow-hidden flex items-center justify-center">
+                        <svg width="1000" height="1000" style={{ transform: `scale(${zoom})` }} className="camera-layer overflow-visible">
+                            {/* Lines */}
+                            {state.showLines && state.points.map(p => {
+                                if (p.cluster === -1) return null;
+                                const c = state.centroids[p.cluster];
+                                return (
+                                    <line key={`l-${p.id}`} x1={p.x} y1={p.y} x2={c.x} y2={c.y} stroke={c.color} strokeWidth="1" opacity="0.3" className="assignment-line" />
+                                );
+                            })}
+                            {/* Data Points */}
+                            {state.points.map(p => (
+                                <circle key={`p-${p.id}`} cx={p.x} cy={p.y} r="4" fill={p.cluster === -1 ? "#475569" : state.centroids[p.cluster].color} stroke="#0f172a" strokeWidth="1" className="data-point" />
+                            ))}
+                            {/* Centroids */}
+                            {state.centroids.map(c => (
+                                <g key={`c-${c.id}`} transform={`translate(${c.x}, ${c.y})`} className="centroid">
+                                    <path d="M0 -15 L13 7 L-13 7 Z" fill={c.color} stroke="white" strokeWidth="2" />
+                                    <circle r="4" fill="white" />
+                                </g>
+                            ))}
+                        </svg>
+                    </div>
+
+                    <div className="absolute bottom-6 left-1/2 -translate-x-1/2 w-full max-w-4xl px-4 z-50">
+                        <div className={`bg-slate-900/80 backdrop-blur-md border border-slate-700/50 rounded-2xl shadow-2xl flex flex-col relative transition-all duration-300 ${isMinimized ? 'w-fit mx-auto px-4 pb-3 pt-1' : 'px-5 pb-4 pt-2'}`}>
+                            <button onClick={() => setIsMinimized(!isMinimized)} className="absolute top-2 right-2 p-1 hover:bg-slate-700/50 rounded-md text-slate-400 hover:text-white transition-colors">{isMinimized ? <ChevronUp size={16}/> : <ChevronDown size={18}/>}</button>
+                            {isMinimized ? (
+                                <div className="flex items-center justify-center gap-4">
+                                    <button onClick={prevStep} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-200"><Rewind size={18}/></button>
+                                    <button onClick={() => setIsPlaying(!isPlaying)} className={`w-10 h-10 flex items-center justify-center rounded-full shadow-lg ${isPlaying ? 'bg-amber-500' : 'bg-blue-600'}`}>{isPlaying ? <Pause fill="white" size={18} /> : <Play fill="white" size={18} className="ml-1"/>}</button>
+                                    <button onClick={nextStep} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-200"><FastForward size={18}/></button>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="relative w-full h-1.5 bg-slate-800 rounded-full mb-3 mt-1">
+                                        <div className="absolute top-0 left-0 h-full bg-blue-500 rounded-full transition-all duration-100" style={{ width: `${(currentStep / (history.length-1)) * 100}%` }}></div>
+                                        <input type="range" min="0" max={history.length - 1} value={currentStep} onChange={(e) => { setIsPlaying(false); setCurrentStep(Number(e.target.value)); }} className="absolute -top-2 left-0 w-full h-6 opacity-0 cursor-pointer z-10" />
+                                    </div>
+                                    <div className="flex items-center justify-between w-full">
+                                        <div className="flex flex-col w-[30%]"><span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Step</span><span className="text-sm font-mono text-emerald-300 truncate">{state.desc}</span></div>
+                                        <div className="flex items-center justify-center gap-3 w-[40%]"><button onClick={prevStep} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-200"><Rewind size={18}/></button><button onClick={() => setIsPlaying(!isPlaying)} className={`w-12 h-12 flex items-center justify-center rounded-full shadow-lg ${isPlaying ? 'bg-amber-500' : 'bg-blue-600'}`}>{isPlaying ? <Pause fill="white" size={20} /> : <Play fill="white" size={20} className="ml-1"/>}</button><button onClick={nextStep} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-200"><FastForward size={18}/></button></div>
+                                        <div className="flex items-center justify-end gap-4 w-[30%]">
+                                            <button onClick={() => setZoom(z => Math.max(0.3, z - 0.1))} className="text-slate-400 hover:text-white">-</button>
+                                            <span className="text-xs font-mono text-slate-500">{Math.round(zoom*100)}%</span>
+                                            <button onClick={() => setZoom(z => Math.min(2, z + 0.1))} className="text-slate-400 hover:text-white">+</button>
+                                            <button onClick={() => setIsMuted(!isMuted)} className={`p-2 rounded-lg ${isMuted ? 'text-rose-400 bg-rose-400/10' : 'text-blue-400 bg-blue-400/10'}`}>{isMuted ? <VolumeX size={18}/> : <Volume2 size={18}/>}</button>
+                                            <div className="flex flex-col gap-1 items-end w-24">
+                                                <span className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">Speed {speedMultiplier}x</span>
+                                                <input type="range" min="0.5" max="2.0" step="0.1" value={speedMultiplier} onChange={(e) => setSpeedMultiplier(Number(e.target.value))} className="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-400" />
+                                            </div>
+                                        </div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        createRoot(document.getElementById('root')).render(<App />);
+    

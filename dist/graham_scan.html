@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graham Scan Visualizer</title>
+    <style>
+        body { margin: 0; overflow: hidden; background-color: #0f172a; color: white; font-family: 'Inter', sans-serif; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+        .camera-layer { transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1); will-change: transform; }
+        .infinite-bg { background-image: radial-gradient(#334155 1px, transparent 1px); background-size: 30px 30px; }
+        .point { transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+        .point-hull { fill: #10b981; filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.6)); }
+        .line-scanning { stroke-dasharray: 8 4; animation: dash 1s linear infinite; }
+        .line-bad { stroke: #f43f5e; stroke-width: 2; opacity: 0.5; }
+        @keyframes dash { to { stroke-dashoffset: -12; } }
+    </style>
+  <script type="module" crossorigin src="/assets/graham_scan-DpcodpBi.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/chatbot-CXQzZ2_v.js">
+  <link rel="modulepreload" crossorigin href="/assets/settings_manager-SEJbgrw-.js">
+  <link rel="stylesheet" crossorigin href="/assets/main-BV5HfjFp.css">
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>

@@ -1,4 +1,4 @@
-const ML_SCRIPT = {
+window.ML_SCRIPT = {
     "KMEANS": {
         "START": () => `Welcome to K-Means Clustering! We have a cloud of data points and we want to group them into clusters based on their similarity. Let's find the hidden patterns!`,
         "INIT_CENTROIDS": (k) => `First, we'll place ${k} random centroids in the field. These will act as the "hearts" of our future clusters.`,

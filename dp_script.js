@@ -1,4 +1,4 @@
-const DP_SCRIPT = {
+window.DP_SCRIPT = {
     "KNAPSACK": {
         "START": () => `Welcome to the 0/1 Knapsack Problem! We have a bag with limited capacity and a set of valuable items. Our goal is to maximize the total value without breaking the bag.`,
         "CELL_EVAL": (i, w) => `Evaluating item ${i} at capacity ${w}. Should we take it or leave it?`,

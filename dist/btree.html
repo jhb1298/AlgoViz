@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B-Tree Visualizer | AlgoViz</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=JetBrains+Mono:wght@400;700&display=swap');
+        :root {
+            --bg-deep: #0f172a;
+            --accent-indigo: #6366f1;
+            --accent-blue: #3b82f6;
+            --accent-rose: #f43f5e;
+        }
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background-color: var(--bg-deep); 
+            color: white; 
+            font-family: 'Inter', sans-serif; 
+        }
+        .infinite-bg { 
+            background-image: radial-gradient(#334155 1px, transparent 1px); 
+            background-size: 30px 30px; 
+        }
+        .camera-layer { 
+            transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1); 
+            will-change: transform; 
+        }
+        .glass {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .node-active { 
+            border-color: var(--accent-indigo) !important; 
+            box-shadow: 0 0 30px rgba(99, 102, 241, 0.5); 
+            transform: scale(1.05); 
+        }
+        .key-enter {
+            animation: key-pop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        @keyframes key-pop {
+            from { transform: scale(0); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
+    </style>
+  <script type="module" crossorigin src="/assets/btree-ln1xDxBL.js"></script>
+  <link rel="modulepreload" crossorigin href="/assets/modulepreload-polyfill-B5Qt9EMX.js">
+  <link rel="modulepreload" crossorigin href="/assets/chatbot-CXQzZ2_v.js">
+  <link rel="modulepreload" crossorigin href="/assets/settings_manager-SEJbgrw-.js">
+  <link rel="stylesheet" crossorigin href="/assets/main-BV5HfjFp.css">
+</head>
+<body>
+    <div id="root"></div>
+</body>
+</html>
+

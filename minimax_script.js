@@ -1,4 +1,4 @@
-const MINIMAX_SCRIPT = {
+window.MINIMAX_SCRIPT = {
     "START": (depth, isPruning) => `Let's find the best move using Minimax! Max wants the highest score, Min wants the lowest. ${isPruning ? "We'll use Alpha-Beta pruning to skip useless branches!" : "We'll check every single possibility."}`,
     "MAX_TURN": (d) => `It's Max's turn at depth ${d}. I'm looking for the maximum value my children can offer!`,
     "MIN_TURN": (d) => `It's Min's turn at depth ${d}. I'll pick the smallest value to keep Max's score low!`,

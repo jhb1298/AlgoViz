@@ -1,0 +1,238 @@
+import './src/globals.js';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { createRoot } from 'react-dom/client';
+import './graph_script.js';
+import './settings_manager.js';
+import './algorithm_data.js';
+import './chatbot.js';
+
+/* extracted from map_coloring.html */
+
+        
+        const IconWrapper = ({ children, size = 20, className="", ...props }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className} {...props}>{children}</svg>
+        );
+        const Play = (props) => <IconWrapper {...props}><polygon points="5 3 19 12 5 21 5 3"></polygon></IconWrapper>;
+        const Pause = (props) => <IconWrapper {...props}><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></IconWrapper>;
+        const SkipBack = (props) => <IconWrapper {...props}><polygon points="19 20 9 12 19 4 19 20"></polygon><line x1="5" y1="19" x2="5" y2="5"></line></IconWrapper>;
+        const SkipForward = (props) => <IconWrapper {...props}><polygon points="5 4 15 12 5 20 5 4"></polygon><line x1="19" y1="5" x2="19" y2="19"></line></IconWrapper>;
+        const Rewind = (props) => <IconWrapper {...props}><polygon points="11 19 2 12 11 5 11 19"></polygon><polygon points="22 19 13 12 22 5 22 19"></polygon></IconWrapper>;
+        const FastForward = (props) => <IconWrapper {...props}><polygon points="13 19 22 12 13 5 13 19"></polygon><polygon points="2 19 11 12 2 5 2 19"></polygon></IconWrapper>;
+        const GripHorizontal = (props) => <IconWrapper {...props}><circle cx="12" cy="9" r="1"></circle><circle cx="19" cy="9" r="1"></circle><circle cx="5" cy="9" r="1"></circle><circle cx="12" cy="15" r="1"></circle><circle cx="19" cy="15" r="1"></circle><circle cx="5" cy="15" r="1"></circle></IconWrapper>;
+        const Home = (props) => <IconWrapper {...props}><path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path><polyline points="9 22 9 12 15 12 15 22"></polyline></IconWrapper>;
+        const Volume2 = (props) => <IconWrapper {...props}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></IconWrapper>;
+        const VolumeX = (props) => <IconWrapper {...props}><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></IconWrapper>;
+        const ChevronUp = (props) => <IconWrapper {...props}><polyline points="18 15 12 9 6 15"></polyline></IconWrapper>;
+        const ChevronDown = (props) => <IconWrapper {...props}><polyline points="6 9 12 15 18 9"></polyline></IconWrapper>;
+
+        // Simple Grid-based Map for visualization
+        const MAP_REGIONS = [
+            { id: 'R1', path: "M 100 100 L 300 100 L 300 300 L 100 300 Z", adj: ['R2', 'R4', 'R5'] },
+            { id: 'R2', path: "M 300 100 L 500 100 L 500 300 L 300 300 Z", adj: ['R1', 'R3', 'R5', 'R6'] },
+            { id: 'R3', path: "M 500 100 L 700 100 L 700 300 L 500 300 Z", adj: ['R2', 'R6'] },
+            { id: 'R4', path: "M 100 300 L 300 300 L 300 500 L 100 500 Z", adj: ['R1', 'R5', 'R7'] },
+            { id: 'R5', path: "M 300 300 L 500 300 L 500 500 L 300 500 Z", adj: ['R1', 'R2', 'R4', 'R6', 'R7', 'R8'] },
+            { id: 'R6', path: "M 500 300 L 700 300 L 700 500 L 500 500 Z", adj: ['R2', 'R3', 'R5', 'R8', 'R9'] },
+            { id: 'R7', path: "M 100 500 L 300 500 L 300 700 L 100 700 Z", adj: ['R4', 'R5', 'R8'] },
+            { id: 'R8', path: "M 300 500 L 500 500 L 500 700 L 300 700 Z", adj: ['R5', 'R6', 'R7', 'R9'] },
+            { id: 'R9', path: "M 500 500 L 700 500 L 700 700 L 500 700 Z", adj: ['R6', 'R8'] }
+        ];
+
+        const COLOR_PALETTE = [
+            { name: "Sky", hex: "#0ea5e9" },
+            { name: "Emerald", hex: "#10b981" },
+            { name: "Rose", hex: "#f43f5e" },
+            { name: "Amber", hex: "#f59e0b" }
+        ];
+
+        function generateSimulation(regions, k) {
+            const history = [];
+            const coloring = {};
+            regions.forEach(r => coloring[r.id] = null);
+
+            function record(status, desc, speech, activeRegion = null, conflictRegion = null, activeColor = null, algoLine = null) {
+                history.push({ 
+                    stepId: history.length, 
+                    coloring: { ...coloring }, 
+                    status, desc, speech, activeRegion, conflictRegion, activeColor, algoLine 
+                });
+            }
+
+            record('START', "Starting map coloring simulation...", SEARCH_SCRIPT.MAP_COLORING.START(), null, null, null, 1);
+
+            function solve(idx) {
+                if (idx === regions.length) return true;
+
+                const r = regions[idx];
+                for (let c = 0; c < k; c++) {
+                    const colorHex = COLOR_PALETTE[c].hex;
+                    const colorName = COLOR_PALETTE[c].name;
+
+                    record('TRYING', `Trying ${colorName} for region ${r.id}`, SEARCH_SCRIPT.MAP_COLORING.TRY_REGION(r.id, colorName), r.id, null, colorHex, 3);
+
+                    let conflict = null;
+                    for (const neighborId of r.adj) {
+                        if (coloring[neighborId] === colorHex) {
+                            conflict = neighborId;
+                            break;
+                        }
+                    }
+
+                    if (conflict) {
+                        record('CONFLICT', `Border conflict with ${conflict}`, SEARCH_SCRIPT.MAP_COLORING.CONFLICT(r.id, conflict, colorName), r.id, conflict, colorHex, 4);
+                        continue;
+                    }
+
+                    coloring[r.id] = colorHex;
+                    record('ASSIGNED', `Assigned ${colorName} to ${r.id}`, null, r.id, null, null, 5);
+
+                    if (solve(idx + 1)) return true;
+
+                    coloring[r.id] = null;
+                    record('BACKTRACK', `Backtracking from ${r.id}`, null, r.id, null, null, 7);
+                }
+                return false;
+            }
+
+            if (solve(0)) {
+                record('SUCCESS', "Map successfully colored!", SEARCH_SCRIPT.MAP_COLORING.SUCCESS(), null, null, null, 6);
+            } else {
+                record('FAIL', "Could not color map with limited colors.", "Backtracking reached start with no solution.", null, null, null, 7);
+            }
+
+            return history;
+        }
+
+        const App = () => {
+            const { SettingsIcon, SettingsModal, AlgorithmPanel } = useMemo(() => window.initSettingsComponents(React), []);
+            const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+            const [settings, setSettings] = useState(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+            useEffect(() => {
+                const handleUpdate = () => setSettings(JSON.parse(localStorage.getItem('simulation_settings') || '{"fontSize": 16, "nodeColor": "#3b82f6"}'));
+                window.addEventListener('simulation_settings_updated', handleUpdate);
+                return () => window.removeEventListener('simulation_settings_updated', handleUpdate);
+            }, []);
+            const [k, setK] = useState(4);
+            const [currentStep, setCurrentStep] = useState(0);
+            const [isPlaying, setIsPlaying] = useState(false);
+            const [speedMultiplier, setSpeedMultiplier] = useState(1);
+            const [zoom, setZoom] = useState(0.8);
+            const [isMuted, setIsMuted] = useState(false);
+            const [isMinimized, setIsMinimized] = useState(false);
+            
+            const [manualOffset, setManualOffset] = useState({ x: 0, y: 0 });
+            const [panelOffset, setPanelOffset] = useState({ x: 0, y: 0 });
+            const [isDraggingCanvas, setIsDraggingCanvas] = useState(false);
+            const [isDraggingPanel, setIsDraggingPanel] = useState(false);
+            const canvasDragStart = useRef({ x: 0, y: 0 });
+            const panelDragStart = useRef({ x: 0, y: 0 });
+            const isPlayingRef = useRef(false);
+            isPlayingRef.current = isPlaying;
+
+            const history = useMemo(() => generateSimulation(MAP_REGIONS, k), [k]);
+
+            const nextStep = () => { setCurrentStep(prev => (prev < history.length - 1 ? prev + 1 : (setIsPlaying(false), prev))); };
+            const prevStep = () => { setCurrentStep(prev => Math.max(0, prev - 1)); setIsPlaying(false); };
+
+            const speak = (text) => {
+                const delay = (1000 / speedMultiplier);
+                if (isMuted || !text) { setTimeout(() => { if(isPlayingRef.current) nextStep(); }, delay); return; }
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.pitch = 1.1; utterance.rate = 1.1 * speedMultiplier;
+                utterance.onend = () => { if(isPlayingRef.current) nextStep(); };
+                window.speechSynthesis.speak(utterance);
+            };
+
+            useEffect(() => {
+                if (isPlaying) speak(history[currentStep]?.speech);
+                else window.speechSynthesis.cancel();
+            }, [isPlaying, currentStep]);
+
+            const state = history[currentStep] || { coloring: {} };
+
+            return (
+                <div className="h-screen w-screen flex flex-col relative overflow-hidden bg-slate-950 text-white select-none infinite-bg" onMouseMove={(e) => { if(isDraggingPanel) setPanelOffset({x: e.clientX-panelDragStart.current.x, y: e.clientY-panelDragStart.current.y}); else if(isDraggingCanvas) setManualOffset({x: e.clientX-canvasDragStart.current.x, y: e.clientY-canvasDragStart.current.y}); }} onMouseUp={() => {setIsDraggingCanvas(false); setIsDraggingPanel(false);}}>
+                    <div className="absolute top-0 left-0 right-0 z-[60] p-6 flex justify-between items-center pointer-events-none">
+                        <div className="flex items-center gap-4 pointer-events-auto">
+                            <a href="index.html" className="bg-slate-900 p-2.5 rounded-xl hover:bg-slate-800 transition-colors border border-slate-800 shadow-2xl"><Home size={20} /></a>
+                            <div>
+                                <h1 className="font-black text-xl tracking-tighter uppercase italic">Map Coloring</h1>
+                                <div className="flex items-center gap-2">
+                                    <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span>
+                                    <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Planar Dual-Graph Solver</span>
+                                <button onClick={() => setIsSettingsOpen(true)} className="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg transition-colors text-slate-400 hover:text-white shadow-lg"><SettingsIcon size={20}/></button></div>
+                            </div>
+                        </div>
+                        <div className="pointer-events-auto flex items-center gap-2 bg-slate-900 px-4 py-2 rounded-2xl border border-slate-800 shadow-2xl">
+                            <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Palette Size:</span>
+                            <input type="number" min="1" max="4" value={k} onChange={e => { setK(Number(e.target.value)); setCurrentStep(0); setIsPlaying(false); }} className="w-10 bg-transparent font-black text-blue-400 text-center outline-none" />
+                        </div>
+                    </div>
+
+                    
+                    <SettingsModal isOpen={isSettingsOpen} onClose={() => setIsSettingsOpen(false)} />
+                    <AlgorithmPanel algoKey="MAP_COLORING" currentLine={state.algoLine} />
+                    <div className="flex-1 relative overflow-hidden cursor-grab" onWheel={(e) => setZoom(z => Math.min(Math.max(0.2, z-e.deltaY*0.001), 2))} onMouseDown={(e) => {if(!e.target.closest('.control-panel-wrapper')) {setIsDraggingCanvas(true); canvasDragStart.current={x: e.clientX-manualOffset.x, y: e.clientY-manualOffset.y};}}}>
+                        <div className={`absolute left-1/2 top-1/2 flex items-center justify-center ${isDraggingCanvas ? '' : 'camera-layer'}`} style={{ transform: `translate(calc(-50% + ${manualOffset.x}px), calc(-50% + ${manualOffset.y}px)) scale(${zoom})` }}>
+                            <svg width="800" height="800" viewBox="0 0 800 800" className="overflow-visible">
+                                {MAP_REGIONS.map(r => {
+                                    const isActive = state.activeRegion === r.id;
+                                    const isConflict = state.conflictRegion === r.id || (isActive && state.status === 'CONFLICT');
+                                    const fillColor = (isActive && state.activeColor) ? state.activeColor : (state.coloring[r.id] || '#0f172a');
+                                    
+                                    return (
+                                        <g key={r.id}>
+                                            <path 
+                                                d={r.path} 
+                                                fill={fillColor} 
+                                                className={`region ${isActive ? 'region-active' : ''} ${isConflict ? 'region-conflict' : ''}`}
+                                            />
+                                            <text 
+                                                x={parseInt(r.path.split(' ')[1]) + 100} 
+                                                y={parseInt(r.path.split(' ')[2]) + 100} 
+                                                textAnchor="middle" 
+                                                className="text-xs font-black fill-slate-500 pointer-events-none"
+                                            >
+                                                {r.id}
+                                            </text>
+                                        </g>
+                                    );
+                                })}
+                            </svg>
+                        </div>
+                    </div>
+
+                    <div className="absolute bottom-6 left-1/2 w-full max-w-4xl px-4 z-50 control-panel-wrapper" style={{ transform: `translate(calc(-50% + ${panelOffset.x}px), ${panelOffset.y}px)` }}>
+                        <div className={`bg-slate-900/40 hover:bg-slate-900/85 backdrop-blur-md border border-slate-600/30 rounded-2xl shadow-2xl flex flex-col relative box-border transition-all duration-300 ${isMinimized ? 'w-fit min-w-[180px] mx-auto px-4 pb-3 pt-1' : 'px-5 pb-4 pt-2'}`}>
+                            <div className="w-full h-6 cursor-grab active:cursor-grabbing flex justify-center items-center mb-1" onMouseDown={(e) => {e.preventDefault(); setIsDraggingPanel(true); panelDragStart.current={x:e.clientX-panelOffset.x, y:e.clientY-panelOffset.y}; e.stopPropagation();}}>
+                                <div className="bg-white/10 rounded-full px-6 py-0.5"><GripHorizontal size={12} className="text-white/50" /></div>
+                            </div>
+                            <button onClick={() => setIsMinimized(!isMinimized)} className="absolute top-2 right-2 p-1 hover:bg-slate-700/50 rounded-md text-slate-400 hover:text-white transition-colors z-50">{isMinimized ? <ChevronUp size={16}/> : <ChevronDown size={18}/>}</button>
+                            {isMinimized ? (
+                                <div className="flex items-center justify-center gap-4">
+                                    <button onClick={prevStep} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-200"><Rewind size={18}/></button>
+                                    <button onClick={() => setIsPlaying(!isPlaying)} className={`w-10 h-10 flex items-center justify-center rounded-full shadow-lg transform transition-all active:scale-95 border border-white/20 ${isPlaying ? 'bg-amber-500' : 'bg-blue-600'}`}>{isPlaying ? <Pause fill="white" size={18} /> : <Play fill="white" size={18} className="ml-1"/>}</button>
+                                    <button onClick={nextStep} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-200"><FastForward size={18}/></button>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="relative w-full h-1.5 bg-slate-800/80 rounded-full mb-3 mt-1"><div className="absolute top-0 left-0 h-full bg-indigo-500 rounded-full transition-all duration-100" style={{ width: `${(currentStep / (history.length-1)) * 100}%` }}></div><input type="range" min="0" max={history.length - 1} value={currentStep} onChange={(e) => { setIsPlaying(false); setCurrentStep(Number(e.target.value)); }} className="absolute -top-2 left-0 w-full h-6 opacity-0 cursor-pointer z-10" /></div>
+                                    <div className="flex items-center justify-between w-full">
+                                        <div className="flex flex-col w-[30%] overflow-hidden pr-2"><span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-0.5">Computational Step {String(currentStep).padStart(3, '0')}</span><span className="text-sm font-mono text-indigo-300 truncate tracking-tight">{state?.desc}</span></div>
+                                        <div className="flex items-center justify-center gap-3 w-[40%]"><button onClick={() => setCurrentStep(0)} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-300 transition-colors"><SkipBack size={16}/></button><button onClick={prevStep} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-200 transition-colors"><Rewind size={18}/></button><button onClick={() => setIsPlaying(!isPlaying)} className={`w-12 h-12 flex items-center justify-center rounded-full shadow-lg transform transition-all active:scale-95 border border-white/20 ${isPlaying ? 'bg-amber-500' : 'bg-blue-600'}`}>{isPlaying ? <Pause fill="white" size={20} /> : <Play fill="white" size={20} className="ml-1"/>}</button><button onClick={nextStep} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-200 transition-colors"><FastForward size={18}/></button><button onClick={() => setCurrentStep(history.length - 1)} className="p-1.5 hover:bg-slate-700/50 rounded-md text-slate-300 transition-colors"><SkipForward size={16}/></button></div>
+                                        <div className="flex items-center justify-end gap-4 w-[30%]"><button onClick={() => setIsMuted(!isMuted)} className={`p-2 rounded-lg transition-colors ${isMuted ? 'text-rose-400 bg-rose-400/10' : 'text-blue-400 bg-blue-400/10'}`}>{isMuted ? <VolumeX size={18}/> : <Volume2 size={18}/>}</button>
+                                        <div className="flex flex-col gap-1 items-end w-24">
+                                            <span className="text-[9px] font-bold uppercase text-slate-400 tracking-wider">Clock {speedMultiplier}x</span>
+                                            <input type="range" min="0.5" max="2.0" step="0.1" value={speedMultiplier} onChange={(e) => setSpeedMultiplier(Number(e.target.value))} className="w-full h-1 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-400" />
+                                        </div></div>
+                                    </div>
+                                </>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+        createRoot(document.getElementById('root')).render(<App />);
+    

@@ -1,4 +1,4 @@
-const SIGNAL_SCRIPT = {
+window.SIGNAL_SCRIPT = {
     "CONVOLUTION": {
         "START": (sig, kernel) => `Starting 1D Convolution! We'll slide our kernel over the signal to produce a filtered output.`,
         "FLIP": () => `First, we flip the kernel. This is what distinguishes convolution from correlation mathematically.`,
