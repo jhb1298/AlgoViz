@@ -126,7 +126,7 @@ import './chatbot.js';
                     <div className="px-3 py-1.5 text-[9px] font-mono text-slate-400 bg-slate-900 border-b border-slate-700">
                         <div className={getCodeClass(0)}>1. check children...</div>
                         <div className={getCodeClass(1)}>2. if leaf return val</div>
-                        {pruningEnabled && <div className={getCodeClass(3)}>3. if ß &le; a prune!</div>}
+                        {pruningEnabled && <div className={getCodeClass(3)}>3. if ÃŸ &le; a prune!</div>}
                     </div>
                     <div className="bg-slate-800 flex-1 flex flex-col items-center justify-center p-2">
                         <div className="text-3xl font-black text-white">{latestState?.val ?? '?'}</div>

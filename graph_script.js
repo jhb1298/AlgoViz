@@ -40,7 +40,7 @@ window.SEARCH_SCRIPT = {
         "SUCCESS": () => `Search complete! We've successfully navigated the graph using only our best guesses.`
     },
     "ASTAR": {
-        "START": () => `Welcome to A-Star Search! It's like Dijkstra, but smarter! It uses a 'Heuristic'—a best guess of the remaining distance—to head straight for the target.`,
+        "START": () => `Welcome to A-Star Search! It's like Dijkstra, but smarter! It uses a 'Heuristic'â€”a best guess of the remaining distanceâ€”to head straight for the target.`,
         "VISITING": (node, f, g, h) => `Checking cell ${node}. Its total score is ${f}. That's ${g} steps taken plus a ${h} step guess to the finish line!`,
         "RELAXING": (node, f) => `Found a better way to reach ${node}! Its new priority score is ${f}. We're getting closer!`,
         "TARGET_FOUND": () => `Target spotted! A-Star has found the most efficient path by looking only where it needed to.`,

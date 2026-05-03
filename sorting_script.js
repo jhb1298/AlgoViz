@@ -11,7 +11,7 @@ window.SORTING_SCRIPT = {
         "PICKING": (val) => `Picking up ${val}. Now let's find where it belongs in our sorted line.`,
         "SLIDING": (val, target) => `${val} is smaller than ${target}, so let's slide ${target} to the right to make some room!`,
         "INSERTING": (val) => `Found it! This is the perfect home for ${val}. Plop!`,
-        "SUCCESS": () => `All cards—I mean numbers—are organized! That's a winning hand.`
+        "SUCCESS": () => `All cardsâ€”I mean numbersâ€”are organized! That's a winning hand.`
     },
     "SELECTION": {
         "START": () => `Time for a scavenger hunt! Selection Sort will scan the messy part of the list to find the absolute smallest number and bring it to the front.`,
@@ -55,7 +55,7 @@ window.SORTING_SCRIPT = {
         "SUCCESS": () => `All buckets have been emptied and combined! Our scattered numbers are now one harmonious sorted list.`
     },
     "COMB": {
-        "START": () => `Let's try Comb Sort! It improves on Bubble Sort by using a gap to eliminate "turtles"—small values near the end of the list.`,
+        "START": () => `Let's try Comb Sort! It improves on Bubble Sort by using a gap to eliminate "turtles"â€”small values near the end of the list.`,
         "GAP": (gap) => `Setting our comparison gap to ${gap}. We'll compare elements that are this far apart.`,
         "COMPARING": (a, b) => `Comparing ${a} and ${b} with our current gap. Do they need a swap?`,
         "SUCCESS": () => `The gap has shrunk to one and all swaps are done! The turtles have been defeated and the array is sorted.`

@@ -275,7 +275,7 @@ E D 6`;
 
                                                 return (
                                                     <div key={j} className={`matrix-cell h-12 flex items-center justify-center text-xs font-mono transition-all duration-200 ${isActiveCell ? 'matrix-active rounded-lg' : (isPivotUsage ? 'matrix-pivot rounded-lg' : (isKBoundary ? 'matrix-k-row-col' : ''))}`}>
-                                                        {val === Infinity ? '8' : (val !== null && val !== undefined ? Math.round(val) : '—')}
+                                                        {val === Infinity ? '8' : (val !== null && val !== undefined ? Math.round(val) : 'â€”')}
                                                     </div>
                                                 );
                                             })}
@@ -292,7 +292,7 @@ E D 6`;
                                         <div className="flex justify-between items-center text-slate-500">
                                             <span>Current: D[{state.i || 'i'}][{state.j || 'j'}]</span>
                                             <span className="text-white font-bold">
-                                                {state.i && state.j ? (state.dist[state.i][state.j] === Infinity ? '8' : state.dist[state.i][state.j].toFixed(1)) : '—'}
+                                                {state.i && state.j ? (state.dist[state.i][state.j] === Infinity ? '8' : state.dist[state.i][state.j].toFixed(1)) : 'â€”'}
                                             </span>
                                         </div>
                                         <div className="flex justify-between items-center text-rose-400">
@@ -300,7 +300,7 @@ E D 6`;
                                             <span className="font-bold">
                                                 {state.i && state.j && state.k ? 
                                                     ((state.dist[state.i][state.k] + state.dist[state.k][state.j]) === Infinity ? '8' : (state.dist[state.i][state.k] + state.dist[state.k][state.j]).toFixed(1)) 
-                                                    : '—'}
+                                                    : 'â€”'}
                                             </span>
                                         </div>
                                         <div className={`mt-4 pt-4 border-t border-slate-800 text-center font-black ${state.status === 'UPDATING' ? 'text-indigo-400' : 'text-slate-600'}`}>

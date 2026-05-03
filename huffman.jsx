@@ -229,7 +229,7 @@ import './chatbot.js';
         const TreeRenderer = ({ node, activeIds, settings, animPos }) => {
             if (!node) return null;
             const isActive = activeIds?.includes(node.id);
-            // Read position from the animated positions map — NOT from the node object directly
+            // Read position from the animated positions map â€” NOT from the node object directly
             const pos = animPos?.get(node.id) || { x: node.x || 0, y: node.y || 0 };
             const { x, y } = pos;
 
@@ -343,7 +343,7 @@ import './chatbot.js';
                 });
             }, [state.forest]);
 
-            // DOUBLE RAF — key to smooth animation:
+            // DOUBLE RAF â€” key to smooth animation:
             // When the step changes, forestLayout runs and mutates node coordinates.
             // We capture these NEW target coordinates, but we DON'T update animPositions yet.
             // Frame 1 (RAF 1): browser paints the OLD animPositions (nodes at their old spots)

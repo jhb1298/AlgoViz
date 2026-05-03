@@ -266,7 +266,7 @@ D F 4`;
 
                             return (
                                 <tr key={i} className={`transition-colors ${isActive ? 'bg-indigo-500/20' : isMst ? 'bg-emerald-500/5' : ''}`}>
-                                    <td className="px-3 py-2 font-mono font-bold">{edge.from} — {edge.to}</td>
+                                    <td className="px-3 py-2 font-mono font-bold">{edge.from} â€” {edge.to}</td>
                                     <td className="px-3 py-2 text-right font-bold text-slate-300">{edge.weight}</td>
                                     <td className={`px-3 py-2 text-center text-[10px] uppercase font-black ${statusClass}`}>{statusText}</td>
                                 </tr>

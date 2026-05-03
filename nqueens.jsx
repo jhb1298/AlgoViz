@@ -117,7 +117,7 @@ import './chatbot.js';
                             return (
                                 <div key={i} className={`w-8 h-8 flex items-center justify-center relative chess-square ${bgColor}`}>
                                     {hasQueen && <Crown size={20} className="text-emerald-400 drop-shadow-md queen-enter" />}
-                                    {isTrial && status === 'CONFLICT' && <span className="text-white font-black text-xl leading-none">×</span>}
+                                    {isTrial && status === 'CONFLICT' && <span className="text-white font-black text-xl leading-none">Ã—</span>}
                                     {isTrial && status !== 'CONFLICT' && <Crown size={18} className="text-yellow-200 opacity-60" />}
                                 </div>
                             );

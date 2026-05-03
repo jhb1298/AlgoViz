@@ -1,8 +1,8 @@
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 //  AlgoViz Universal Algorithm Assistant Chatbot
-//  Self-initializing · No JSX · React.createElement only
+//  Self-initializing Â· No JSX Â· React.createElement only
 //  Uses window.__ALGO_CONTEXT for live state + DOM observation
-// ─────────────────────────────────────────────────────────────
+// â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 (function () {
     'use strict';
 
@@ -27,7 +27,7 @@
         'When should I use this algorithm?'
     ];
 
-    // ── Title → ALGORITHM_PSEUDOCODE key mapping ──────────────
+    // â”€â”€ Title â†’ ALGORITHM_PSEUDOCODE key mapping â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const TITLE_MAP = {
         'bubble': 'BUBBLE_SORT', 'selection sort': 'SELECTION_SORT',
         'insertion': 'INSERTION_SORT', 'merge sort': 'MERGE_SORT',
@@ -60,7 +60,7 @@
         'heapify': 'HEAPIFY', 'heap': 'HEAP_SORT',
     };
 
-    // ── Helpers ───────────────────────────────────────────────
+    // â”€â”€ Helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function getSettings() {
         try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}'); }
         catch { return {}; }
@@ -88,7 +88,7 @@
             ? window.ALGORITHM_PSEUDOCODE[algoKey] : null;
         const ctx = window.__ALGO_CONTEXT || {};
 
-        let prompt = `You are an expert, friendly algorithm tutor embedded inside "AlgoViz" — an interactive step-by-step algorithm visualizer.
+        let prompt = `You are an expert, friendly algorithm tutor embedded inside "AlgoViz" â€” an interactive step-by-step algorithm visualizer.
 Your goal: help the user deeply understand the algorithm being visualized RIGHT NOW.
 Page: ${document.title}
 Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
@@ -99,9 +99,9 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
 
         if (ctx.state) {
             const s = ctx.state;
-            prompt += `\n\nCurrent Simulation State:\n  • Step #${s.stepId ?? '?'}  |  Status: ${s.status ?? '?'}\n  • Description: "${s.desc ?? ''}"`;
+            prompt += `\n\nCurrent Simulation State:\n  â€¢ Step #${s.stepId ?? '?'}  |  Status: ${s.status ?? '?'}\n  â€¢ Description: "${s.desc ?? ''}"`;
             if (s.algoLine && pseudo?.[s.algoLine - 1]) {
-                prompt += `\n  • Executing pseudocode line ${s.algoLine}: "${pseudo[s.algoLine - 1]}"`;
+                prompt += `\n  â€¢ Executing pseudocode line ${s.algoLine}: "${pseudo[s.algoLine - 1]}"`;
             }
         } else if (ctx.desc) {
             prompt += `\n\nCurrent Step: "${ctx.desc}"`;
@@ -109,7 +109,7 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
 
         prompt += '\n\nStyle: Be concise (2-4 sentences), approachable, and educational. Use simple analogies. Avoid walls of text.';
         const lang = language && language !== 'English' ? language : null;
-        if (lang) prompt += `\n\n🌐 CRITICAL: You MUST respond entirely in ${lang}. Translate everything including technical terms as naturally as possible.`;
+        if (lang) prompt += `\n\nðŸŒ CRITICAL: You MUST respond entirely in ${lang}. Translate everything including technical terms as naturally as possible.`;
 
         return prompt;
     }
@@ -128,13 +128,13 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
         });
         if (!res.ok) {
             const err = await res.json().catch(() => ({}));
-            throw new Error(err.error?.message || `HTTP ${res.status} — Check your API key`);
+            throw new Error(err.error?.message || `HTTP ${res.status} â€” Check your API key`);
         }
         const data = await res.json();
         return data.choices?.[0]?.message?.content ?? '(no response)';
     }
 
-    // ── DOM Observer (passive live state) ────────────────────
+    // â”€â”€ DOM Observer (passive live state) â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function startDOMObserver() {
         const poll = () => {
             // Read current step description from the most common selector patterns
@@ -151,7 +151,7 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
         setInterval(poll, 500);
     }
 
-    // ── CSS Injection ─────────────────────────────────────────
+    // â”€â”€ CSS Injection â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function injectCSS() {
         const css = document.createElement('style');
         css.id = '_acb_styles';
@@ -370,7 +370,7 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
         document.head.appendChild(css);
     }
 
-    // ── React Component ───────────────────────────────────────
+    // â”€â”€ React Component â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     function mountChatbot() {
         const { React, ReactDOM } = window;
         if (!React || !ReactDOM) return;
@@ -378,7 +378,7 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
         const h = React.createElement;
 
         function format(text) {
-            // Simple bold formatter: **text** → <strong>
+            // Simple bold formatter: **text** â†’ <strong>
             return text.split(/(\*\*[^*]+\*\*)/g).map((part, i) => {
                 if (part.startsWith('**') && part.endsWith('**')) {
                     return h('strong', { key: i }, part.slice(2, -2));
@@ -397,7 +397,7 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
             const [languageDraft, setLanguageDraft] = useState(saved.language || 'English');
             const INITIAL_MESSAGE = {
                 role: 'assistant',
-                content: '👋 Hello! I\'m your **AlgoViz assistant**. Ask me anything about the current algorithm, step, or pseudocode — I\'m here to help you understand!'
+                content: 'ðŸ‘‹ Hello! I\'m your **AlgoViz assistant**. Ask me anything about the current algorithm, step, or pseudocode â€” I\'m here to help you understand!'
             };
             const [messages, setMessages] = useState([INITIAL_MESSAGE]);
             const [input, setInput] = useState('');
@@ -456,7 +456,7 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
                     setMessages(prev => [...prev, { role: 'assistant', content: reply }]);
                     if (!isOpen) setUnread(n => n + 1);
                 } catch (e) {
-                    setError('⚠️ ' + e.message);
+                    setError('âš ï¸ ' + e.message);
                 } finally {
                     setIsLoading(false);
                 }
@@ -479,16 +479,16 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
             const ctxText = ctx.state?.desc || ctx.desc || '';
             const showChips = messages.length <= 2;
 
-            // ── Settings Panel ──────────────────────────────
+            // â”€â”€ Settings Panel â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             const settingsPanel = showSettings && h('div', { className: '_acb_settings' },
                 h('div', { className: '_acb_settings_inner' },
                     // Header
                     h('div', { style: { display: 'flex', alignItems: 'center', justifyContent: 'space-between' } },
                         h('div', null,
-                            h('div', { style: { color: 'white', fontWeight: '800', fontSize: '17px', letterSpacing: '-0.02em' } }, '⚙️ Assistant Settings'),
+                            h('div', { style: { color: 'white', fontWeight: '800', fontSize: '17px', letterSpacing: '-0.02em' } }, 'âš™ï¸ Assistant Settings'),
                             h('div', { style: { color: '#64748b', fontSize: '12px', marginTop: '3px' } }, 'Configure AI backend & language')
                         ),
-                        h('button', { className: '_acb_header_btn', onClick: () => { setShowSettings(false); setError(''); } }, '✕')
+                        h('button', { className: '_acb_header_btn', onClick: () => { setShowSettings(false); setError(''); } }, 'âœ•')
                     ),
 
                     // Divider
@@ -496,7 +496,7 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
 
                     // API Key
                     h('div', null,
-                        h('label', { className: '_acb_label' }, '🔑 Groq API Key'),
+                        h('label', { className: '_acb_label' }, 'ðŸ”‘ Groq API Key'),
                         h('input', {
                             type: 'password',
                             className: '_acb_field',
@@ -508,15 +508,15 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
                         h('p', { className: '_acb_helper_text' },
                             'Free at ',
                             h('a', { href: 'https://console.groq.com', target: '_blank', rel: 'noreferrer' }, 'console.groq.com'),
-                            ' · Uses ',
+                            ' Â· Uses ',
                             h('strong', { style: { color: '#818cf8' } }, 'Llama 3.3 70B'),
-                            ' · Never stored on any server'
+                            ' Â· Never stored on any server'
                         )
                     ),
 
                     // Language
                     h('div', null,
-                        h('label', { className: '_acb_label' }, '🌐 Response Language'),
+                        h('label', { className: '_acb_label' }, 'ðŸŒ Response Language'),
                         h('select', {
                             className: '_acb_field',
                             value: languageDraft,
@@ -532,11 +532,11 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
                         className: '_acb_save_btn',
                         onClick: saveSettings_,
                         disabled: !apiKeyDraft.trim()
-                    }, '💾 Save & Start Chatting')
+                    }, 'ðŸ’¾ Save & Start Chatting')
                 )
             );
 
-            // ── Chat Window ─────────────────────────────────
+            // â”€â”€ Chat Window â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             const chatWindow = isOpen && h('div', { className: '_acb_win' },
                 settingsPanel,
 
@@ -544,20 +544,20 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
                 h('div', { className: '_acb_header' },
                     h('div', { className: '_acb_header_row' },
                         h('div', { style: { display: 'flex', alignItems: 'center', gap: '10px' } },
-                            h('div', { className: '_acb_avatar' }, '🤖'),
+                            h('div', { className: '_acb_avatar' }, 'ðŸ¤–'),
                             h('div', null,
                                 h('div', { style: { color: 'white', fontWeight: '700', fontSize: '14px', letterSpacing: '-0.01em' } }, 'Algorithm Assistant'),
                                 h('div', { style: { color: '#6366f1', fontSize: '10.5px', fontWeight: '600', marginTop: '1px' } },
                                     algoKey
-                                        ? '📚 ' + algoKey.replace(/_/g, ' ')
-                                        : '📚 Ready to help'
+                                        ? 'ðŸ“š ' + algoKey.replace(/_/g, ' ')
+                                        : 'ðŸ“š Ready to help'
                                 )
                             )
                         ),
                         h('div', { style: { display: 'flex', gap: '6px', alignItems: 'center' } },
-                            h('button', { className: '_acb_header_btn', onClick: openSettings, title: 'Settings' }, '⚙️'),
-                            h('button', { className: '_acb_header_btn', onClick: () => setIsOpen(false), title: 'Minimize' }, '−'),
-                            h('button', { className: '_acb_header_btn', onClick: () => { setIsOpen(false); setMessages([INITIAL_MESSAGE]); }, title: 'Close & Reset' }, '✕')
+                            h('button', { className: '_acb_header_btn', onClick: openSettings, title: 'Settings' }, 'âš™ï¸'),
+                            h('button', { className: '_acb_header_btn', onClick: () => setIsOpen(false), title: 'Minimize' }, 'âˆ’'),
+                            h('button', { className: '_acb_header_btn', onClick: () => { setIsOpen(false); setMessages([INITIAL_MESSAGE]); }, title: 'Close & Reset' }, 'âœ•')
                         )
                     ),
                     // API key hint
@@ -568,14 +568,14 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
                             borderRadius: '8px', fontSize: '11px', color: '#fbbf24', cursor: 'pointer'
                         },
                         onClick: openSettings
-                    }, '⚡ Click here to add your Groq API key and enable chat →')
+                    }, 'âš¡ Click here to add your Groq API key and enable chat â†’')
                 ),
 
                 // Context bar (live step)
                 showCtxBar && h('div', { className: '_acb_ctx_bar' },
-                    h('span', { style: { color: '#6366f1', fontWeight: 'bold' } }, '●'),
+                    h('span', { style: { color: '#6366f1', fontWeight: 'bold' } }, 'â—'),
                     h('span', { style: { overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' } },
-                        'Live: ' + (ctxText.length > 60 ? ctxText.slice(0, 58) + '…' : ctxText)
+                        'Live: ' + (ctxText.length > 60 ? ctxText.slice(0, 58) + 'â€¦' : ctxText)
                     )
                 ),
 
@@ -611,7 +611,7 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
                         h('textarea', {
                             ref: textareaRef,
                             className: '_acb_textarea',
-                            placeholder: hasKey ? 'Ask anything about this algorithm… (Enter to send)' : 'Add your Groq API key in ⚙️ Settings',
+                            placeholder: hasKey ? 'Ask anything about this algorithmâ€¦ (Enter to send)' : 'Add your Groq API key in âš™ï¸ Settings',
                             value: input,
                             onInput: handleTextareaInput,
                             onChange: e => setInput(e.target.value),
@@ -624,12 +624,12 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
                             onClick: () => send(),
                             disabled: !hasKey || isLoading || !input.trim(),
                             title: 'Send (Enter)'
-                        }, isLoading ? '…' : '↑')
+                        }, isLoading ? 'â€¦' : 'â†‘')
                     )
                 )
             );
 
-            // ── FAB Button ──────────────────────────────────
+            // â”€â”€ FAB Button â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
             const fab = h('button', {
                 className: '_acb_fab',
                 title: 'Algorithm Assistant',
@@ -651,7 +651,7 @@ Algorithm: ${algoKey ? algoKey.replace(/_/g, ' ') : document.title}`;
         ReactDOM.createRoot(mount).render(h(ChatBot));
     }
 
-    // ── Bootstrap ─────────────────────────────────────────────
+    // â”€â”€ Bootstrap â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     let tries = 0;
     function tryMount() {
         if (window.React && window.ReactDOM) {

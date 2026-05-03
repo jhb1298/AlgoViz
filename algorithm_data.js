@@ -138,7 +138,7 @@ window.ALGORITHM_PSEUDOCODE = {
     "RADIX": [
         "1. Find max number to get digit count d",
         "2. For each digit position (1s, 10s, ...):",
-        "3.   Count occurrences of each digit 0–9",
+        "3.   Count occurrences of each digit 0â€“9",
         "4.   Compute cumulative prefix counts",
         "5.   Place elements into sorted output array",
         "6.   Copy output back to input array"
@@ -215,9 +215,9 @@ window.ALGORITHM_PSEUDOCODE = {
     "HANOI": [
         "1. Function hanoi(n, from, to, via):",
         "2.   If n == 1: Move disk from rod to rod",
-        "3.   Move top (n-1) disks: from → via",
-        "4.   Move nth disk: from → to",
-        "5.   Move (n-1) disks: via → to"
+        "3.   Move top (n-1) disks: from â†’ via",
+        "4.   Move nth disk: from â†’ to",
+        "5.   Move (n-1) disks: via â†’ to"
     ],
     "NQUEENS": [
         "1. If row == n: solution found!",
@@ -434,11 +434,11 @@ window.ALGORITHM_PSEUDOCODE = {
         "2.   if depth == 0 or node is leaf:",
         "3.     return evaluate(node)",
         "4.   if isMaximizing:",
-        "5.     maxVal = -∞",
+        "5.     maxVal = -âˆž",
         "6.     For each child: maxVal = max(maxVal, minimax(child, depth-1, false))",
         "7.     return maxVal",
         "8.   else:",
-        "9.     minVal = +∞",
+        "9.     minVal = +âˆž",
         "10.    For each child: minVal = min(minVal, minimax(child, depth-1, true))",
         "11.    return minVal"
     ],
@@ -579,9 +579,9 @@ window.ALGORITHM_PSEUDOCODE = {
     "HASH_QUADRATIC": [
         "1. index = key % table_size",
         "2. i = 0",
-        "3. while bucket[(index + i²) % table_size] is occupied:",
+        "3. while bucket[(index + iÂ²) % table_size] is occupied:",
         "4.   i = i + 1",
-        "5. bucket[(index + i²) % table_size] = key"
+        "5. bucket[(index + iÂ²) % table_size] = key"
     ],
     "HASH_DOUBLE": [
         "1. index = hash1(key)",

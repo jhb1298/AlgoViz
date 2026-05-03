@@ -15,8 +15,8 @@ window.HASH_SCRIPT = {
             "INSERT": (val, idx) => `Found an empty spot at ${idx}! Inserting ${val} here.`
         },
         "QUADRATIC": {
-            "START": () => `Quadratic Probing time! We'll jump by squares (1², 2², 3²...) to avoid clustering.`,
-            "PROBE": (idx, i) => `Spot occupied. Jumping ${i}² = ${i*i} steps ahead to check index ${idx}.`,
+            "START": () => `Quadratic Probing time! We'll jump by squares (1Â², 2Â², 3Â²...) to avoid clustering.`,
+            "PROBE": (idx, i) => `Spot occupied. Jumping ${i}Â² = ${i*i} steps ahead to check index ${idx}.`,
             "INSERT": (val, idx) => `Landed on empty spot ${idx}. ${val} fits perfectly!`
         },
         "DOUBLE": {

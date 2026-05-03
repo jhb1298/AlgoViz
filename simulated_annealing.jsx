@@ -203,7 +203,7 @@ import './chatbot.js';
                             <div className="flex items-center gap-8">
                                 <div className="text-right">
                                     <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Temperature</div>
-                                    <div className="font-mono font-bold" style={{ color: getTempColor(state.temp) }}>{Math.round(state.temp)}°</div>
+                                    <div className="font-mono font-bold" style={{ color: getTempColor(state.temp) }}>{Math.round(state.temp)}Â°</div>
                                 </div>
                                 <div className="text-right">
                                     <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Path Length</div>

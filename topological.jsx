@@ -282,7 +282,7 @@ E F`;
                                         {Array.from({ length: graph.nodes.length }).map((_, i) => (
                                             <div key={i} className={`h-12 border-2 rounded-xl flex items-center px-4 transition-all duration-500 ${state.result[i] ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-slate-800/20 border-slate-700/50'}`}>
                                                 <span className="text-[10px] font-black text-slate-500 w-6">{i + 1}</span>
-                                                <span className={`text-lg font-black ${state.result[i] ? 'text-white' : 'text-slate-700'}`}>{state.result[i] || '—'}</span>
+                                                <span className={`text-lg font-black ${state.result[i] ? 'text-white' : 'text-slate-700'}`}>{state.result[i] || 'â€”'}</span>
                                                 {state.result[i] && <div className="ml-auto w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />}
                                             </div>
                                         ))}

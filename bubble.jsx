@@ -1,4 +1,4 @@
-﻿import './src/globals.js';
+import './src/globals.js';
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import { createRoot } from 'react-dom/client';
 import './sorting_script.js';
