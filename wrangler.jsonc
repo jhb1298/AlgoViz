@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "recursion-visualizer",
+  "name": "mastersuite",
   "compatibility_date": "2026-05-03",
   "assets": {
     "directory": "dist",
